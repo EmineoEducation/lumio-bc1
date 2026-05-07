@@ -1,0 +1,562 @@
+// ══════════════════════════════════════════════════════════════
+//  WINDOW MANAGER + DESKTOP + DOCK + MENU BAR
+// ══════════════════════════════════════════════════════════════
+const { useState: useWmState, useEffect: useWmEffect, useRef: useWmRef, useContext: useWmContext, createContext } = React;
+
+const WindowsCtx = createContext(null);
+window.useWindows = () => useWmContext(WindowsCtx);
+
+// ─── App registry ───────────────────────────────────────────
+const APP_META = {
+  mail:     { title: 'Mail',         w: 1100, h: 680, icon: 'MailIcon' },
+  browser:  { title: 'Safari',       w: 1080, h: 720, icon: 'BrowserIcon' },
+  pdf:      { title: 'Aperçu',       w:  900, h: 700, icon: 'PdfIcon' },
+  voice:    { title: 'Mémos vocaux', w:  820, h: 560, icon: 'VoiceIcon' },
+  notes:    { title: 'Notes',        w:  960, h: 660, icon: 'NotesIcon' },
+  notepad:  { title: 'Bloc-notes',   w:  560, h: 620, icon: 'NotepadIcon' },
+  slack:    { title: 'Slack — Lumio Health', w: 980, h: 640, icon: 'SlackIcon' },
+  finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
+  calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
+  trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
+  livrable: { title: 'Livrable — BC1', w: 920, h: 700, icon: 'LivrableIcon' }
+};
+
+// ═════ Window component ═════════════════════════════════════
+function Win({ win, onFocus, onClose, onMinimize, onMove, onResize }) {
+  const dragRef = useWmRef(null);
+  const onDragStart = (e) => {
+    if (win.maximized) return;
+    onFocus(win.id);
+    const startX = e.clientX, startY = e.clientY;
+    const startWX = win.x, startWY = win.y;
+    const move = (ev) => onMove(win.id, startWX + ev.clientX - startX, Math.max(28, startWY + ev.clientY - startY));
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  };
+
+  const onResizeStart = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onFocus(win.id);
+    const startX = e.clientX, startY = e.clientY;
+    const startW = win.w, startH = win.h;
+    const move = (ev) => onResize(win.id, Math.max(440, startW + ev.clientX - startX), Math.max(320, startH + ev.clientY - startY));
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  };
+
+  const meta = APP_META[win.app];
+  const AppComp = (window.LUMIO_APPS || {})[win.app];
+
+  const style = win.maximized ? {
+    left: 0, top: 28, width: '100%', height: 'calc(100% - 28px - 76px)'
+  } : {
+    left: win.x, top: win.y, width: win.w, height: win.h
+  };
+
+  return (
+    <div
+      onMouseDown={() => onFocus(win.id)}
+      style={{
+        position: 'absolute',
+        ...style,
+        background: 'white',
+        borderRadius: 10,
+        boxShadow: win.focused
+          ? '0 24px 60px rgba(20,24,36,0.32), 0 6px 18px rgba(20,24,36,0.18), 0 0 0 0.5px rgba(20,24,36,0.4)'
+          : '0 10px 24px rgba(20,24,36,0.18), 0 0 0 0.5px rgba(20,24,36,0.3)',
+        zIndex: win.z,
+        display: win.minimized ? 'none' : 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        opacity: win.focused ? 1 : 0.97,
+        transition: 'opacity 120ms'
+      }}>
+      <div
+        onMouseDown={onDragStart}
+        onDoubleClick={() => onFocus(win.id, 'toggleMax')}
+        style={{
+          height: 32,
+          background: win.focused ? 'linear-gradient(180deg, #f4f2ee, #e8e6e0)' : '#f0eee8',
+          borderBottom: '1px solid rgba(20,24,36,0.12)',
+          display: 'flex', alignItems: 'center',
+          padding: '0 10px',
+          flexShrink: 0,
+          cursor: 'grab',
+          userSelect: 'none'
+        }}>
+        <div style={{ display: 'flex', gap: 7 }}>
+          <button onClick={(e) => { e.stopPropagation(); onClose(win.id); }} style={trafficLight('#fc615d')} />
+          <button onClick={(e) => { e.stopPropagation(); onMinimize(win.id); }} style={trafficLight('#fdbc40')} />
+          <button onClick={(e) => { e.stopPropagation(); onFocus(win.id, 'toggleMax'); }} style={trafficLight('#34c84a')} />
+        </div>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 12, fontWeight: 600, color: win.focused ? 'var(--ink)' : 'var(--ink-mute)', letterSpacing: '0.005em' }}>
+          {meta.title}
+        </div>
+        <div style={{ width: 60 }} />
+      </div>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+        {AppComp ? <AppComp {...(win.props || {})} /> : <div style={{ padding: 40 }}>Chargement…</div>}
+      </div>
+      {!win.maximized && (
+        <div
+          onMouseDown={onResizeStart}
+          style={{
+            position: 'absolute',
+            right: 0, bottom: 0,
+            width: 16, height: 16,
+            cursor: 'nwse-resize',
+            background: 'linear-gradient(135deg, transparent 50%, rgba(20,24,36,0.18) 50%)',
+            zIndex: 10
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+const trafficLight = (color) => ({
+  width: 12, height: 12, borderRadius: '50%',
+  background: color, border: 'none', padding: 0,
+  cursor: 'pointer', boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.2)'
+});
+
+// ═════ Menu bar ═════════════════════════════════════════════
+function MenuBar({ activeApp, openLogout }) {
+  const [time, setTime] = useWmState('');
+  const [showUserMenu, setShowUserMenu] = useWmState(false);
+  useWmEffect(() => {
+    const tick = () => {
+      const t = new Date();
+      const hh = t.getHours().toString().padStart(2,'0');
+      const mm = t.getMinutes().toString().padStart(2,'0');
+      setTime(`sam. 12 sept.  ${hh}:${mm}`);
+    };
+    tick();
+    const id = setInterval(tick, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, height: 28,
+      background: 'rgba(245,243,239,0.78)',
+      backdropFilter: 'blur(20px) saturate(1.4)',
+      WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+      borderBottom: '1px solid rgba(20,24,36,0.08)',
+      display: 'flex', alignItems: 'center',
+      padding: '0 14px',
+      fontSize: 13, color: 'var(--ink)',
+      zIndex: 10000
+    }}>
+      <div style={{ fontSize: 14, marginRight: 14 }}> </div>
+      <div style={{ fontWeight: 700, marginRight: 18 }}>{activeApp || 'Finder'}</div>
+      {['Fichier','Édition','Présentation','Aller','Fenêtre','Aide'].map(m => (
+        <div key={m} style={{ marginRight: 14, color: 'var(--ink-soft)', cursor: 'default' }}>{m}</div>
+      ))}
+      <div style={{ flex: 1 }} />
+      <div style={{ display: 'flex', gap: 14, color: 'var(--ink-soft)', alignItems: 'center' }}>
+        <span>🔋 84%</span>
+        <span>📶</span>
+        <span>🔍</span>
+        <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{time}</span>
+        <span
+          onClick={() => setShowUserMenu(m => !m)}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
+          <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#c4420f', color: 'white', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            {window.LUMIO_DATA?.student?.initial || 'L'}
+          </span>
+          {window.LUMIO_DATA?.student?.name?.split(' ')[0] || 'Lou'} ▾
+          {showUserMenu && (
+            <div style={{
+              position: 'absolute', top: 22, right: 0,
+              background: 'white', border: '1px solid rgba(20,24,36,0.12)',
+              borderRadius: 8, boxShadow: '0 8px 24px rgba(20,24,36,0.18)',
+              minWidth: 180, zIndex: 20000, overflow: 'hidden'
+            }} onClick={e => e.stopPropagation()}>
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--rule)' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{window.LUMIO_DATA?.student?.name || 'Lou Bertrand'}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Consultant·e externe</div>
+              </div>
+              <div
+                onClick={() => { setShowUserMenu(false); if (window.confirm('Quitter la session en cours ?')) openLogout(); }}
+                style={{ padding: '9px 14px', fontSize: 12, color: '#c0392b', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.background='#fff5f5'}
+                onMouseLeave={e => e.currentTarget.style.background='transparent'}
+              >
+                ⏻ Quitter la session
+              </div>
+            </div>
+          )}
+        </span>
+      </div>
+      {showUserMenu && <div onClick={() => setShowUserMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 19999 }} />}
+    </div>
+  );
+}
+
+// ═════ Dock ═════════════════════════════════════════════════
+function Dock({ openApp, openWindows, livrableUnlocked }) {
+  const baseItems = [
+    { id: 'finder', label: 'Finder' },
+    { id: 'mail', label: 'Mail' },
+    { id: 'browser', label: 'Safari' },
+    { id: 'pdf', label: 'Aperçu' },
+    { id: 'voice', label: 'Mémos vocaux' },
+    { id: 'notes', label: 'Notes' },
+    { id: 'notepad', label: 'Bloc-notes' },
+    { id: 'slack', label: 'Slack' },
+    { id: 'calendar', label: 'Calendrier' },
+    { id: 'trash', label: 'Corbeille' }
+  ];
+  const items = livrableUnlocked
+    ? [...baseItems.slice(0, -1), { id: 'livrable', label: 'Livrable', bounce: true }, baseItems[baseItems.length - 1]]
+    : baseItems;
+
+  // CSS bounce injecté une fois
+  useWmEffect(() => {
+    if (!document.getElementById('dock-bounce-style')) {
+      const s = document.createElement('style');
+      s.id = 'dock-bounce-style';
+      s.textContent = `
+        @keyframes dock-bounce {
+          0%,100%{transform:translateY(0) scale(1)}
+          20%{transform:translateY(-18px) scale(1.1)}
+          40%{transform:translateY(-4px) scale(1.02)}
+          60%{transform:translateY(-10px) scale(1.06)}
+          80%{transform:translateY(-2px) scale(1.01)}
+        }
+        .dock-bounce { animation: dock-bounce 0.9s ease 3; }
+      `;
+      document.head.appendChild(s);
+    }
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+      background: 'rgba(245,243,239,0.55)',
+      backdropFilter: 'blur(28px) saturate(1.6)',
+      WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+      border: '1px solid rgba(255,255,255,0.4)',
+      boxShadow: '0 12px 30px rgba(20,24,36,0.18)',
+      borderRadius: 18,
+      padding: '6px 10px',
+      display: 'flex', alignItems: 'flex-end', gap: 6,
+      zIndex: 9999
+    }}>
+      {items.map((it, idx) => {
+        const Icon = window[APP_META[it.id]?.icon];
+        if (!Icon) return null;
+        const isOpen = openWindows.some(w => w.app === it.id);
+        return (
+          <div key={it.id} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button
+              onClick={() => openApp(it.id)}
+              title={it.label}
+              className={it.bounce && livrableUnlocked ? 'dock-bounce' : ''}
+              style={{
+                background: 'transparent', border: 'none',
+                padding: 4, cursor: 'pointer',
+                transition: 'transform 180ms cubic-bezier(.34,1.56,.64,1)'
+              }}
+              onMouseEnter={(e) => { if (!it.bounce) e.currentTarget.style.transform = 'translateY(-6px) scale(1.18)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
+            >
+              <Icon size={50} />
+            </button>
+            {it.bounce && livrableUnlocked && (
+              <div style={{
+                position: 'absolute', top: -6, right: -4,
+                width: 14, height: 14, borderRadius: '50%',
+                background: '#34c84a', border: '2px solid white',
+                fontSize: 8, color: 'white', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>!</div>
+            )}
+            {isOpen && (
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(20,24,36,0.5)', position: 'absolute', bottom: -2 }} />
+            )}
+            {idx === 0 && <div style={{ width: 1, height: 40, background: 'rgba(20,24,36,0.15)', position: 'absolute', right: -7, top: 8 }} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ═════ Desktop icons ════════════════════════════════════════
+function DesktopIcons({ openApp }) {
+  const icons = [
+    { app: 'finder', folder: 'mission', label: 'Mission Lumio', kind: 'folder', x: 36, y: 56 },
+    { app: 'mail', label: 'Mail.app', kind: 'app', x: 36, y: 174 },
+    { app: 'slack', label: 'Slack.app', kind: 'app', x: 36, y: 292 },
+    { app: 'notepad', label: 'Mes notes.txt', kind: 'app', x: 36, y: 410 }
+  ];
+  return (
+    <>
+      {icons.map((it, i) => {
+        const meta = APP_META[it.app];
+        const Icon = it.kind === 'folder' ? window.FolderIcon : window[meta.icon];
+        return (
+          <div key={i}
+            onDoubleClick={() => openApp(it.app, it.kind === 'folder' ? { openFolder: it.folder } : {})}
+            onClick={() => openApp(it.app, it.kind === 'folder' ? { openFolder: it.folder } : {})}
+            style={{
+              position: 'absolute',
+              left: it.x, top: it.y,
+              width: 88,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              cursor: 'pointer',
+              padding: 6,
+              borderRadius: 4
+            }}>
+            <Icon size={56} />
+            <div style={{
+              fontSize: 12,
+              color: 'white',
+              textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+              marginTop: 4,
+              textAlign: 'center',
+              padding: '1px 5px',
+              borderRadius: 2,
+              lineHeight: 1.2
+            }}>{it.label}</div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+// ═════ Wallpaper ════════════════════════════════════════════
+function Wallpaper() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: `
+        radial-gradient(ellipse at 20% 30%, #f5d5b8 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 20%, #e8a5b0 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, #b8c8d8 0%, transparent 60%),
+        linear-gradient(160deg, #f0c8a8 0%, #d8a098 30%, #98a8c8 60%, #5878a8 100%)
+      `,
+      zIndex: 0
+    }} />
+  );
+}
+
+// ═════ Notifications ════════════════════════════════════════
+function NotificationStack({ notifications, onDismiss, onClick }) {
+  return (
+    <div style={{ position: 'fixed', top: 36, right: 12, width: 340, zIndex: 11000, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {notifications.map(n => (
+        <div
+          key={n.id}
+          onClick={() => onClick(n)}
+          style={{
+            background: 'rgba(245,243,239,0.94)',
+            backdropFilter: 'blur(20px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+            borderRadius: 12,
+            padding: '12px 14px',
+            boxShadow: '0 8px 24px rgba(20,24,36,0.22), 0 0 0 0.5px rgba(20,24,36,0.1)',
+            cursor: 'pointer',
+            animation: 'slideInNotif 280ms ease-out'
+          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 6, background: n.color || '#1a2436', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{n.icon || '!'}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)' }}>{n.app}</div>
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--ink-faint)' }}>maintenant</div>
+            <button onClick={(e) => { e.stopPropagation(); onDismiss(n.id); }} style={{ background: 'transparent', border: 'none', color: 'var(--ink-faint)', fontSize: 14, cursor: 'pointer' }}>×</button>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600, marginBottom: 2 }}>{n.title}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.4 }}>{n.body}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═════ DESKTOP — top-level orchestrator ════════════════════
+function Desktop({ onLogout }) {
+  const [windows, setWindows] = useWmState([]);
+  const [zCounter, setZCounter] = useWmState(100);
+  const [notifications, setNotifications] = useWmState([]);
+  const [exchangeCount, setExchangeCount] = useWmState(0);
+  const [livrableUnlocked, setLivrableUnlocked] = useWmState(false);
+  const notifSeqRef = useWmRef(0);
+
+  // Expose pour que SlackApp puisse incrémenter
+  useWmEffect(() => {
+    window.__onSlackExchange = (count) => {
+      setExchangeCount(count);
+      // Débloquer livrable après 2 échanges
+      if (count >= 2) setLivrableUnlocked(true);
+      // Docs bonus : email Camille après échange 1
+      if (count === 1) {
+        setTimeout(() => {
+          const id = ++notifSeqRef.current;
+          setNotifications(ns => [...ns, {
+            id,
+            app: 'Mail',
+            icon: 'CO',
+            color: '#0a7a6e',
+            title: 'Camille Ott',
+            body: 'J\'ai des choses à te dire que je ne mets pas sur Slack.',
+            click: { app: 'mail', props: { openId: 'camille_bonus' } }
+          }]);
+          setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 14000);
+          // Injecter l'email Camille bonus dans MailApp
+          if (!window.LUMIO_DATA._camilleEmailAdded) {
+            window.LUMIO_DATA._camilleEmailAdded = true;
+            window.LUMIO_DATA._camilleEmail = {
+              id: 'camille_bonus',
+              from: 'Camille Ott',
+              fromEmail: 'camille.ott@lumio-health.com',
+              avatar: 'CO', avatarColor: '#0a7a6e',
+              subject: 'Ce que je ne dis pas sur Slack',
+              date: '12/09/26 · 09:14',
+              preview: 'J\'ai une ancienne collègue chez Biostream. Ce qu\'elle m\'a dit sur leur certif…',
+              unread: true,
+              tags: ['TERRAIN'],
+              body: `Lou,
+
+Je préfère t'écrire par mail. Je ne suis pas à l'aise pour dire ça sur Slack — Théo lit les canaux.
+
+J'ai une ancienne collègue chez Biostream. On s'est parlé il y a trois semaines. Elle m'a dit que leur certification MDR classe IIa a pris 22 mois et leur a coûté aux alentours de 400K€. Et ça, c'était avec un dossier déjà bien préparé et un organisme notifié très réactif.
+
+Ce que j'en déduis — et je ne peux pas le dire à Sonia sans citer ma source — c'est que si Lumio n'a pas commencé le process il y a plus d'un an, on n'est pas certifiés avant fin 2027 dans le meilleur des cas. Peut-être 2028.
+
+Ça change tout à la promesse "expert santé certifié". On ne peut pas construire une plateforme de marque sur quelque chose qu'on n'aura pas pendant 18 à 30 mois.
+
+Ce que Sonia refuse de voir : nos clients B2B actuels, ceux qui nous font confiance depuis des années — certains ont déjà commencé à regarder Biostream. J'ai eu deux rendez-vous ce mois-ci où j'ai senti le glissement. On a encore 6 mois, peut-être 9, avant que ça devienne une hémorragie.
+
+À toi de décider comment tu utilises ça dans ta livraison.
+
+Camille`
+            };
+          }
+        }, 2500);
+      }
+      // Après échange 3 : Sonia envoie une note Slack
+      if (count === 3) {
+        setTimeout(() => {
+          const id = ++notifSeqRef.current;
+          setNotifications(ns => [...ns, {
+            id,
+            app: 'Notes',
+            icon: '📝',
+            color: '#e0b53a',
+            title: 'Note déposée',
+            body: 'Sonia a partagé une note : "À régler avec Théo"',
+            click: { app: 'notes', props: { openNote: 'theo_regler' } }
+          }]);
+          setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 14000);
+          // Activer la note dans NotesApp
+          window.LUMIO_DATA._theoNoteUnlocked = true;
+        }, 1800);
+      }
+    };
+  }, []);
+
+  const openApp = (app, props = {}) => {
+    const meta = APP_META[app];
+    if (!meta) return;
+    setWindows(ws => {
+      // Update props of existing window if open
+      const existingIdx = ws.findIndex(w => w.app === app);
+      if (existingIdx >= 0) {
+        const newZ = zCounter + 1;
+        setZCounter(newZ);
+        return ws.map((w, i) => i === existingIdx
+          ? { ...w, props: { ...w.props, ...props }, focused: true, minimized: false, z: newZ }
+          : { ...w, focused: false }
+        );
+      }
+      const id = `w_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+      const newZ = zCounter + 1;
+      setZCounter(newZ);
+      const offset = ws.length * 28;
+      return [
+        ...ws.map(w => ({ ...w, focused: false })),
+        {
+          id, app, props,
+          x: 80 + offset, y: 60 + offset,
+          w: meta.w, h: meta.h,
+          z: newZ, focused: true, minimized: false, maximized: false
+        }
+      ];
+    });
+  };
+  window.__openApp = openApp;
+
+  const focusWin = (id, action) => {
+    setWindows(ws => {
+      const newZ = zCounter + 1;
+      setZCounter(newZ);
+      return ws.map(w => w.id === id
+        ? { ...w, focused: true, z: newZ, ...(action === 'toggleMax' ? { maximized: !w.maximized } : {}) }
+        : { ...w, focused: false }
+      );
+    });
+  };
+  const closeWin = (id) => setWindows(ws => ws.filter(w => w.id !== id));
+  const minimizeWin = (id) => setWindows(ws => ws.map(w => w.id === id ? { ...w, minimized: true, focused: false } : w));
+  const moveWin = (id, x, y) => setWindows(ws => ws.map(w => w.id === id ? { ...w, x, y } : w));
+  const resizeWin = (id, w, h) => setWindows(ws => ws.map(win => win.id === id ? { ...win, w, h } : win));
+
+  // ─── Notification scheduler ────────────────────────────
+  useWmEffect(() => {
+    const events = [
+      // After 12s — Camille DM ping
+      { t: 12000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'Si tu veux qu\'on se parle dans la semaine, dis-moi 🙃', click: { app: 'slack', props: { openChannel: 'camille' } } } },
+      // After 60s — Calendar reminder
+      { t: 60000, n: { app: 'Calendrier', icon: '📅', color: '#c4420f', title: 'CODIR de cadrage', body: 'Le 30 sept à 09:00 — dans 18 jours. V1 attendue.', click: { app: 'calendar' } } },
+      // After 130s — Camille follow-up
+      { t: 130000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'PS — j\'ai des verbatims clients qui peuvent t\'aider. Audio dispo dans Mémos vocaux.', click: { app: 'voice' } } }
+    ];
+    const timers = events.map(ev => setTimeout(() => {
+      const id = ++notifSeqRef.current;
+      setNotifications(ns => [...ns, { id, ...ev.n }]);
+      // auto-dismiss after 14s
+      setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 14000);
+    }, ev.t));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const dismissNotif = (id) => setNotifications(ns => ns.filter(n => n.id !== id));
+  const clickNotif = (n) => {
+    if (n.click) openApp(n.click.app, n.click.props || {});
+    dismissNotif(n.id);
+  };
+
+  const focusedWin = windows.find(w => w.focused);
+  const activeAppTitle = focusedWin ? APP_META[focusedWin.app].title : 'Finder';
+
+  return (
+    <WindowsCtx.Provider value={{ open: openApp }}>
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', userSelect: 'none' }}>
+        <Wallpaper />
+        <MenuBar activeApp={activeAppTitle} openLogout={onLogout} />
+        <DesktopIcons openApp={openApp} />
+        {windows.map(w => (
+          <Win key={w.id} win={w}
+            onFocus={focusWin}
+            onClose={closeWin}
+            onMinimize={minimizeWin}
+            onMove={moveWin}
+            onResize={resizeWin}
+          />
+        ))}
+        <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} />
+        <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
+      </div>
+    </WindowsCtx.Provider>
+  );
+}
+
+window.LumioDesktop = Desktop;

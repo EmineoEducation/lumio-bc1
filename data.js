@@ -1,0 +1,239 @@
+// ══════════════════════════════════════════════════════════════
+//  DATA — Mission Lumio Health BC1
+// ══════════════════════════════════════════════════════════════
+
+window.LUMIO_DATA = {
+  student: {
+    name: "Lou Bertrand",
+    role: "Consultant·e externe — Brand Audit",
+    email: "lou.bertrand@consult.fr",
+    company: "Indépendant·e"
+  },
+  ceoEmail: {
+    from: "Théo Marczak <theo@lumio-health.com>",
+    to: "Sonia Ferracci <sonia@lumio-health.com>",
+    cc: "Camille Ott <camille.ott@lumio-health.com>",
+    subject: "Re : Proposition repositionnement — mes réserves",
+    date: "14 juin 2026, 23h12",
+    body: `Sonia,
+
+J'ai lu la note. Il y a des choses avec lesquelles je suis d'accord. Il y en a d'autres qui m'inquiètent.
+
+Ce qui m'inquiète : le territoire « expert de la santé invisible » est exactement ce qu'on nous reprochera si on ne l'assume pas à 100 %. Et pour l'assumer, il faut la certification MDR. Je ne suis pas en mesure de te donner un calendrier MDR ce soir. La procédure est plus longue que prévu — l'organisme notifié nous a fait trois retours. On parle de fin Q2 2027 dans le meilleur scénario.
+
+L'autre chose, et je préfère qu'on s'en parle clairement : les 230 entreprises clientes — on confond « contacts actifs » et « clients facturés ». Nos 180 références actives, c'est le bon chiffre. Le reste, c'est du pipe ou des comptes dormants. Si on construit la plateforme de marque sur 230, on va se faire reprendre par les commerciaux dans six mois.
+
+Sur le budget : 380 000 € cette année, ce n'est pas possible. J'ai besoin que tu présentes une version à 200 000 € au board, pas plus. Si on dépasse, je devrai demander au fonds de revoter et tu sais ce que ça veut dire.
+
+Je ne dis pas non à la direction "santé invisible". Je dis qu'on ne peut pas la lancer sans avoir résolu le problème MDR. Si on se positionne « expert santé » sans certification, on va se faire attaquer. Biostream n'attend que ça — Marc Léger m'a appelé la semaine dernière, il prépare une campagne comparative.
+
+Reparlons-nous demain matin. 8h30 dans mon bureau ?
+
+T.`
+  },
+  briefEmail: {
+    from: "Sonia Ferracci <sonia@lumio-health.com>",
+    to: "lou.bertrand@consult.fr",
+    subject: "Mission de diagnostic de marque — confidentiel",
+    date: "3 septembre 2026, 07h42",
+    body: `Lou,
+
+Je vous confie une mission dont j'ai besoin qu'elle soit terminée avant notre réunion de direction du 30 septembre. Je vais être directe sur le contexte, parce que vous ne pourrez pas travailler correctement sans le connaître.
+
+Lumio Health traverse ce que j'appellerais une crise d'identité stratégique. Pas une crise de communication — une crise plus profonde. Nous ne savons plus ce que nous sommes, ni à qui nous parlons, ni ce qui nous distingue vraiment de ce qui arrive sur notre marché.
+
+Pendant huit ans, Théo a construit une marque B2B solide, discrète, crédible auprès des DRH. Ça fonctionnait. Et puis le fonds est entré, et tout s'est accéléré. On nous demande maintenant de devenir une marque grand public en 36 mois, sans perdre les institutionnels. Je ne dis pas que c'est impossible. Je dis que personne dans cette maison n'a formulé clairement ce que ça implique pour notre identité.
+
+Ce qui me préoccupe le plus en ce moment, c'est la pression réglementaire. Deux de nos concurrents directs viennent d'obtenir leur certification MDR classe IIa et ils en font leur argument commercial numéro un. Nos clients DRH commencent à poser des questions. En face, Apple et Samsung occupent le grand public avec des wearables santé massivement distribués. Lumio est quelque part entre les deux — et ce « entre les deux » est un problème.
+
+Ce que je vous demande :
+
+1. Une note de synthèse de veille stratégique — les tendances de l'environnement qui pèsent sur nous, avec votre évaluation de leur potentiel d'opportunité ou de risque pour Lumio.
+
+2. Une plateforme de marque — notre territoire, notre proposition de valeur, notre personnalité, nos engagements. Un document que Théo peut tenir entre les mains, défendre au board, et que mes équipes peuvent utiliser comme boussole.
+
+J'ai déposé sur votre espace les documents internes que j'ai pu rassembler. Ils sont fragmentaires — c'est tout ce que j'ai pu obtenir sans alarmer le reste de la direction. Vous trouverez la note de cadrage que j'ai présentée au CODIR en juin (et que Théo a contestée), un rapport de veille de notre stagiaire (non relu, à prendre avec des pincettes), trois articles de presse, et un entretien avec Camille Ott — notre commerciale historique.
+
+Quand vous aurez fait un premier tour, écrivez-moi sur Slack. Je veux savoir ce que vous voyez avant le 12 septembre.
+
+Bonne lecture.
+
+Sonia
+Directrice Marketing — Lumio Health
++33 6 ▒▒ ▒▒ ▒▒ ▒▒`
+  },
+  pressArticles: [
+    {
+      url: "lesechos.fr/industrie-services/sante/wearable-mdr-fracture",
+      source: "Les Échos",
+      date: "18 avril 2026",
+      author: "par Émilie Vasseur",
+      headline: "Le wearable santé entre dans l'ère de la certification — et le marché se fracture",
+      lede: "La mise en application pleine du règlement européen MDR crée une ligne de fracture nette dans le secteur des objets connectés de santé.",
+      body: `D'un côté, les acteurs certifiés IIa qui peuvent légalement revendiquer une fonction médicale. De l'autre, ceux qui restent dans la catégorie « bien-être » — avec une crédibilité institutionnelle fragilisée. Plusieurs acheteurs hospitaliers indiquent ne plus référencer que des solutions certifiées.
+
+« La certification, c'est devenu le ticket d'entrée. Sans elle, vous existez sur le marché grand public, mais vous disparaissez du circuit prescripteur », analyse Florence Daubray, consultante healthtech chez Roland Berger.
+
+Pour les acteurs intermédiaires — ceux qui ont construit une légitimité B2B sans certification médicale — le piège est clair : rester dans le wellness les expose à la concurrence d'Apple et Samsung ; basculer dans le médical sans MDR les expose juridiquement.
+
+Biostream, qui a obtenu sa classe IIa en janvier, a immédiatement augmenté ses tarifs B2B de 22 % et signé trois contrats hospitaliers en deux mois. Neuroflow a suivi en mars. La fenêtre se ferme pour les retardataires.`
+    },
+    {
+      url: "hbrfrance.fr/strategie/donnees-stress-arme-marques-b2b",
+      source: "Harvard Business Review France",
+      date: "mai 2026",
+      author: "par Jean-Pierre Mas",
+      headline: "Stress au travail : la donnée devient l'arme des marques B2B",
+      lede: "Les acteurs qui ont accumulé des historiques de mesure sur plusieurs années disposent d'un avantage concurrentiel difficile à répliquer.",
+      body: `« Une base de données de stress salarié sur cinq ans, c'est un actif de R&D que vous ne pouvez pas acheter. Vous pouvez acheter le hardware, vous pouvez acheter l'algorithme. Vous ne pouvez pas acheter le temps », explique un ancien DG d'une medtech française.
+
+La question devient : comment monétiser cet actif autrement que par l'abonnement ? Trois pistes émergent.
+
+D'abord, le benchmark sectoriel anonymisé : vendre aux DRH non plus une mesure de leurs équipes, mais une comparaison à leur secteur. Ensuite, l'API recherche : ouvrir l'accès à des laboratoires académiques contre du co-branding scientifique. Enfin, le conseil stratégique aux assureurs santé, qui cherchent désespérément à modéliser le risque psychosocial.
+
+Les trois modèles supposent un actif rare : la durée. Et un cadre éthique sans faille — la moindre brèche RGPD anéantit la valeur.`
+    },
+    {
+      url: "20minutes.fr/sante/apple-watch-stress-confiance",
+      source: "20 Minutes",
+      date: "2 juin 2026",
+      author: "par Léa Toussaint",
+      headline: "« Mon Apple Watch me dit que je suis stressé — mais est-ce que ça compte vraiment ? »",
+      lede: "67 % des porteurs de wearables déclarent ne pas « faire vraiment confiance » aux données santé produites par leur montre pour des décisions médicales.",
+      body: `« C'est marrant comme info, mais je vais pas voir mon médecin avec ça », résume Marion, 34 ans, utilisatrice depuis trois ans. Cette méfiance de confort ouvre paradoxalement un espace pour les acteurs qui peuvent revendiquer une rigueur médicale prouvée.
+
+L'enquête, menée par OpinionWay pour la Fédération Française des Diabétiques, révèle aussi que 41 % des porteurs aimeraient une alternative « plus sérieuse » sans pour autant renoncer au confort grand public.
+
+Pour les acteurs medtech français, la fenêtre est étroite : prouver la rigueur sans tomber dans l'austérité, démocratiser sans banaliser. L'équation reste à inventer.`
+    }
+  ],
+  yanisReport: {
+    title: "Rapport de veille concurrentielle wearables santé",
+    author: "Yanis Morel — Stagiaire marketing",
+    date: "12 mai 2026",
+    pages: 4,
+    note: "Document non relu — finalisé la veille de la fin de stage",
+    body: `INTRODUCTION
+
+Le marché mondial des wearables santé dépasse 95 Md$ en 2025 et croît à un rythme de +18 %/an (source : Statista, IDC, March 2026). Trois forces structurent désormais le secteur :
+
+  • La pression réglementaire (MDR en Europe, FDA aux US)
+  • L'intégration verticale par les géants tech (Apple, Samsung, Google/Fitbit)
+  • L'émergence de spécialistes verticaux sur des indications précises (sommeil, stress, glycémie continue)
+
+Lumio Health se positionne historiquement sur le créneau du stress chronique mesuré en milieu professionnel, avec une approche B2B-DRH. Le présent rapport recense les acteurs concurrents directs et indirects, et propose une cartographie de la pression concurrentielle.
+
+I. CARTOGRAPHIE CONCURRENTIELLE
+
+[TABLEAU PRINCIPAL]
+
+II. ANALYSE DES SIGNAUX FAIBLES
+
+a) Salon Préventica 2026 (Lyon, 20-22 mars)
+
+Les DRH et préventeurs interrogés citent la certification MDR comme critère de décision n°1 dans 73 % des cas (n=42 entretiens informels sur stand). Citation récurrente : « Sans certif, je peux pas justifier l'achat à mon comité d'éthique. »
+
+b) Étude Kantar Health Monitor 2026
+
+La certification réglementaire devient un signal de crédibilité — pas seulement une obligation légale. 58 % des DRH déclarent l'utiliser comme proxy de qualité scientifique, même quand ils ne comprennent pas le détail du règlement.
+
+c) Mouvement des prix
+
+Les acteurs certifiés ont tous augmenté leurs tarifs B2B de 15 à 25 % dans les six mois suivant l'obtention. Les non-certifiés sont sous pression à la baisse.
+
+III. LACUNES NON COUVERTES
+
+— Statut exact de la certification chez Withings (information contradictoire entre site institutionnel et discours commercial)
+— Calendrier MDR de Lumio (Théo a refusé de me communiquer l'information malgré relances)
+— Résultats de l'étude qualitative clients B2B menée par Camille Ott en mars 2026 (jamais reçus)
+— Position d'Apple Health sur le marché entreprise français (rumeurs de partenariat avec Malakoff Humanis non confirmées)
+
+IV. RECOMMANDATIONS
+
+À ce stade, et sous toutes réserves liées à mon niveau d'expérience, j'identifie trois mouvements urgents :
+
+1. Clarifier en interne le calendrier MDR de Lumio
+2. Cartographier précisément les 230 clients (ou 180 ?) pour distinguer comptes actifs et dormants
+3. Anticiper l'arrivée d'Apple Health sur le segment entreprise via un positionnement de niche défendable
+
+— FIN —`,
+    competitors: [
+      { name: "Biostream", product: "Flow Patch Pro", mdr: "Classe IIa — janv. 2026", priceB2B: "4 200 €/an/10 ut.", funding: "Série C — 80 M$" },
+      { name: "Neuroflow", product: "Calm Band", mdr: "Classe IIa — mars 2026", priceB2B: "890 €/an/10 ut.", funding: "Série B — 35 M€" },
+      { name: "Withings", product: "ScanWatch 2", mdr: "Non communiqué", priceB2B: "299 €/unité", funding: "Privé — Éric Carreel" },
+      { name: "Apple Health", product: "Apple Watch S10", mdr: "Hors scope MDR", priceB2B: "499 €/unité", funding: "Apple Inc." },
+      { name: "Lumio Health", product: "Lumio Patch", mdr: "En cours — délai non communiqué", priceB2B: "3 800 €/an/10 ut.", funding: "Série B — 22 M$ (2025)" }
+    ]
+  },
+  soniaNote: {
+    title: "Note de cadrage — Repositionnement Lumio",
+    subtitle: "« Ce que nous voulons devenir »",
+    author: "Sonia Ferracci, Directrice Marketing",
+    date: "12 juin 2026",
+    audience: "Comité de direction — confidentiel",
+    body: `CONTEXTE
+
+Lumio Health dispose d'un actif sous-exploité : 8 ans de données propriétaires sur le stress au travail, collectées auprès de 230 entreprises clientes. Aucun concurrent direct ne possède cet historique. C'est notre vraie différence — pas le patch lui-même, qui sera répliqué d'ici 18 mois.
+
+PROPOSITION
+
+Repositionner Lumio comme « l'expert de la santé invisible » — le stress chronique que les gens ressentent mais ne voient pas, que les médecins ne diagnostiquent pas faute d'outil, et que les DRH n'arrivent pas à objectiver pour leurs comités sociaux.
+
+PLATEFORME PROPOSÉE
+
+  Territoire     : « La santé que les chiffres ne montrent pas encore »
+  Promesse       : Lumio révèle ce que le corps sait mais que la médecine
+                   ne capte pas
+  Cibles B2B     : DRH des ETI et grands comptes (>500 salariés),
+                   prescripteurs (médecine du travail, mutuelles)
+  Cibles B2C     : actifs 30-50 ans, urbains, en charge mentale élevée
+  Personnalité   : scientifique sans être froide
+                   rassurante sans être condescendante
+                   précise sans être technique
+  Engagements    : 100 % des données anonymisées
+                   jamais revendues à des tiers
+                   open data scientifique sur 5 ans
+
+CONDITIONS DE RÉUSSITE
+
+Ce repositionnement suppose impérativement que la certification MDR classe IIa soit obtenue avant le lancement grand public. Sans certification, le territoire « expert santé » est intenable et nous expose à des attaques juridiques de la part des concurrents certifiés.
+
+J'ai besoin d'un engagement de Théo sur le calendrier MDR avant fin juin pour pouvoir lancer les travaux créatifs.
+
+BUDGET
+
+Déploiement 12 mois : 380 000 € (créa, prod, médias B2B, événementiel)
+Phase B2C ultérieure : à chiffrer en fonction de la date MDR
+
+Cette note est un point de départ, pas un livrable. J'attends vos retours en CODIR du 18 juin.
+
+Sonia`
+  },
+  camilleVerbatims: [
+    {
+      duration: "01:42",
+      title: "Sur la rupture dans les conversations clients",
+      transcript: `Ce que je vis depuis six mois, c'est une vraie rupture dans les conversations avec nos clients. Avant, on nous achetait sur la confiance — sur huit ans de relation, sur des cas d'usage, sur la qualité de la data. Aujourd'hui, les DRH arrivent en réunion avec des questions sur la certification. Pas agressivement — embarrassés, comme si c'était indiscret de demander. Mais ils demandent quand même. Et c'est récent. C'est de cette année. C'est pas encore un dealbreaker, mais c'est une horloge. Je le sens à la façon dont ils tournent autour du sujet en début de rendez-vous, comme s'ils voulaient cocher la case avant de passer à la vraie discussion.`
+    },
+    {
+      duration: "00:58",
+      title: "Sur la pression Biostream",
+      transcript: `Nos clients actuels nous font encore confiance. Mais si Biostream se pointe chez eux avec sa certification IIa et un prix légèrement inférieur, la conversation va changer très vite. Moi je peux défendre Lumio sur la qualité des données, sur l'historique, sur la relation. Je ne peux pas défendre une absence de certification indéfiniment. Au bout d'un moment, le client va dire « j'ai un comité d'éthique, je peux pas continuer avec un fournisseur non certifié ». Et là j'aurai plus d'arguments.`
+    },
+    {
+      duration: "01:15",
+      title: "La question que personne ne pose",
+      transcript: `La question que Sonia ne se pose peut-être pas assez, et que Théo refuse de se poser : nos clients B2B historiques, est-ce qu'ils nous voient toujours comme une solution professionnelle de référence, ou est-ce qu'ils commencent à nous voir comme « le truc d'avant que les vrais certifiés sont arrivés » ? Parce que si c'est ça, aucune plateforme de marque ne résoudra le problème. C'est trop tard, l'image est cuite. Moi je pense qu'on est à six mois, peut-être neuf, du basculement. Après, ce sera un travail de reconquête. Beaucoup plus cher.`
+    }
+  ],
+  slackMessages: {
+    initial: [
+      { from: "Sonia Ferracci", time: "07:48", text: "Salut Lou — bien reçu mon mail ? J'ai déposé tous les docs sur ton espace partagé.", read: true },
+      { from: "Sonia Ferracci", time: "07:48", text: "Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture.", read: true },
+    ],
+    delayed: [
+      { from: "Camille Ott", time: "+8min", text: "Hello 👋 j'ai vu que Sonia t'avait briefé. Si tu veux qu'on se parle dans la semaine, dis-moi. Je travaille pas dans la même réalité que la direction sur ce dossier 🙃", channel: "DM" },
+      { from: "Sonia Ferracci", time: "+15min", text: "Au fait — n'oublie pas que Théo ne sait pas que tu as accès à son mail du 14 juin. À toi de juger comment l'utiliser.", channel: "DM" },
+    ]
+  }
+};

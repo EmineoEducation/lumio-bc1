@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Lumio Health — Clinique BEC · BC1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300..700;1,300..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  --bg: #f4f2ee; --ink: #141824; --ink-soft: #2a3142; --ink-mute: #5b6473; --ink-faint: #9aa0ae;
+  --rule: rgba(20,24,36,0.10); --accent: #c4420f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+body { font-family: var(--font-sans); color: var(--ink); background: #1a2436; -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; } input, textarea { font-family: inherit; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(20,24,36,0.18); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(20,24,36,0.32); background-clip: padding-box; border: 2px solid transparent; }
+table { border-collapse: collapse; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOutLogin { 0% { opacity: 1; } 100% { opacity: 0; pointer-events: none; } }
+@keyframes typedot { 0%,60%,100% { opacity: .2; } 30% { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+}
+@keyframes dock-bounce {
+  0%,100%{transform:translateY(0) scale(1)} 20%{transform:translateY(-18px) scale(1.1)}
+  40%{transform:translateY(-4px) scale(1.02)} 60%{transform:translateY(-10px) scale(1.06)}
+  80%{transform:translateY(-2px) scale(1.01)}
+}
+.dock-bounce { animation: dock-bounce 0.9s ease 3; }
+::placeholder { color: rgba(255,255,255,0.45) !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="data.js"></script>
+<script>
+/* ── Intercepteur clé API ── */
+(function() {
+  const saved = sessionStorage.getItem('lumio_api_key');
+  if (saved) window.__ANTHROPIC_KEY = saved;
+  const _fetch = window.fetch.bind(window);
+  window.fetch = function(url, opts = {}) {
+    if (typeof url === 'string' && url.includes('api.anthropic.com')) {
+      opts = { ...opts, headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.__ANTHROPIC_KEY || '',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        ...(opts.headers || {})
+      }};
+    }
+    return _fetch(url, opts);
+  };
+})();
+</script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="app-mail.jsx"></script>
+<script type="text/babel" src="app-browser.jsx"></script>
+<script type="text/babel" src="app-pdf.jsx"></script>
+<script type="text/babel" src="app-voice.jsx"></script>
+<script type="text/babel" src="app-notes.jsx"></script>
+<script type="text/babel" src="app-slack.jsx"></script>
+<script type="text/babel" src="app-extras.jsx"></script>
+<script type="text/babel" src="app-livrable.jsx"></script>
+<script type="text/babel" src="desktop.jsx"></script>
+<script type="text/babel" src="main.jsx"></script>
+</body>
+</html>
