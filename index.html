@@ -52,11 +52,10 @@ table { border-collapse: collapse; }
   const _fetch = window.fetch.bind(window);
   window.fetch = function(url, opts = {}) {
     if (typeof url === 'string' && url.includes('api.anthropic.com')) {
-      // Rediriger vers le proxy Vercel — la clé API reste côté serveur
       return _fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: opts.body, // body déjà JSON.stringify'd par l'appelant
+        body: opts.body,
       });
     }
     return _fetch(url, opts);
@@ -72,6 +71,7 @@ table { border-collapse: collapse; }
 <script type="text/babel" src="app-slack.jsx"></script>
 <script type="text/babel" src="app-extras.jsx"></script>
 <script type="text/babel" src="app-livrable.jsx"></script>
+<script type="text/babel" src="app-trash.jsx"></script>
 <script type="text/babel" src="desktop.jsx"></script>
 <script type="text/babel" src="main.jsx"></script>
 </body>
