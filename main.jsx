@@ -181,40 +181,113 @@ function LoginScreen({ onLogin, studentName }) {
 // ─── Welcome overlay ─────────────────────────────────────────
 function WelcomeBriefCard({ onClose, studentName }) {
   const prenom = studentName.split(' ')[0];
+  const [accepted, setAccepted] = useRootState(false);
+
+  const handleStart = () => {
+    if (!accepted) return;
+    onClose();
+  };
+
+  // Blocs actes pour visualiser le temps
+  const actes = [
+    { n: '1', label: 'Ancrage terrain', dur: '20 min', color: '#7a756c' },
+    { n: '2', label: 'Entrée dans l\'affaire', dur: '30 min', color: '#1b4f8a' },
+    { n: '3', label: 'Diagnostic', dur: '45 min', color: '#1a6641' },
+    { n: '4', label: 'Production', dur: '1h20', color: '#c4420f', bold: true },
+    { n: '5', label: 'Réflexion', dur: '35 min', color: '#7a756c' },
+  ];
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 12000,
-      background: 'rgba(20,24,36,0.55)',
-      backdropFilter: 'blur(8px)',
+      background: 'rgba(20,24,36,0.65)',
+      backdropFilter: 'blur(10px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      animation: 'fadeIn 400ms ease-out'
+      animation: 'fadeIn 400ms ease-out',
+      padding: '1rem',
+      overflowY: 'auto'
     }}>
       <div style={{
-        width: 540, background: 'white', borderRadius: 14,
-        padding: '32px 36px', boxShadow: '0 30px 80px rgba(0,0,0,0.4)'
+        width: '100%', maxWidth: 580, background: 'white', borderRadius: 14,
+        padding: '32px 36px', boxShadow: '0 30px 80px rgba(0,0,0,0.45)'
       }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.25em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 12 }}>Clinique BEC · MSMC RNCP 38504 · Bloc 1</div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.15, marginBottom: 16 }}>
+        {/* Header */}
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.25em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 10 }}>Clinique BEC · MSMC RNCP 38504 · Bloc 1</div>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.15, marginBottom: 14 }}>
           Bienvenue, {prenom}.
         </h1>
-        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 14 }}>
-          Tu es <strong>{studentName}</strong>, consultant·e en stratégie de marque. Sonia Ferracci, Directrice Marketing de Lumio Health, t'a confié hier un audit de marque à livrer en CODIR dans 18 jours.
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 10 }}>
+          Tu es <strong>{studentName}</strong>, consultant·e en stratégie de marque. Sonia Ferracci, Directrice Marketing de Lumio Health, t'a confié un audit de marque urgent. Tu as accès à son <strong>ordinateur de mission</strong> : lettre de mission, veille concurrentielle, note interne CEO, verbatims terrain — et quelques documents qui se contredisent. <em>À toi de trier.</em>
         </p>
-        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 14 }}>
-          Tu accèdes à <strong>l'ordinateur de mission</strong> mis à ta disposition : la lettre de mission de Sonia, la note de cadrage, la veille concurrentielle du stagiaire, la revue de presse, des verbatims commerciaux, et — par discrétion de Sonia — un email confidentiel du CEO qui contredit la version officielle.
-        </p>
-        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 22 }}>
-          Tout est cohérent. Tout n'est pas honnête. <em>À toi de trier.</em>
-        </p>
-        <div style={{ background: '#f4f2ee', padding: '14px 18px', borderRadius: 8, fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.6, marginBottom: 22, fontFamily: 'var(--font-mono)' }}>
-          <strong style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>Consigne pratique</strong><br/>
-          Tu disposes de toutes les apps d'un poste de travail réel. Quand tu as construit ton hypothèse, ouvre <strong>Slack → Sonia Ferracci</strong>. Sonia te répondra en direct.
+
+        {/* Bloc temporel — central */}
+        <div style={{ background: '#1a2436', borderRadius: 10, padding: '16px 20px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 700, color: 'white', letterSpacing: '-0.02em' }}>3h30</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)' }}>=</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>3 semaines dans la vraie vie</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {actes.map(a => (
+              <div key={a.n} style={{
+                flex: '1 1 80px',
+                background: a.bold ? a.color : 'rgba(255,255,255,0.07)',
+                border: `1px solid ${a.bold ? 'transparent' : 'rgba(255,255,255,0.12)'}`,
+                borderRadius: 7, padding: '8px 10px'
+              }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: a.bold ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: 3 }}>ACTE {a.n}</div>
+                <div style={{ fontSize: 11, color: a.bold ? 'white' : 'rgba(255,255,255,0.65)', fontWeight: a.bold ? 600 : 400, lineHeight: 1.3, marginBottom: 4 }}>{a.label}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: a.bold ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)', fontWeight: a.bold ? 700 : 400 }}>{a.dur}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12, fontSize: 12, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', lineHeight: 1.5 }}>
+            ⏱ L'horloge tourne dès que tu cliques sur "Commencer". Garde un œil dessus — le RP ne rallongera pas les actes.
+          </div>
         </div>
+
+        {/* Règles du jeu */}
+        <div style={{ background: '#f7f4ef', borderRadius: 8, padding: '14px 18px', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Trois règles, pas de négociation</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { ico: '📄', txt: 'Tout ce que tu sais, c\'est dans les documents. Ne te souviens de rien — lis.' },
+              { ico: '🤐', txt: 'Le RP ne te dira pas "si c\'est juste". Il ne te dira pas par où commencer. Il observe.' },
+              { ico: '💬', txt: 'Quand tu as une hypothèse solide → Slack → Sonia. Pas avant.' },
+            ].map((r, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{r.ico}</span>
+                <span style={{ fontSize: 13, color: '#2a2620', lineHeight: 1.55 }}>{r.txt}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Checkbox engagement + bouton */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer' }} onClick={() => setAccepted(a => !a)}>
+          <div style={{
+            width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+            border: accepted ? 'none' : '1.5px solid #c4420f',
+            background: accepted ? '#c4420f' : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all .15s'
+          }}>
+            {accepted && <span style={{ color: 'white', fontSize: 11, fontWeight: 700 }}>✓</span>}
+          </div>
+          <span style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.4 }}>
+            J'ai lu les règles. Je suis prêt·e à entrer dans l'affaire.
+          </span>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{
-            padding: '10px 22px', background: 'var(--ink)', color: 'white',
-            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
-          }}>Commencer</button>
+          <button onClick={handleStart} style={{
+            padding: '11px 26px',
+            background: accepted ? 'var(--ink)' : '#d8d2c6',
+            color: accepted ? 'white' : '#9a9690',
+            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            cursor: accepted ? 'pointer' : 'default',
+            transition: 'all .2s', fontFamily: 'inherit'
+          }}>Commencer l'affaire →</button>
         </div>
       </div>
     </div>

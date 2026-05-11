@@ -313,9 +313,10 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
 function DesktopIcons({ openApp }) {
   const icons = [
     { app: 'finder', folder: 'mission', label: 'Mission Lumio', kind: 'folder', x: 36, y: 56 },
-    { app: 'mail', label: 'Mail.app', kind: 'app', x: 36, y: 174 },
-    { app: 'slack', label: 'Slack.app', kind: 'app', x: 36, y: 292 },
-    { app: 'notepad', label: 'Mes notes.txt', kind: 'app', x: 36, y: 410 }
+    { app: 'finder', folder: 'portraits', label: 'Portraits équipe', kind: 'folder', x: 36, y: 174 },
+    { app: 'mail', label: 'Mail.app', kind: 'app', x: 36, y: 292 },
+    { app: 'slack', label: 'Slack.app', kind: 'app', x: 36, y: 410 },
+    { app: 'notepad', label: 'Mes notes.txt', kind: 'app', x: 36, y: 528 }
   ];
   return (
     <>

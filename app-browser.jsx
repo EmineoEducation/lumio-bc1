@@ -3,10 +3,21 @@
 // ══════════════════════════════════════════════════════════════
 const { useState: useStateBrowser, useRef: useRefBrowser } = React;
 
-function BrowserApp({ openTab }) {
+function BrowserApp({ openTab, openPortrait }) {
   const D = window.LUMIO_DATA;
 
-  // Build tabs: 3 press articles + 2 distractor tabs
+  const PORTRAIT_META = {
+    theo:    { id: 'portrait-theo',    favicon: 'UD', faviconColor: '#1a2436', host: "usine-digitale.fr", title: "Théo Marczak, l'ingénieur qui a décidé que le stress devait se mesurer · L'Usine Digitale", url: 'https://usine-digitale.fr/article/portrait-theo-marczak', file: '/portraits/portrait_theo_marczak.html' },
+    sonia:   { id: 'portrait-sonia',   favicon: 'CB', faviconColor: '#e8173a', host: 'cbnews.fr',         title: "Sonia Ferracci : « J'ai quitté la certitude pour aller là où quelque chose pouvait basculer » · CB News", url: 'https://cbnews.fr/portraits/sonia-ferracci', file: '/portraits/portrait_sonia_ferracci.html' },
+    jakob:   { id: 'portrait-jakob',   favicon: 'F',  faviconColor: '#0a0a0a', host: 'forbes.fr',         title: "Jakob Rein : l'homme qui parie que la santé au travail n'est pas un marché de niche · Forbes France", url: 'https://forbes.fr/investisseurs/jakob-rein-northgate', file: '/portraits/portrait_jakob_rein.html' },
+    camille: { id: 'portrait-camille', favicon: 'AC', faviconColor: '#1a6b3c', host: 'actionco.fr',       title: "Camille Ott : « Un client DRH ne vous fait pas confiance parce que votre produit est bon » · Action Commerciale", url: 'https://actionco.fr/portraits/camille-ott', file: '/portraits/portrait_camille_ott.html' },
+    yassine: { id: 'portrait-yassine', favicon: 'M',  faviconColor: '#6437f0', host: 'maddyness.com',     title: "Yassine Morel : « Dans la santé, le contenu qui rassure est souvent le contenu qui dit ce qu'il ne fait pas » · Maddyness", url: 'https://maddyness.com/portraits/yassine-morel', file: '/portraits/portrait_yassine_morel.html' },
+  };
+
+  const portraitTab = openPortrait && PORTRAIT_META[openPortrait]
+    ? { ...PORTRAIT_META[openPortrait], type: 'portrait' }
+    : null;
+
   const TABS = [
     {
       id: 't0', favicon: 'L', faviconColor: '#1a2436', host: 'lumio-health.com',
@@ -35,10 +46,15 @@ function BrowserApp({ openTab }) {
       title: 'mdr classe iia wearable santé — DuckDuckGo',
       url: 'https://duckduckgo.com/?q=mdr+classe+iia+wearable+santé',
       type: 'search'
-    }
+    },
+    ...(portraitTab ? [portraitTab] : []),
   ];
 
-  const initialTab = openTab && TABS.find(t => t.id === openTab) ? openTab : (openTab && TABS.find(t => t.id.startsWith('press-' + openTab))?.id) || 'press-0';
+  const initialTab = portraitTab
+    ? portraitTab.id
+    : openTab && TABS.find(t => t.id === openTab)
+      ? openTab
+      : (openTab && TABS.find(t => t.id.startsWith('press-' + openTab))?.id) || 'press-0';
   const [activeTab, setActiveTab] = useStateBrowser(initialTab);
   const tab = TABS.find(t => t.id === activeTab) || TABS[0];
 
@@ -85,6 +101,14 @@ function BrowserApp({ openTab }) {
         {tab.type === 'corporate' && <CorporateView />}
         {tab.type === 'linkedin' && <LinkedInView />}
         {tab.type === 'search' && <SearchView />}
+        {tab.type === 'portrait' && (
+          <iframe
+            src={tab.file}
+            title={tab.title}
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+            sandbox="allow-same-origin allow-scripts"
+          />
+        )}
       </div>
     </div>
   );

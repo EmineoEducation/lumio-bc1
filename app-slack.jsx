@@ -38,15 +38,18 @@ function SlackApp({ openChannel }) {
 
   const channels = [
     { id: 'general', name: 'général', type: 'channel', members: 12 },
-    { id: 'mission-lumio', name: 'mission-lumio-brand', type: 'channel', members: 4, unread: 1, special: true },
+    { id: 'mission-lumio', name: 'mission-lumio-brand', type: 'channel', members: 4, special: true },
     { id: 'random', name: 'random', type: 'channel', members: 11 },
     { id: 'design-feed', name: 'design-feed', type: 'channel', members: 8 }
   ];
   const dms = [
     { id: 'sonia', name: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', status: 'online' },
-    { id: 'camille', name: 'Camille Ott', avatar: 'CO', color: '#0a7a6e', status: 'online', unread: 2 },
+    { id: 'camille', name: 'Camille Ott', avatar: 'CO', color: '#0a7a6e', status: 'online' },
     { id: 'yanis', name: 'Yanis Morel', avatar: 'YM', color: '#5b6b85', status: 'away' }
   ];
+
+  // Unread counters in state so they clear on visit
+  const [unreads, setUnreads] = useSlackState({ 'mission-lumio': 1, camille: 2 });
 
   const [activeId, setActiveId] = useSlackState(openChannel || 'sonia');
   const [chatHistory, setChatHistory] = useSlackState({}); // by channelId
@@ -92,7 +95,10 @@ function SlackApp({ openChannel }) {
   }, []);
 
   useSlackEffect(() => {
-    if (openChannel) setActiveId(openChannel);
+    if (openChannel) {
+      setActiveId(openChannel);
+      setUnreads(u => ({ ...u, [openChannel]: 0 }));
+    }
   }, [openChannel]);
 
   useSlackEffect(() => {
@@ -236,22 +242,22 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
         <div style={slackStyles.section}>
           <div style={slackStyles.sectionTitle}>▼ Canaux</div>
           {channels.map(c => (
-            <div key={c.id} onClick={() => setActiveId(c.id)}
-              style={{ ...slackStyles.item, ...(activeId === c.id ? slackStyles.itemActive : {}), ...(c.unread ? slackStyles.itemUnread : {}) }}>
+            <div key={c.id} onClick={() => { setActiveId(c.id); setUnreads(u => ({ ...u, [c.id]: 0 })); }}
+              style={{ ...slackStyles.item, ...(activeId === c.id ? slackStyles.itemActive : {}), ...(unreads[c.id] ? slackStyles.itemUnread : {}) }}>
               <span style={{ opacity: 0.7 }}>#</span>
               <span>{c.name}</span>
-              {c.unread && <span style={slackStyles.badge}>{c.unread}</span>}
+              {unreads[c.id] > 0 && <span style={slackStyles.badge}>{unreads[c.id]}</span>}
             </div>
           ))}
         </div>
         <div style={slackStyles.section}>
           <div style={slackStyles.sectionTitle}>▼ Messages directs</div>
           {dms.map(d => (
-            <div key={d.id} onClick={() => setActiveId(d.id)}
-              style={{ ...slackStyles.item, ...(activeId === d.id ? slackStyles.itemActive : {}), ...(d.unread ? slackStyles.itemUnread : {}) }}>
+            <div key={d.id} onClick={() => { setActiveId(d.id); setUnreads(u => ({ ...u, [d.id]: 0 })); }}
+              style={{ ...slackStyles.item, ...(activeId === d.id ? slackStyles.itemActive : {}), ...(unreads[d.id] ? slackStyles.itemUnread : {}) }}>
               <span style={{ ...slackStyles.statusDot, background: d.status === 'online' ? '#2eb67d' : '#9a9ea8' }} />
               <span>{d.name}</span>
-              {d.unread && <span style={slackStyles.badge}>{d.unread}</span>}
+              {unreads[d.id] > 0 && <span style={slackStyles.badge}>{unreads[d.id]}</span>}
             </div>
           ))}
         </div>

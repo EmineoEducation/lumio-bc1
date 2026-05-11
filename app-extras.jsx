@@ -82,6 +82,16 @@ function FinderApp({ openFolder }) {
       items: [
         { name: 'guide_mission_bc1.pdf', kind: 'pdf', app: 'pdf', props: { openGuide: true }, label: 'PDF' }
       ]
+    },
+    portraits: {
+      title: 'Portraits — équipe Lumio',
+      items: [
+        { name: 'Théo Marczak — L\'Usine Digitale.html', kind: 'doc', app: 'browser', props: { openPortrait: 'theo' }, label: 'WEB' },
+        { name: 'Sonia Ferracci — CB News.html', kind: 'doc', app: 'browser', props: { openPortrait: 'sonia' }, label: 'WEB' },
+        { name: 'Jakob Rein — Forbes.html', kind: 'doc', app: 'browser', props: { openPortrait: 'jakob' }, label: 'WEB' },
+        { name: 'Camille Ott — Action Commerciale.html', kind: 'doc', app: 'browser', props: { openPortrait: 'camille' }, label: 'WEB' },
+        { name: 'Yassine Morel — Maddyness.html', kind: 'doc', app: 'browser', props: { openPortrait: 'yassine' }, label: 'WEB' },
+      ]
     }
   };
 
@@ -106,6 +116,7 @@ function FinderApp({ openFolder }) {
         <div onClick={() => setFolder('mission')} style={{ padding: '4px 16px', fontSize: 13, color: folder === 'mission' ? 'white' : 'var(--ink-soft)', background: folder === 'mission' ? '#3a7bd5' : 'transparent', cursor: 'pointer' }}>📂 Mission Lumio</div>
         <div onClick={() => setFolder('press')} style={{ padding: '4px 16px 4px 28px', fontSize: 13, color: folder === 'press' ? 'white' : 'var(--ink-soft)', background: folder === 'press' ? '#3a7bd5' : 'transparent', cursor: 'pointer' }}>📂 Revue de presse</div>
         <div onClick={() => setFolder('guide')} style={{ padding: '4px 16px', fontSize: 13, color: folder === 'guide' ? 'white' : '#1a6641', background: folder === 'guide' ? '#3a7bd5' : 'transparent', cursor: 'pointer', fontWeight: 600 }}>❓ Guide de mission</div>
+        <div onClick={() => setFolder('portraits')} style={{ padding: '4px 16px', fontSize: 13, color: folder === 'portraits' ? 'white' : 'var(--ink-soft)', background: folder === 'portraits' ? '#3a7bd5' : 'transparent', cursor: 'pointer' }}>👤 Portraits équipe</div>
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', gap: 10 }}>
