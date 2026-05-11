@@ -126,7 +126,7 @@ const trafficLight = (color) => ({
 // ═════ Menu bar ═════════════════════════════════════════════
 // Temps fictif : 3h30 réelles = 18 jours fictifs (12→30 sept.)
 // Ratio : 1 min réelle = 5.14 min fictives. Départ : sam. 12 sept. 08:14
-const FICTIF_START_REAL = Date.now(); // moment où le desktop s'ouvre
+const FICTIF_START_REAL = window.LUMIO_TIMER_START || Date.now(); // restauré depuis la session ou nouveau
 const FICTIF_START_MIN = 12 * 60 + 14; // 08h14 en minutes depuis minuit le 12 sept.
 const RATIO = 18 * 24 * 60 / (3 * 60 + 30); // ~74x (18 jours / 3h30)
 const SEPT_DAYS = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];

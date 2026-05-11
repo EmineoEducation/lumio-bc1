@@ -1,7 +1,32 @@
 // ══════════════════════════════════════════════════════════════
 //  LOGIN SCREEN + ROOT APP
 // ══════════════════════════════════════════════════════════════
-const { useState: useRootState, useEffect: useRootEffect } = React;
+const { useState: useRootState, useEffect: useRootEffect, useRef: useRootRef } = React;
+
+// ─── SESSION BACKEND ─────────────────────────────────────────
+function makeSessionId(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = Math.imul(31, h) + name.charCodeAt(i) | 0;
+  return 'sid_' + Math.abs(h).toString(36);
+}
+async function apiSession(method, id, data) {
+  try {
+    if (method === 'GET') {
+      const r = await fetch(`/api/session?id=${encodeURIComponent(id)}`);
+      if (r.status === 404) return null;
+      return (await r.json()).session || null;
+    }
+    const opts = { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, session: data }) };
+    if (method === 'DELETE') opts.body = JSON.stringify({ id });
+    await fetch('/api/session', opts);
+  } catch (e) { console.warn('Session error:', e); }
+  return null;
+}
+window.LUMIO_SESSION = {
+  save: (id, data) => apiSession('POST', id, data),
+  load: (id) => apiSession('GET', id),
+  clear: (id) => apiSession('DELETE', id),
+};
 
 // ─── Saisie du nom (avant le login) ─────────────────────────
 function NameScreen({ onConfirm }) {
@@ -296,33 +321,84 @@ function WelcomeBriefCard({ onClose, studentName }) {
 
 // ─── ROOT ────────────────────────────────────────────────────
 function Root() {
-  const [phase, setPhase] = useRootState('name'); // name | login | brief | desktop
+  const [phase, setPhase] = useRootState('loading'); // loading | name | login | brief | desktop
   const [studentName, setStudentName] = useRootState('');
   const [showLogin, setShowLogin] = useRootState(false);
+  const [sessionId, setSessionId] = useRootState(null);
+  const [timerStart, setTimerStart] = useRootState(null);
+
+  // Au montage : tenter de restaurer une session existante
+  useRootEffect(() => {
+    const savedId = localStorage.getItem('lumio_sid');
+    if (!savedId) { setPhase('name'); return; }
+    window.LUMIO_SESSION.load(savedId).then(session => {
+      if (!session || !session.studentName) { setPhase('name'); return; }
+      // Session trouvée — restaurer
+      const n = session.studentName;
+      setStudentName(n);
+      setSessionId(savedId);
+      if (session.timerStart) setTimerStart(session.timerStart);
+      // Patcher les données avec le nom sauvegardé
+      window.LUMIO_DATA.student.name = n;
+      window.LUMIO_DATA.briefEmail.body = window.LUMIO_DATA.briefEmail.body.replace(/^Lou,/m, `${n.split(' ')[0]},`);
+      window.LUMIO_DATA.slackMessages.initial[0].text = `Salut ${n.split(' ')[0]} — bien reçu mon mail ?`;
+      // Reprendre directement sur le bureau
+      setPhase('desktop');
+    });
+  }, []);
 
   const handleNameConfirm = (name) => {
+    const sid = makeSessionId(name + Date.now());
+    localStorage.setItem('lumio_sid', sid);
+    setSessionId(sid);
     setStudentName(name);
-    // Patcher les données avec le vrai nom
     window.LUMIO_DATA.student.name = name;
     window.LUMIO_DATA.briefEmail.body = window.LUMIO_DATA.briefEmail.body.replace(/^Lou,/m, `${name.split(' ')[0]},`);
     window.LUMIO_DATA.slackMessages.initial[0].text = `Salut ${name.split(' ')[0]} — bien reçu mon mail ?`;
+    window.LUMIO_SESSION.save(sid, { studentName: name, phase: 'login' });
     setShowLogin(true);
     setPhase('login');
   };
 
   const handleLogin = () => {
     setShowLogin(false);
+    window.LUMIO_SESSION.save(sessionId, { phase: 'brief' });
     setTimeout(() => setPhase('brief'), 200);
   };
 
-  const dismissBrief = () => setPhase('desktop');
-  // Logout : retour au login macOS uniquement, pas au NameScreen
-  const logout = () => { setPhase('login'); setShowLogin(true); };
+  const dismissBrief = () => {
+    const ts = Date.now();
+    setTimerStart(ts);
+    window.LUMIO_SESSION.save(sessionId, { phase: 'desktop', timerStart: ts });
+    // Exposer le timerStart pour desktop.jsx
+    window.LUMIO_TIMER_START = ts;
+    setPhase('desktop');
+  };
+
+  const logout = () => {
+    window.LUMIO_SESSION.save(sessionId, { phase: 'login' });
+    setPhase('login');
+    setShowLogin(true);
+  };
+
+  const resetSession = () => {
+    if (sessionId) window.LUMIO_SESSION.clear(sessionId);
+    localStorage.removeItem('lumio_sid');
+    window.location.reload();
+  };
+  // Exposer reset pour un éventuel bouton dans le bureau
+  window.LUMIO_RESET = resetSession;
+
+  if (phase === 'loading') return (
+    <div style={{ position: 'fixed', inset: 0, background: '#1a2436', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.15em' }}>RESTAURATION SESSION…</div>
+    </div>
+  );
 
   return (
     <>
       {phase === 'name' && <NameScreen onConfirm={handleNameConfirm} />}
-      {phase === 'desktop' && <window.LumioDesktop onLogout={logout} studentName={studentName} />}
+      {phase === 'desktop' && <window.LumioDesktop onLogout={logout} studentName={studentName} timerStart={timerStart} />}
       {phase === 'brief' && <WelcomeBriefCard onClose={dismissBrief} studentName={studentName} />}
       {showLogin && phase !== 'name' && <LoginScreen onLogin={handleLogin} studentName={studentName} />}
     </>
