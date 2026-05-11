@@ -52,6 +52,8 @@ function SlackApp({ openChannel }) {
   const [unreads, setUnreads] = useSlackState({ 'mission-lumio': 1, camille: 2 });
 
   const [activeId, setActiveId] = useSlackState(openChannel || 'sonia');
+  const activeIdRef = useSlackRef(openChannel || 'sonia');
+  const setActive = (id) => { activeIdRef.current = id; setActiveId(id); };
   const [chatHistory, setChatHistory] = useSlackState({}); // by channelId
   const [draft, setDraft] = useSlackState('');
   const [sending, setSending] = useSlackState(false);
@@ -96,7 +98,7 @@ function SlackApp({ openChannel }) {
 
   useSlackEffect(() => {
     if (openChannel) {
-      setActiveId(openChannel);
+      setActive(openChannel);
       setUnreads(u => ({ ...u, [openChannel]: 0 }));
     }
   }, [openChannel]);
@@ -137,11 +139,17 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
           ...h,
           sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: reply }]
         }));
+        if (activeIdRef.current !== 'sonia') {
+          setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
+        }
       } catch(e) {
         setChatHistory(h => ({
           ...h,
           sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: 'Bien reçu. Je te reviens avant le board.' }]
         }));
+        if (activeIdRef.current !== 'sonia') {
+          setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
+        }
       } finally {
         setSending(false);
       }
@@ -194,6 +202,9 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
               ...h,
               sonia: [...h.sonia, { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: tt, text: reply }]
             }));
+            if (activeIdRef.current !== 'sonia') {
+              setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
+            }
             delay = 1400 + reply.length * 8;
           }
         } catch(e) {
@@ -201,6 +212,9 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
             ...h,
             sonia: [...h.sonia, { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: 'maintenant', text: 'Désolée je dois sauter dans une réunion. On reprend ça plus tard.' }]
           }));
+          if (activeIdRef.current !== 'sonia') {
+            setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
+          }
         } finally {
           setSending(false);
         }
@@ -242,7 +256,7 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
         <div style={slackStyles.section}>
           <div style={slackStyles.sectionTitle}>▼ Canaux</div>
           {channels.map(c => (
-            <div key={c.id} onClick={() => { setActiveId(c.id); setUnreads(u => ({ ...u, [c.id]: 0 })); }}
+            <div key={c.id} onClick={() => { setActive(c.id); setUnreads(u => ({ ...u, [c.id]: 0 })); }}
               style={{ ...slackStyles.item, ...(activeId === c.id ? slackStyles.itemActive : {}), ...(unreads[c.id] ? slackStyles.itemUnread : {}) }}>
               <span style={{ opacity: 0.7 }}>#</span>
               <span>{c.name}</span>
@@ -253,7 +267,7 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
         <div style={slackStyles.section}>
           <div style={slackStyles.sectionTitle}>▼ Messages directs</div>
           {dms.map(d => (
-            <div key={d.id} onClick={() => { setActiveId(d.id); setUnreads(u => ({ ...u, [d.id]: 0 })); }}
+            <div key={d.id} onClick={() => { setActive(d.id); setUnreads(u => ({ ...u, [d.id]: 0 })); }}
               style={{ ...slackStyles.item, ...(activeId === d.id ? slackStyles.itemActive : {}), ...(unreads[d.id] ? slackStyles.itemUnread : {}) }}>
               <span style={{ ...slackStyles.statusDot, background: d.status === 'online' ? '#2eb67d' : '#9a9ea8' }} />
               <span>{d.name}</span>
