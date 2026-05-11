@@ -76,6 +76,12 @@ function FinderApp({ openFolder }) {
         { name: 'hbr-stress-donnee-arme.html', kind: 'doc', app: 'browser', props: { openTab: 'press-1' }, label: 'WEB' },
         { name: '20mn-apple-watch-confiance.html', kind: 'doc', app: 'browser', props: { openTab: 'press-2' }, label: 'WEB' }
       ]
+    },
+    guide: {
+      title: 'Guide de mission',
+      items: [
+        { name: 'guide_mission_bc1.pdf', kind: 'pdf', app: 'pdf', props: { openGuide: true }, label: 'PDF' }
+      ]
     }
   };
 
@@ -99,6 +105,7 @@ function FinderApp({ openFolder }) {
         <div style={{ padding: '0 16px', fontSize: 11, color: 'var(--ink-faint)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 16, marginBottom: 8 }}>Espaces partagés</div>
         <div onClick={() => setFolder('mission')} style={{ padding: '4px 16px', fontSize: 13, color: folder === 'mission' ? 'white' : 'var(--ink-soft)', background: folder === 'mission' ? '#3a7bd5' : 'transparent', cursor: 'pointer' }}>📂 Mission Lumio</div>
         <div onClick={() => setFolder('press')} style={{ padding: '4px 16px 4px 28px', fontSize: 13, color: folder === 'press' ? 'white' : 'var(--ink-soft)', background: folder === 'press' ? '#3a7bd5' : 'transparent', cursor: 'pointer' }}>📂 Revue de presse</div>
+        <div onClick={() => setFolder('guide')} style={{ padding: '4px 16px', fontSize: 13, color: folder === 'guide' ? 'white' : '#1a6641', background: folder === 'guide' ? '#3a7bd5' : 'transparent', cursor: 'pointer', fontWeight: 600 }}>❓ Guide de mission</div>
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -126,66 +133,119 @@ window.LUMIO_APPS.finder = FinderApp;
 
 // ─── CALENDAR ─────────────────────────────────────────────────
 function CalendarApp() {
-  // Simulated date: 12 september. CODIR is on 30 september.
-  const today = 12;
   const codirDay = 30;
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
-  // Sept 2026 starts on a Tuesday
-  const startOffset = 2;
+  const startOffset = 2; // Sept 2026 commence un mardi
+
+  // Temps fictif dynamique
+  const [currentDay, setCurrentDay] = React.useState(() => getFictifTime ? getFictifTime().day : 12);
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      if (window.__getFictifTime) setCurrentDay(window.__getFictifTime().day);
+    }, 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  const today = currentDay;
+  const daysLeft = Math.max(0, codirDay - today);
+
+  const events = {
+    14: [{ label: '16h — Athena Capital (call)', color: '#2c5d99', bg: 'rgba(60,100,180,0.12)' }],
+    16: [{ label: 'Brief Sonia — retour terrain', color: '#0a7a6e', bg: 'rgba(10,122,110,0.12)' }],
+    18: [{ label: 'Deadline : V1 livrable', color: '#c4420f', bg: 'rgba(196,66,15,0.12)', bold: true }],
+    22: [{ label: 'Préventica Lyon — Camille', color: '#0a7a6e', bg: 'rgba(10,122,110,0.12)' }],
+    25: [{ label: 'RDV Sodexo — Camille', color: '#b85c00', bg: 'rgba(184,92,0,0.12)' }],
+    29: [{ label: '⚠ Relecture finale', color: '#c4420f', bg: 'rgba(196,66,15,0.15)', bold: true }],
+    30: [{ label: '09h — CODIR · livraison', color: '#fff', bg: 'var(--accent)', bold: true }],
+  };
+
+  const urgencyColor = daysLeft <= 5 ? '#c4420f' : daysLeft <= 10 ? '#b85c00' : '#1a6641';
+  const urgencyBg = daysLeft <= 5 ? 'rgba(196,66,15,0.1)' : daysLeft <= 10 ? 'rgba(184,92,0,0.1)' : 'rgba(26,102,65,0.1)';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'white', overflow: 'hidden' }}>
-      <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center' }}>
+      {/* Header */}
+      <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)' }}>Septembre 2026</div>
-          <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>Aujourd'hui — samedi 12 sept.</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>Aujourd'hui — samedi 12 sept.</div>
         </div>
         <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, padding: '6px 12px', background: 'rgba(196,66,15,0.10)', borderRadius: 6 }}>
-          ⚡ J−18 avant le CODIR
+        <div style={{ textAlign: 'center', padding: '8px 16px', background: urgencyBg, borderRadius: 8, border: `1px solid ${urgencyColor}22` }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: urgencyColor, lineHeight: 1, fontFamily: 'var(--font-display)' }}>J−{daysLeft}</div>
+          <div style={{ fontSize: 10, color: urgencyColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginTop: 2 }}>AVANT LE CODIR</div>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, gap: 1, background: 'var(--rule)', padding: 1 }}>
-        {['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'].map(d => (
-          <div key={d} style={{ background: '#f4f2ee', padding: '6px 8px', fontSize: 11, fontWeight: 600, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d}</div>
-        ))}
-        {Array.from({ length: startOffset }).map((_, i) => (
-          <div key={'e'+i} style={{ background: '#fafaf8' }} />
-        ))}
-        {days.map(d => {
-          const isToday = d === today;
-          const isCodir = d === codirDay;
-          const isPast = d < today;
-          return (
-            <div key={d} style={{
-              background: 'white',
-              padding: 8,
-              minHeight: 70,
-              opacity: isPast ? 0.5 : 1,
-              borderTop: isToday ? '3px solid var(--accent)' : 'none',
-              position: 'relative'
-            }}>
-              <div style={{
-                fontSize: 13, fontWeight: isToday ? 700 : 400,
-                color: isToday ? 'var(--accent)' : 'var(--ink)'
-              }}>{d}</div>
-              {isCodir && (
-                <div style={{ marginTop: 4, padding: '3px 5px', background: 'var(--accent)', color: 'white', borderRadius: 3, fontSize: 9.5, fontWeight: 600, lineHeight: 1.3 }}>
-                  09:00 — CODIR<br/><span style={{ fontWeight: 400 }}>livraison V1</span>
-                </div>
-              )}
-              {d === 14 && (
-                <div style={{ marginTop: 4, padding: '3px 5px', background: 'rgba(60,100,180,0.15)', color: '#2c5d99', borderRadius: 3, fontSize: 9.5, lineHeight: 1.3 }}>
-                  16:00 — Athena Capital (call)
-                </div>
-              )}
-              {d === 22 && (
-                <div style={{ marginTop: 4, padding: '3px 5px', background: 'rgba(10,122,110,0.15)', color: '#0a7a6e', borderRadius: 3, fontSize: 9.5, lineHeight: 1.3 }}>
-                  Préventica — Lyon
-                </div>
-              )}
-            </div>
-          );
-        })}
+
+      {/* Bande de tension narrative */}
+      <div style={{ padding: '10px 22px', background: '#fafaf8', borderBottom: '1px solid var(--rule)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 24, fontSize: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
+            <span style={{ color: 'var(--ink-soft)' }}>Livrable dû le <strong style={{ color: 'var(--ink)' }}>18 sept.</strong></span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2c5d99' }} />
+            <span style={{ color: 'var(--ink-soft)' }}>Athena Capital <strong style={{ color: 'var(--ink)' }}>14 sept.</strong></span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#b85c00' }} />
+            <span style={{ color: 'var(--ink-soft)' }}>Prospect Sodexo <strong style={{ color: 'var(--ink)' }}>25 sept.</strong></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Grille calendrier */}
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: 'var(--rule)', padding: 1, minHeight: '100%' }}>
+          {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => (
+            <div key={d} style={{ background: '#f4f2ee', padding: '6px 8px', fontSize: 11, fontWeight: 700, color: 'var(--ink-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' }}>{d}</div>
+          ))}
+          {Array.from({ length: startOffset }).map((_, i) => (
+            <div key={'e'+i} style={{ background: '#fafaf8', minHeight: 80 }} />
+          ))}
+          {Array.from({ length: 30 }, (_, i) => i + 1).map(d => {
+            const isToday = d === today;
+            const isCodir = d === codirDay;
+            const isPast = d < today;
+            const dayEvents = events[d] || [];
+            return (
+              <div key={d} style={{
+                background: isPast ? '#fafaf8' : 'white',
+                padding: '6px 8px',
+                minHeight: 80,
+                opacity: isPast ? 0.45 : 1,
+                borderTop: isToday ? '3px solid var(--accent)' : isCodir ? '3px solid var(--accent)' : '3px solid transparent',
+                position: 'relative',
+              }}>
+                <div style={{
+                  width: isToday ? 22 : 'auto',
+                  height: isToday ? 22 : 'auto',
+                  borderRadius: isToday ? '50%' : 0,
+                  background: isToday ? 'var(--accent)' : 'transparent',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: isToday || isCodir ? 700 : 400,
+                  color: isToday ? 'white' : isCodir ? 'var(--accent)' : 'var(--ink)',
+                  marginBottom: 4,
+                }}>{d}</div>
+                {dayEvents.map((ev, ei) => (
+                  <div key={ei} style={{
+                    padding: '2px 5px', borderRadius: 3,
+                    fontSize: 9.5, lineHeight: 1.35,
+                    background: ev.bg, color: ev.color,
+                    fontWeight: ev.bold ? 700 : 400,
+                    marginBottom: 2,
+                  }}>{ev.label}</div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pied — note de contexte */}
+      <div style={{ padding: '10px 22px', borderTop: '1px solid var(--rule)', background: '#fafaf8', fontSize: 11, color: 'var(--ink-mute)', fontStyle: 'italic', flexShrink: 0 }}>
+        Le board attend une plateforme de marque défendable. Pas un diagnostic. Pas une liste de tendances.
+        <strong style={{ color: 'var(--ink)', fontStyle: 'normal' }}> Un document que Théo peut tenir entre les mains.</strong>
       </div>
     </div>
   );

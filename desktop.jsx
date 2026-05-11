@@ -124,18 +124,40 @@ const trafficLight = (color) => ({
 });
 
 // ═════ Menu bar ═════════════════════════════════════════════
+// Temps fictif : 3h30 réelles = 18 jours fictifs (12→30 sept.)
+// Ratio : 1 min réelle = 5.14 min fictives. Départ : sam. 12 sept. 08:14
+const FICTIF_START_REAL = Date.now(); // moment où le desktop s'ouvre
+const FICTIF_START_MIN = 12 * 60 + 14; // 08h14 en minutes depuis minuit le 12 sept.
+const RATIO = 18 * 24 * 60 / (3 * 60 + 30); // ~74x (18 jours / 3h30)
+const SEPT_DAYS = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+// 12 sept. 2026 = mardi → offset 2
+function getFictifTime() {
+  const realElapsed = (Date.now() - FICTIF_START_REAL) / 60000; // minutes réelles écoulées
+  const fictifElapsed = realElapsed * RATIO; // minutes fictives
+  const totalMin = FICTIF_START_MIN + fictifElapsed;
+  // Calculer le jour (12 + jours écoulés)
+  const dayOffset = Math.floor(totalMin / (24 * 60));
+  const day = Math.min(12 + dayOffset, 30); // cap au 30 sept.
+  const minuteOfDay = totalMin % (24 * 60);
+  const hh = Math.floor(minuteOfDay / 60).toString().padStart(2,'0');
+  const mm = Math.floor(minuteOfDay % 60).toString().padStart(2,'0');
+  // Jour de la semaine (12 sept. = samedi → offset 6)
+  const dowOffset = (6 + dayOffset) % 7;
+  const dow = SEPT_DAYS[dowOffset];
+  return { label: `${dow} ${day} sept.  ${hh}:${mm}`, day, dayOffset };
+}
+
+// Exposer pour le Calendrier
+window.__getFictifTime = getFictifTime;
+
 function MenuBar({ activeApp, openLogout }) {
-  const [time, setTime] = useWmState('');
+  const [timeLabel, setTimeLabel] = useWmState('');
   const [showUserMenu, setShowUserMenu] = useWmState(false);
+
   useWmEffect(() => {
-    const tick = () => {
-      const t = new Date();
-      const hh = t.getHours().toString().padStart(2,'0');
-      const mm = t.getMinutes().toString().padStart(2,'0');
-      setTime(`sam. 12 sept.  ${hh}:${mm}`);
-    };
+    const tick = () => setTimeLabel(getFictifTime().label);
     tick();
-    const id = setInterval(tick, 30000);
+    const id = setInterval(tick, 10000); // refresh toutes les 10s réelles ≈ ~12 min fictives
     return () => clearInterval(id);
   }, []);
 
@@ -161,7 +183,7 @@ function MenuBar({ activeApp, openLogout }) {
         <span>🔋 84%</span>
         <span>📶</span>
         <span>🔍</span>
-        <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{time}</span>
+        <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{timeLabel}</span>
         <span
           onClick={() => setShowUserMenu(m => !m)}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, position: 'relative' }}>
@@ -461,11 +483,56 @@ Camille`
         }, 1800);
       }
     };
+
+    // Livrable soumis — Sonia envoie un message Slack
+    window.__onLivrableSubmitted = (veille, plateforme, juryResult) => {
+      const id = ++notifSeqRef.current;
+      setNotifications(ns => [...ns, {
+        id,
+        app: 'Slack',
+        icon: 'SF',
+        color: '#c4420f',
+        title: 'Sonia Ferracci',
+        body: 'Je viens de recevoir ton document. Je te lis.',
+        click: { app: 'slack', props: {} }
+      }]);
+      setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 14000);
+      // Stocker le livrable pour que Slack puisse y répondre
+      window.LUMIO_DATA._livrableSubmitted = { veille, plateforme, juryResult };
+      // Déclencher une réponse Sonia dans Slack après 4s
+      setTimeout(() => {
+        if (window.__onSoniaLivrableReaction) window.__onSoniaLivrableReaction(veille, plateforme);
+      }, 4000);
+    };
+  }, []);
+
+  // Surveiller la fin de session (J-0 = CODIR)
+  useWmEffect(() => {
+    const check = setInterval(() => {
+      if (!window.__getFictifTime) return;
+      const { day } = window.__getFictifTime();
+      if (day >= 30 && !window.__codirNotified) {
+        window.__codirNotified = true;
+        const id = ++notifSeqRef.current;
+        setNotifications(ns => [...ns, {
+          id,
+          app: 'Calendrier',
+          icon: '📅',
+          color: '#c4420f',
+          title: 'CODIR dans 5 minutes',
+          body: 'Le board attend ton document. Il est 08h55 le 30 septembre.',
+          click: { app: 'livrable', props: {} }
+        }]);
+      }
+    }, 15000);
+    return () => clearInterval(check);
   }, []);
 
   const openApp = (app, props = {}) => {
     const meta = APP_META[app];
     if (!meta) return;
+    // Tracker pour les tips contextuels
+    if (window.__onAppOpened) window.__onAppOpened(app);
     setWindows(ws => {
       // Update props of existing window if open
       const existingIdx = ws.findIndex(w => w.app === app);
@@ -509,20 +576,100 @@ Camille`
   const moveWin = (id, x, y) => setWindows(ws => ws.map(w => w.id === id ? { ...w, x, y } : w));
   const resizeWin = (id, w, h) => setWindows(ws => ws.map(win => win.id === id ? { ...win, w, h } : win));
 
-  // ─── Notification scheduler ────────────────────────────
+  // ─── Système de tips ──────────────────────────────────────
+  const shownTipsRef = useWmRef(new Set());
+
+  const pushTip = (key, tip) => {
+    if (shownTipsRef.current.has(key)) return;
+    shownTipsRef.current.add(key);
+    const id = ++notifSeqRef.current;
+    setNotifications(ns => [...ns, {
+      id,
+      app: 'Mission · Guide',
+      icon: '?',
+      color: '#1a6641',
+      ...tip,
+      click: tip.click || { app: 'finder', props: { openFolder: 'guide' } }
+    }]);
+    setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 18000);
+  };
+
+  // Tips déclenchés par le temps fictif (J-)
+  useWmEffect(() => {
+    const check = setInterval(() => {
+      if (!window.__getFictifTime) return;
+      const { day } = window.__getFictifTime();
+      const dLeft = 30 - day;
+
+      if (dLeft <= 12 && dLeft > 7) {
+        pushTip('j12', {
+          title: 'J−12 · Par où commencer',
+          body: 'Sonia t\'a écrit hier soir. Commence par Mail — sa lettre de mission est là.',
+          click: { app: 'mail', props: { openId: 'brief' } }
+        });
+      }
+      if (dLeft <= 7 && dLeft > 3) {
+        pushTip('j7', {
+          title: 'J−7 · Passer à l\'action',
+          body: 'Sonia attend une première réaction. Ouvre Slack et envoie-lui quelque chose — même une ébauche.',
+          click: { app: 'slack', props: {} }
+        });
+      }
+      if (dLeft <= 3 && dLeft > 0) {
+        pushTip('j3', {
+          title: 'J−3 · Finaliser',
+          body: 'L\'app Livrable t\'attend dans le dock. Tu as assez d\'éléments pour construire quelque chose.',
+          click: { app: 'livrable', props: {} }
+        });
+      }
+    }, 20000);
+    return () => clearInterval(check);
+  }, []);
+
+  // Tips contextuels — surveillance de la progression
+  useWmEffect(() => {
+    const openedApps = new Set();
+    const slackMessageSent = { v: false };
+    window.__onAppOpened = (app) => openedApps.add(app);
+    window.__onSlackSent = () => { slackMessageSent.v = true; };
+
+    const checks = [
+      // 3 min sans rien ouvrir → Mail
+      { delay: 3 * 60 * 1000, key: 'ctx_start', cond: () => openedApps.size === 0,
+        tip: { title: 'Par où commencer ?', body: 'Cherche la lettre de mission de Sonia Ferracci dans Mail — c\'est là que tout commence.', click: { app: 'mail', props: { openId: 'brief' } } } },
+      // 6 min — Mail ouvert mais pas Slack
+      { delay: 6 * 60 * 1000, key: 'ctx_slack', cond: () => openedApps.has('mail') && !openedApps.has('slack'),
+        tip: { title: 'Sonia attend', body: 'Tu as lu le brief. Sonia Ferracci attend ta réaction sur Slack — ouvre-le et écris-lui.', click: { app: 'slack', props: {} } } },
+      // 8 min — Slack ouvert mais rien envoyé
+      { delay: 8 * 60 * 1000, key: 'ctx_send', cond: () => openedApps.has('slack') && !slackMessageSent.v,
+        tip: { title: 'Envoie quelque chose', body: 'Tu as Slack ouvert. Envoie une phrase à Sonia — même imparfaite. Ça débloque la suite.', click: { app: 'slack', props: {} } } },
+      // 10 min — pas ouvert Aperçu
+      { delay: 10 * 60 * 1000, key: 'ctx_pdf', cond: () => !openedApps.has('pdf'),
+        tip: { title: 'Un rapport attend dans Aperçu', body: 'Yanis, le stagiaire marketing, a produit une veille concurrentielle en mai. Elle est incomplète — mais elle dit des choses importantes sur Biostream.', click: { app: 'pdf', props: {} } } },
+      // 15 min — pas ouvert Mémos vocaux
+      { delay: 15 * 60 * 1000, key: 'ctx_voice', cond: () => !openedApps.has('voice'),
+        tip: { title: 'Camille a enregistré trois verbatims', body: 'Ouvre Mémos vocaux — Camille Ott dit des choses sur les clients B2B que les documents ne disent pas.', click: { app: 'voice', props: {} } } },
+      // 20 min — livrable débloqué mais pas ouvert
+      { delay: 20 * 60 * 1000, key: 'ctx_livrable', cond: () => livrableUnlocked && !openedApps.has('livrable'),
+        tip: { title: 'Le livrable t\'attend', body: 'L\'app Livrable rebondit dans le dock. Tu as assez d\'éléments pour commencer à rédiger.', click: { app: 'livrable', props: {} } } },
+    ];
+
+    const timers = checks.map(c =>
+      setTimeout(() => { if (c.cond()) pushTip(c.key, c.tip); }, c.delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [livrableUnlocked]);
+
+  // Notification scheduler ambiant (existant, allégé)
   useWmEffect(() => {
     const events = [
-      // After 12s — Camille DM ping
       { t: 12000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'Si tu veux qu\'on se parle dans la semaine, dis-moi 🙃', click: { app: 'slack', props: { openChannel: 'camille' } } } },
-      // After 60s — Calendar reminder
       { t: 60000, n: { app: 'Calendrier', icon: '📅', color: '#c4420f', title: 'CODIR de cadrage', body: 'Le 30 sept à 09:00 — dans 18 jours. V1 attendue.', click: { app: 'calendar' } } },
-      // After 130s — Camille follow-up
       { t: 130000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'PS — j\'ai des verbatims clients qui peuvent t\'aider. Audio dispo dans Mémos vocaux.', click: { app: 'voice' } } }
     ];
     const timers = events.map(ev => setTimeout(() => {
       const id = ++notifSeqRef.current;
       setNotifications(ns => [...ns, { id, ...ev.n }]);
-      // auto-dismiss after 14s
       setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 14000);
     }, ev.t));
     return () => timers.forEach(clearTimeout);
@@ -554,6 +701,25 @@ Camille`
         ))}
         <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} />
         <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
+        {/* Bouton ? — aide à la demande */}
+        <button
+          onClick={() => openApp('finder', { openFolder: 'guide' })}
+          title="Guide de mission"
+          style={{
+            position: 'fixed', bottom: 90, left: 16, zIndex: 9998,
+            width: 32, height: 32, borderRadius: '50%',
+            background: 'rgba(245,243,239,0.55)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.4)',
+            boxShadow: '0 4px 12px rgba(20,24,36,0.18)',
+            color: 'var(--ink-soft)', fontSize: 14, fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all .2s'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,102,65,0.85)'; e.currentTarget.style.color = 'white'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,243,239,0.55)'; e.currentTarget.style.color = 'var(--ink-soft)'; }}
+        >?</button>
       </div>
     </WindowsCtx.Provider>
   );

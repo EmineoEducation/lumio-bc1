@@ -61,8 +61,17 @@ function LivrableApp() {
         })
       });
       const data = await resp.json();
-      setResult(data.content?.map(b => b.text || '').join('') || 'Erreur.');
+      const juryResult = data.content?.map(b => b.text || '').join('') || 'Erreur.';
+      setResult(juryResult);
       setPhase('result');
+
+      // Sonia reçoit le livrable — notif Slack
+      setTimeout(() => {
+        if (window.__onLivrableSubmitted) {
+          window.__onLivrableSubmitted(veille, plateforme, juryResult);
+        }
+      }, 1200);
+
     } catch(e) {
       setResult('Erreur de connexion. Réessaie.');
       setPhase('result');
@@ -97,8 +106,50 @@ function LivrableApp() {
         <div style={S.subtitle}>BC1 · RNCP 38504 · Mission Lumio Health</div>
       </div>
       <div style={S.result}>
+        {/* Retour jury */}
         <div style={{ ...S.resultTitle }}>Retour certifiant — BC1</div>
         <div style={S.resultBody}>{result}</div>
+
+        {/* Séparateur */}
+        <div style={{ margin: '32px 0 24px', borderTop: '1px solid var(--rule)' }} />
+
+        {/* Écran de clôture — Le Retour (Voyage du héros) */}
+        <div style={{
+          background: '#f4f2ee', borderRadius: 10,
+          padding: '24px 28px', marginBottom: 24
+        }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>
+            Ce que tu rapportes de cette mission
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, marginBottom: 16 }}>
+            Tu as traversé le dossier Lumio Health de part en part.
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.75, marginBottom: 20 }}>
+            Tu as lu les documents dans le désordre du réel. Tu as repéré que Sonia et Théo ne parlent pas des mêmes 230 clients. Tu as compris que la certification MDR n'est pas un détail administratif — c'est l'obstacle central qui rend intenable n'importe quelle promesse de marque ambitieuse avant 2027. Tu as produit une analyse et une proposition.
+          </div>
+
+          {/* Compétences couvertes */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+            {['C.1 · Veille organisée','C.2 · Quali. opportunités/risques','C.3 · Exploitation données','C.4 · Diagnostic fondé','C.5 · Écart identité/perception','C.6 · Plateforme cohérente'].map(c => (
+              <div key={c} style={{
+                padding: '4px 10px', borderRadius: 4,
+                background: 'white', border: '1px solid var(--rule)',
+                fontSize: 11, color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)'
+              }}>{c}</div>
+            ))}
+          </div>
+
+          {/* Phrase Compilatio */}
+          <div style={{ background: 'white', border: '1px solid var(--rule)', borderLeft: '3px solid var(--accent)', borderRadius: '0 6px 6px 0', padding: '14px 18px' }}>
+            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ink-mute)', marginBottom: 8 }}>
+              Phrase pour Compilatio · BC1
+            </div>
+            <div style={{ fontSize: 13, fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--ink-soft)', lineHeight: 1.7 }}>
+              "Dans le cadre de l'affaire Lumio Health (BC1), j'ai produit une note de synthèse de veille stratégique couvrant les dimensions réglementaires (MDR), concurrentielles et sociocomportementales, ainsi qu'une plateforme de marque cohérente avec les contraintes identifiées — certification en attente, tension B2B/B2C, budget contraint. J'ai mobilisé les données documentaires fournies et les échanges avec la Directrice Marketing pour construire un diagnostic fondé, pas une liste d'observations."
+            </div>
+          </div>
+        </div>
+
         <button style={S.backBtn} onClick={() => setPhase('edit')}>← Modifier et soumettre à nouveau</button>
       </div>
     </div>

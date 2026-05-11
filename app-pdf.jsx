@@ -1,12 +1,104 @@
-// ══════════════════════════════════════════════════════════════
-//  PDF VIEWER — Aperçu-like for Yanis's report
-// ══════════════════════════════════════════════════════════════
+// ─── Guide de mission ────────────────────────────────────────
+function GuideApp() {
+  const G = {
+    app: { display: 'flex', flexDirection: 'column', height: '100%', background: '#1a2436', overflow: 'hidden' },
+    header: { padding: '20px 28px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 },
+    eyebrow: { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(196,66,15,0.8)', marginBottom: 6 },
+    title: { fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 300, color: 'rgba(255,255,255,0.92)', lineHeight: 1.2 },
+    body: { flex: 1, overflowY: 'auto', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 },
+    section: { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '16px 20px' },
+    sectionDay: { fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(196,66,15,0.7)', marginBottom: 8 },
+    sectionTitle: { fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.88)', marginBottom: 8 },
+    tip: { fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65, fontFamily: 'var(--font-display)', fontStyle: 'italic' },
+    action: { marginTop: 10, padding: '8px 12px', background: 'rgba(255,255,255,0.06)', borderRadius: 5, fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)' },
+    divider: { height: 1, background: 'rgba(255,255,255,0.06)' },
+    footer: { padding: '12px 28px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', flexShrink: 0 }
+  };
+
+  const tips = [
+    {
+      day: 'J−18 · Entrée dans la mission',
+      title: 'Par où commencer ?',
+      body: 'Tu as accès à 8 apps sur ce desktop. Elles contiennent toutes quelque chose d\'utile. Commence par Mail — Sonia Ferracci t\'a écrit hier soir. Sa lettre de mission est là.',
+      action: '→ Mail → Lettre de mission — Sonia Ferracci'
+    },
+    {
+      day: 'J−12 · Après lecture des documents',
+      title: 'Croiser les sources',
+      body: 'Tu remarqueras des contradictions entre les documents. C\'est voulu — c\'est le cœur du travail. Sonia parle de 230 clients. Théo dit 180. La certification MDR est "en cours" depuis un moment. Camille Ott sait des choses que les autres ne disent pas.',
+      action: '→ Mémos vocaux → 3 enregistrements de Camille Ott'
+    },
+    {
+      day: 'J−7 · Passer à l\'action',
+      title: 'Sonia attend une réaction',
+      body: 'Tu n\'as pas besoin d\'avoir tout compris pour écrire à Sonia. Envoie-lui ta première impression — même imparfaite. C\'est comme ça que la mission avance. Elle répondra, et la réponse t\'apportera de nouveaux éléments.',
+      action: '→ Slack → DM Sonia Ferracci'
+    },
+    {
+      day: 'J−3 · Finaliser',
+      title: 'Rédiger le livrable',
+      body: 'L\'app Livrable t\'attend dans le dock (icône verte). Tu dois produire deux choses : une note de synthèse de veille stratégique et une plateforme de marque. Ce n\'est pas un résumé des documents — c\'est une prise de position professionnelle.',
+      action: '→ Dock → Livrable (icône verte avec coche)'
+    },
+    {
+      day: 'En cas de blocage',
+      title: 'Ce que tu cherches est dans ces apps',
+      body: 'Si tu tournes en rond, ouvre le Finder → Mission Lumio. Tous les documents sont là. Si tu ne sais pas quoi écrire à Sonia, commence par une phrase : "Après lecture du dossier, je pense que le vrai problème est…" et complète.',
+      action: '→ Finder → Mission Lumio'
+    }
+  ];
+
+  return (
+    <div style={G.app}>
+      <div style={G.header}>
+        <div style={G.eyebrow}>Guide de mission · BC1 · Clinique BEC</div>
+        <div style={G.title}>Lumio Health — aide au parcours</div>
+      </div>
+      <div style={G.body}>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', fontFamily: 'var(--font-display)', padding: '0 0 4px' }}>
+          Ce guide est là si tu te sens bloqué. Il ne donne pas les réponses — il indique où chercher.
+        </div>
+        {tips.map((t, i) => (
+          <div key={i} style={G.section}>
+            <div style={G.sectionDay}>{t.day}</div>
+            <div style={G.sectionTitle}>{t.title}</div>
+            <div style={G.tip}>{t.body}</div>
+            <div style={G.action}>{t.action}</div>
+          </div>
+        ))}
+        <div style={G.divider} />
+        <div style={{ ...G.section, background: 'rgba(26,102,65,0.08)', borderColor: 'rgba(26,102,65,0.2)' }}>
+          <div style={{ ...G.sectionDay, color: 'rgba(26,102,65,0.8)' }}>Rappel · Livrable final</div>
+          <div style={G.sectionTitle}>Ce que tu dois produire</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+            {[
+              ['C.1 / C.2', 'Note de synthèse veille — tendances réglementaires, concurrentielles, sociocomportementales. Chaque tendance qualifiée : opportunité ou risque pour Lumio.'],
+              ['C.3 → C.6', 'Plateforme de marque — territoire, proposition de valeur, cibles B2B / B2C différenciées, personnalité, engagements RSE. Cohérente avec les vraies contraintes (MDR, budget, 180 références actives).']
+            ].map(([badge, desc]) => (
+              <div key={badge} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, padding: '2px 7px', background: 'rgba(26,102,65,0.2)', color: 'rgba(26,102,65,0.9)', borderRadius: 4, flexShrink: 0, marginTop: 2 }}>{badge}</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, fontFamily: 'var(--font-display)', fontStyle: 'italic' }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={G.footer}>Ce guide est disponible à tout moment via le bouton ? en bas à gauche du desktop.</div>
+    </div>
+  );
+}
+
+// ─── PDF Viewer ───────────────────────────────────────────────
 const { useState: usePdfState } = React;
 
-function PdfApp() {
+function PdfApp({ openGuide }) {
   const D = window.LUMIO_DATA;
   const r = D.yanisReport;
   const [page, setPage] = usePdfState(1);
+
+  // Si openGuide, afficher le guide de mission
+  if (openGuide) return <GuideApp />;
+
   const totalPages = 4;
 
   return (

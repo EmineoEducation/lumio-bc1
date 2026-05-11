@@ -1,13 +1,17 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
+  "functions": {
+    "api/chat.js": {
+      "maxDuration": 30
+    }
+  },
+  "routes": [
     {
-      "source": "/(.*).jsx",
-      "headers": [
-        { "key": "Content-Type", "value": "text/babel" }
-      ]
+      "src": "/api/chat",
+      "dest": "/api/chat.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }

@@ -101,6 +101,48 @@ function SlackApp({ openChannel }) {
     }
   }, [chatHistory, activeId, sending]);
 
+  // Réaction de Sonia quand le livrable est soumis
+  useSlackEffect(() => {
+    window.__onSoniaLivrableReaction = async (veille, plateforme) => {
+      setActiveId('sonia');
+      setSending(true);
+      const now = new Date();
+      const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+      const prompt = `Tu es Sonia Ferracci, Directrice Marketing de Lumio Health. Le/la consultant·e vient de te remettre son livrable final : une note de synthèse de veille stratégique et une plateforme de marque. Tu l'as lu rapidement. Tu réagis en message Slack — direct, professionnel, honnête. Ni enthousiaste pour rien, ni froid. Tu pointer ce qui te convainc, ce qui te questionne encore, et tu conclus par ce que tu vas faire avec ce document avant le CODIR. 100-150 mots maximum.
+
+Livrable reçu :
+VEILLE : ${veille.substring(0, 600)}...
+PLATEFORME : ${plateforme.substring(0, 600)}...`;
+
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 400,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+        const data = await resp.json();
+        const reply = data.content?.map(b => b.text || '').join('') || '…';
+        setChatHistory(h => ({
+          ...h,
+          sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: reply }]
+        }));
+      } catch(e) {
+        setChatHistory(h => ({
+          ...h,
+          sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: 'Bien reçu. Je te reviens avant le board.' }]
+        }));
+      } finally {
+        setSending(false);
+      }
+    };
+    return () => { window.__onSoniaLivrableReaction = null; };
+  }, [chatHistory]);
+
   const isSonia = activeId === 'sonia';
   const messages = chatHistory[activeId] || [];
 
@@ -120,6 +162,7 @@ function SlackApp({ openChannel }) {
       const newCount = exchangeCount + 1;
       setExchangeCountLocal(newCount);
       if (window.__onSlackExchange) window.__onSlackExchange(newCount);
+      if (window.__onSlackSent) window.__onSlackSent();
 
       setSending(true);
       // Show typing indicator
