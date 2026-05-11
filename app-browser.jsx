@@ -106,7 +106,7 @@ function BrowserApp({ openTab, openPortrait }) {
             src={tab.file}
             title={tab.title}
             style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            sandbox="allow-same-origin allow-scripts"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation-by-user-activation"
           />
         )}
       </div>
