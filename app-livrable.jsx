@@ -1,210 +1,287 @@
 // ══════════════════════════════════════════════════════════════
-//  LIVRABLE APP — Note de synthèse + Plateforme de marque + Jury IA
+//  LIVRABLE APP — Tableau structuré BC1 · 2 colonnes · jury IA → Slack
 // ══════════════════════════════════════════════════════════════
 
-const JURY_PROMPT = `Tu es un jury d'évaluation certifiant pour le Master MSMC (RNCP 38504), bloc de compétences BC1. Tu évalues le livrable complet produit par un étudiant : une note de synthèse de veille stratégique et une plateforme de marque pour Lumio Health.
+const COMPETENCES = [
+  {
+    code: 'C.1',
+    label: 'Organiser une veille stratégique',
+    rncp: 'Identifier et mobiliser des sources pertinentes (réglementaires, concurrentielles, sociocomportementales). Structurer la collecte et en assurer la traçabilité.',
+    placeholder: 'Quelles sources as-tu mobilisées ? Comment as-tu organisé ta veille sur l\'environnement Lumio ?',
+    min: 80
+  },
+  {
+    code: 'C.2',
+    label: 'Qualifier les signaux : opportunité ou risque',
+    rncp: 'Pour chaque tendance identifiée, argumenter en quoi elle constitue une opportunité ou un risque pour la marque. Hiérarchiser selon l\'impact potentiel.',
+    placeholder: 'Pour chaque tendance repérée, justifie ton évaluation : opportunité ou risque pour Lumio, et pourquoi ?',
+    min: 100
+  },
+  {
+    code: 'C.3',
+    label: 'Exploiter les données disponibles',
+    rncp: 'Mobiliser les verbatims, benchmarks et données documentaires fournis. Traiter les contradictions entre sources plutôt que les ignorer.',
+    placeholder: 'Quelles données as-tu exploitées ? Comment as-tu traité les éléments contradictoires entre les documents ?',
+    min: 80
+  },
+  {
+    code: 'C.4',
+    label: 'Construire un diagnostic fondé',
+    rncp: 'Produire une interprétation, pas une liste d\'observations. Mobiliser des outils d\'analyse (SWOT, PESTEL, etc.) et en tirer des conclusions actionnables.',
+    placeholder: 'Quel est ton diagnostic de la situation de Lumio ? Sur quels outils ou raisonnements t\'appuies-tu ?',
+    min: 100
+  },
+  {
+    code: 'C.5',
+    label: 'Analyser le positionnement et l\'identité de marque',
+    rncp: 'Identifier l\'écart entre ce que Lumio dit être et ce que ses interlocuteurs perçoivent réellement. Nommer la tension B2B / B2C.',
+    placeholder: 'Comment perçois-tu l\'écart entre l\'identité déclarée de Lumio et la réalité de ses marchés ? Quelle tension identifies-tu ?',
+    min: 80
+  },
+  {
+    code: 'C.6',
+    label: 'Formaliser la plateforme de marque',
+    rncp: 'Proposer un territoire, une proposition de valeur, une personnalité et des engagements cohérents avec le diagnostic — et défendables au regard des contraintes (MDR, budget, cibles).',
+    placeholder: 'Formule ta plateforme de marque pour Lumio : territoire, proposition de valeur, personnalité, engagements. Justifie chaque choix.',
+    min: 120
+  }
+];
+
+const JURY_PROMPT = `Tu es un jury d'évaluation certifiant pour le Master MSMC (RNCP 38504), bloc de compétences BC1. Tu évalues un livrable structuré produit par un étudiant : chaque compétence RNCP (C.1 à C.6) a fait l'objet d'une réponse distincte.
 
 Contexte Lumio Health :
 - Medtech parisienne, 8 ans, wearable stress (Lumio Patch), historiquement B2B (DRH)
 - Pression d'un fonds américain : grand public en 36 mois, objectif 20M€ CA
-- Deux concurrents certifiés MDR IIa (Biostream jan. 2026, Neuroflow mars 2026). Lumio pas certifiée, fin Q2 2027 au mieux selon Théo
-- Tension Sonia (230 clients, budget 380K€, territoire "expert santé invisible") vs Théo (180 références, 200K€ max, bloque sur MDR)
-- Camille Ott : les DRH posent des questions sur la certif — "c'est une horloge", 6-9 mois avant basculement
-- Information terrain Camille : certification MDR = 22 mois et ~400K€ minimum
+- Deux concurrents certifiés MDR IIa (Biostream jan. 2026, Neuroflow mars 2026). Lumio pas certifiée, fin Q2 2027 au mieux
+- Tension Sonia (230 clients, budget 380K€) vs Théo (180 références, 200K€ max, bloque sur MDR)
+- Camille Ott : les DRH posent des questions sur la certif — 6-9 mois avant basculement
+- Certification MDR = 22 mois et ~400K€ minimum
 
-Grille d'évaluation — 6 compétences RNCP :
-C.1 : Veille organisée · sources identifiées · couverture réglementaire/concurrentielle/sociocomportementale
-C.2 : Qualification opportunité/risque argumentée · hiérarchisation
-C.3 : Exploitation des données disponibles · verbatims mobilisés · contradictions traitées
-C.4 : Diagnostic fondé · matrices mobilisées · interprétation pas description
-C.5 : Écart identifié entre identité déclarée et perception réelle · tension B2B/B2C nommée
-C.6 : Plateforme cohérente · proposition de valeur opérationnelle · engagements RSE · cohérence avec contraintes (budget, MDR)
+Pour chaque compétence, évalue la réponse de l'étudiant. Format STRICT :
 
-Format STRICT de ton retour :
-## Ce qui est solide
-2-3 points précis avec les compétences couvertes nommées. Cite les mots de l'étudiant.
+### C.1 — [Satisfaisant / Insuffisant / Absent]
+Une phrase de retour précise. Cite les mots de l'étudiant si pertinent.
 
-## Ce qui manque ou est insuffisant
-2-3 points précis avec les compétences RNCP non couvertes nommées.
+### C.2 — [Satisfaisant / Insuffisant / Absent]
+Une phrase de retour précise.
 
-## Niveau de conformité
-Une seule ligne : Non conforme / Partiellement conforme / Conforme / Conforme avec distinction
+### C.3 — [Satisfaisant / Insuffisant / Absent]
+Une phrase de retour précise.
+
+### C.4 — [Satisfaisant / Insuffisant / Absent]
+Une phrase de retour précise.
+
+### C.5 — [Satisfaisant / Insuffisant / Absent]
+Une phrase de retour précise.
+
+### C.6 — [Satisfaisant / Insuffisant / Absent]
+Une phrase de retour précise.
+
+---
+
+## Niveau de conformité global
+**[Non conforme / Partiellement conforme / Conforme / Conforme avec distinction]**
+Une phrase de synthèse.
 
 ## Question de jury
 Une seule question qu'un jury poserait à l'oral — précise, dérangeante, sans réponse évidente.
 
-Règles absolues : ne rédige pas de plateforme alternative. Ne complète pas les lacunes. Cite les mots de l'étudiant. Si une partie est absente, nomme-le d'emblée.`;
+Règles : ne rédige pas de plateforme alternative. Ne complète pas les lacunes. Si une compétence est absente, écris "Absent" et une phrase. Cite les mots de l'étudiant.`;
+
+const wc = (txt) => txt.trim() ? txt.trim().split(/\s+/).length : 0;
+const GLOBAL_MIN = 500;
 
 function LivrableApp() {
-  const [veille, setVeille] = React.useState('');
-  const [plateforme, setPlateforme] = React.useState('');
-  const [phase, setPhase] = React.useState('edit'); // edit | submitting | result
-  const [result, setResult] = React.useState('');
-  const [wordVeille, setWordVeille] = React.useState(0);
-  const [wordPlat, setWordPlat] = React.useState(0);
+  const [answers, setAnswers] = React.useState(() =>
+    Object.fromEntries(COMPETENCES.map(c => [c.code, '']))
+  );
+  const [phase, setPhase] = React.useState('edit'); // edit | submitting | done
+  const [submitted, setSubmitted] = React.useState(false);
 
-  const count = (txt) => txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  const wordCounts = Object.fromEntries(
+    COMPETENCES.map(c => [c.code, wc(answers[c.code])])
+  );
+  const globalWords = Object.values(wordCounts).reduce((a, b) => a + b, 0);
+
+  const missingMin = COMPETENCES.filter(c => wordCounts[c.code] < c.min);
+  const canSubmit = missingMin.length === 0 && globalWords >= GLOBAL_MIN && !submitted;
+
+  const setAnswer = (code, val) =>
+    setAnswers(prev => ({ ...prev, [code]: val }));
 
   const submit = async () => {
-    if (!veille.trim() || !plateforme.trim()) return;
+    if (!canSubmit) return;
     setPhase('submitting');
-    const content = `PARTIE 1 — NOTE DE SYNTHÈSE VEILLE STRATÉGIQUE\n\n${veille}\n\n---\n\nPARTIE 2 — PLATEFORME DE MARQUE LUMIO HEALTH\n\n${plateforme}`;
+
+    const livrableText = COMPETENCES.map(c =>
+      `## ${c.code} — ${c.label}\n\n${answers[c.code]}`
+    ).join('\n\n---\n\n');
+
     try {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
+          max_tokens: 1200,
           system: JURY_PROMPT,
-          messages: [{ role: 'user', content }]
+          messages: [{ role: 'user', content: livrableText }]
         })
       });
       const data = await resp.json();
-      const juryResult = data.content?.map(b => b.text || '').join('') || 'Erreur.';
-      setResult(juryResult);
-      setPhase('result');
+      const juryResult = data.content?.map(b => b.text || '').join('') || 'Erreur de connexion.';
 
-      // Sonia reçoit le livrable — notif Slack
+      setPhase('done');
+      setSubmitted(true);
+
+      // Envoyer le retour jury dans Slack via Sonia
       setTimeout(() => {
         if (window.__onLivrableSubmitted) {
-          window.__onLivrableSubmitted(veille, plateforme, juryResult);
+          window.__onLivrableSubmitted(livrableText, '', juryResult);
         }
       }, 1200);
 
     } catch(e) {
-      setResult('Erreur de connexion. Réessaie.');
-      setPhase('result');
+      setPhase('edit');
+      alert('Erreur de connexion. Réessaie.');
     }
   };
 
-  const S = {
-    app: { display: 'flex', flexDirection: 'column', height: '100%', background: '#f9f8f5', fontFamily: 'var(--font-sans)', overflow: 'hidden' },
-    header: { padding: '14px 22px 10px', borderBottom: '1px solid var(--rule)', background: 'white', flexShrink: 0 },
-    title: { fontSize: 17, fontWeight: 700, color: 'var(--ink)', marginBottom: 2 },
-    subtitle: { fontSize: 11, color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' },
-    body: { flex: 1, overflow: 'auto', padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 },
-    section: { background: 'white', border: '1px solid var(--rule)', borderRadius: 8, overflow: 'hidden' },
-    sectionHead: { padding: '10px 16px', borderBottom: '1px solid var(--rule)', background: '#f4f2ee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--accent)' },
-    wc: { fontSize: 11, color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)' },
-    textarea: { width: '100%', border: 'none', outline: 'none', padding: '14px 16px', fontSize: 13.5, fontFamily: 'var(--font-display)', lineHeight: 1.7, color: 'var(--ink)', resize: 'none', minHeight: 180, background: 'transparent' },
-    footer: { padding: '12px 22px', borderTop: '1px solid var(--rule)', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
-    hint: { fontSize: 12, color: 'var(--ink-mute)' },
-    btn: { background: '#1a6641', color: 'white', border: 'none', borderRadius: 6, padding: '9px 22px', fontSize: 13, fontWeight: 600, cursor: 'pointer' },
-    btnDis: { background: 'rgba(20,24,36,0.12)', color: 'var(--ink-faint)', cursor: 'not-allowed' },
-    result: { flex: 1, overflow: 'auto', padding: '24px 28px' },
-    resultTitle: { fontSize: 16, fontWeight: 700, color: 'var(--ink)', marginBottom: 16, fontFamily: 'var(--font-display)' },
-    resultBody: { fontSize: 14, lineHeight: 1.75, color: 'var(--ink-soft)', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-display)' },
-    backBtn: { background: 'transparent', border: '1px solid var(--rule)', borderRadius: 6, padding: '7px 16px', fontSize: 12, color: 'var(--ink-soft)', cursor: 'pointer', marginTop: 20 }
-  };
-
-  if (phase === 'result') return (
-    <div style={S.app}>
-      <div style={S.header}>
-        <div style={S.title}>Évaluation du jury</div>
-        <div style={S.subtitle}>BC1 · RNCP 38504 · Mission Lumio Health</div>
-      </div>
-      <div style={S.result}>
-        {/* Retour jury */}
-        <div style={{ ...S.resultTitle }}>Retour certifiant — BC1</div>
-        <div style={S.resultBody}>{result}</div>
-
-        {/* Séparateur */}
-        <div style={{ margin: '32px 0 24px', borderTop: '1px solid var(--rule)' }} />
-
-        {/* Écran de clôture — Le Retour (Voyage du héros) */}
-        <div style={{
-          background: '#f4f2ee', borderRadius: 10,
-          padding: '24px 28px', marginBottom: 24
-        }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 12 }}>
-            Ce que tu rapportes de cette mission
-          </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, marginBottom: 16 }}>
-            Tu as traversé le dossier Lumio Health de part en part.
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.75, marginBottom: 20 }}>
-            Tu as lu les documents dans le désordre du réel. Tu as repéré que Sonia et Théo ne parlent pas des mêmes 230 clients. Tu as compris que la certification MDR n'est pas un détail administratif — c'est l'obstacle central qui rend intenable n'importe quelle promesse de marque ambitieuse avant 2027. Tu as produit une analyse et une proposition.
-          </div>
-
-          {/* Compétences couvertes */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-            {['C.1 · Veille organisée','C.2 · Quali. opportunités/risques','C.3 · Exploitation données','C.4 · Diagnostic fondé','C.5 · Écart identité/perception','C.6 · Plateforme cohérente'].map(c => (
-              <div key={c} style={{
-                padding: '4px 10px', borderRadius: 4,
-                background: 'white', border: '1px solid var(--rule)',
-                fontSize: 11, color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)'
-              }}>{c}</div>
-            ))}
-          </div>
-
-          {/* Phrase Compilatio */}
-          <div style={{ background: 'white', border: '1px solid var(--rule)', borderLeft: '3px solid var(--accent)', borderRadius: '0 6px 6px 0', padding: '14px 18px' }}>
-            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ink-mute)', marginBottom: 8 }}>
-              Phrase pour Compilatio · BC1
-            </div>
-            <div style={{ fontSize: 13, fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--ink-soft)', lineHeight: 1.7 }}>
-              "Dans le cadre de l'affaire Lumio Health (BC1), j'ai produit une note de synthèse de veille stratégique couvrant les dimensions réglementaires (MDR), concurrentielles et sociocomportementales, ainsi qu'une plateforme de marque cohérente avec les contraintes identifiées — certification en attente, tension B2B/B2C, budget contraint. J'ai mobilisé les données documentaires fournies et les échanges avec la Directrice Marketing pour construire un diagnostic fondé, pas une liste d'observations."
-            </div>
-          </div>
-        </div>
-
-        <button style={S.backBtn} onClick={() => setPhase('edit')}>← Modifier et soumettre à nouveau</button>
-      </div>
-    </div>
-  );
-
   if (phase === 'submitting') return (
-    <div style={{ ...S.app, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-      <div style={{ width: 40, height: 40, border: '3px solid rgba(26,102,65,0.2)', borderTopColor: '#1a6641', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-      <div style={{ fontSize: 13, color: 'var(--ink-mute)', fontStyle: 'italic' }}>Le jury évalue ta livraison…</div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: '#f9f8f5' }}>
+      <div style={{ width: 44, height: 44, border: '3px solid rgba(26,102,65,0.2)', borderTopColor: '#1a6641', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ fontSize: 14, color: 'var(--ink-mute)', fontStyle: 'italic', fontFamily: 'var(--font-display)' }}>Le jury évalue ton livrable…</div>
+      <div style={{ fontSize: 11, color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)' }}>Le retour arrivera dans Slack</div>
     </div>
   );
 
-  const canSubmit = veille.trim().length > 80 && plateforme.trim().length > 80;
+  if (phase === 'done') return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: '#f9f8f5', padding: '0 40px', textAlign: 'center' }}>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#1a6641', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400, color: 'var(--ink)' }}>Livrable remis à Sonia</div>
+      <div style={{ fontSize: 13, color: 'var(--ink-mute)', lineHeight: 1.7, maxWidth: 420 }}>
+        L'évaluation du jury a été envoyée dans Slack.<br/>
+        Ouvre Slack pour lire le retour certifiant.
+      </div>
+      <div style={{ marginTop: 8, padding: '10px 22px', background: 'rgba(26,102,65,0.1)', borderRadius: 6, border: '1px solid rgba(26,102,65,0.2)', fontSize: 12, color: '#1a6641', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+        {globalWords} mots · 6 compétences couvertes
+      </div>
+    </div>
+  );
+
   return (
-    <div style={S.app}>
-      <div style={S.header}>
-        <div style={S.title}>Livrable — BC1 · Lumio Health</div>
-        <div style={S.subtitle}>À remettre avant le 30 septembre · CODIR · Sonia Ferracci</div>
-      </div>
-      <div style={S.body}>
-        <div style={{ fontSize: 12, color: 'var(--ink-mute)', padding: '4px 0', fontStyle: 'italic' }}>
-          Rédige les deux parties ci-dessous. Quand tu es prêt(e), soumets au jury — tu recevras une évaluation certifiante.
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f9f8f5', fontFamily: 'var(--font-sans)', overflow: 'hidden' }}>
+
+      {/* Header */}
+      <div style={{ padding: '14px 24px 12px', borderBottom: '1px solid var(--rule)', background: 'white', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', marginBottom: 2 }}>Livrable — BC1 · Lumio Health</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>RNCP 38504 · À remettre à Sonia Ferracci avant le 30 septembre · CODIR 09h00</div>
         </div>
-        <div style={S.section}>
-          <div style={S.sectionHead}>
-            <span style={S.sectionLabel}>Partie 1 · Note de synthèse veille stratégique (C.1 / C.2)</span>
-            <span style={S.wc}>{wordVeille} mots</span>
-          </div>
-          <textarea
-            style={S.textarea}
-            value={veille}
-            onChange={e => { setVeille(e.target.value); setWordVeille(count(e.target.value)); }}
-            placeholder="Tendances de l'environnement Lumio (réglementaires, concurrentielles, sociocomportementales) · Qualification opportunité / risque pour chaque tendance · Sources identifiées…"
-          />
-        </div>
-        <div style={S.section}>
-          <div style={S.sectionHead}>
-            <span style={S.sectionLabel}>Partie 2 · Plateforme de marque (C.3 à C.6)</span>
-            <span style={S.wc}>{wordPlat} mots</span>
-          </div>
-          <textarea
-            style={S.textarea}
-            value={plateforme}
-            onChange={e => { setPlateforme(e.target.value); setWordPlat(count(e.target.value)); }}
-            placeholder="Territoire · Proposition de valeur · Cibles B2B / B2C · Personnalité · Engagements RSE · Justification au regard du diagnostic…"
-          />
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: globalWords >= GLOBAL_MIN ? '#1a6641' : 'var(--ink-mute)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{globalWords}</div>
+          <div style={{ fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>mots / {GLOBAL_MIN} min.</div>
         </div>
       </div>
-      <div style={S.footer}>
-        <div style={S.hint}>Entrée libre · Formulation professionnelle attendue</div>
+
+      {/* Tableau */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 24px', minHeight: 0 }}>
+
+        {/* En-têtes colonnes */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 0, marginBottom: 0 }}>
+          <div style={{ padding: '8px 14px', background: 'var(--ink)', borderRadius: '6px 0 0 0' }}>
+            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Expression libre</div>
+          </div>
+          <div style={{ padding: '8px 14px', background: '#2a3142', borderRadius: '0 6px 0 0' }}>
+            <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>Compétence RNCP 38504</div>
+          </div>
+        </div>
+
+        {/* Lignes par compétence */}
+        {COMPETENCES.map((c, i) => {
+          const words = wordCounts[c.code];
+          const ok = words >= c.min;
+          const isLast = i === COMPETENCES.length - 1;
+          return (
+            <div key={c.code} style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 0, borderBottom: isLast ? 'none' : '1px solid var(--rule)' }}>
+
+              {/* Colonne gauche — saisie */}
+              <div style={{ borderRight: '1px solid var(--rule)', background: 'white', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '10px 14px 6px', borderBottom: '1px solid rgba(20,24,36,0.06)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.04em' }}>{c.code}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', flex: 1 }}>{c.label}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: ok ? '#1a6641' : words > 0 ? '#b85c00' : 'var(--ink-faint)', fontWeight: ok ? 700 : 400, flexShrink: 0 }}>
+                    {words} / {c.min} mots {ok ? '✓' : ''}
+                  </span>
+                </div>
+                <textarea
+                  value={answers[c.code]}
+                  onChange={e => setAnswer(c.code, e.target.value)}
+                  placeholder={c.placeholder}
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    minHeight: 140,
+                    border: 'none',
+                    outline: 'none',
+                    padding: '12px 14px',
+                    fontSize: 13.5,
+                    fontFamily: 'var(--font-display)',
+                    lineHeight: 1.7,
+                    color: 'var(--ink)',
+                    resize: 'none',
+                    background: 'transparent'
+                  }}
+                />
+              </div>
+
+              {/* Colonne droite — référentiel */}
+              <div style={{ background: '#f4f2ee', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700 }}>{c.code} · Attendu</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.65 }}>{c.rncp}</div>
+                <div style={{ marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--rule)', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', letterSpacing: '0.06em' }}>
+                  minimum {c.min} mots
+                </div>
+              </div>
+
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer — soumettre */}
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--rule)', background: 'white', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+        <div style={{ flex: 1 }}>
+          {missingMin.length > 0 ? (
+            <div style={{ fontSize: 11, color: '#b85c00' }}>
+              Minimum non atteint : {missingMin.map(c => c.code).join(', ')}
+            </div>
+          ) : globalWords < GLOBAL_MIN ? (
+            <div style={{ fontSize: 11, color: '#b85c00' }}>
+              Total minimum {GLOBAL_MIN} mots requis ({GLOBAL_MIN - globalWords} restants)
+            </div>
+          ) : (
+            <div style={{ fontSize: 11, color: '#1a6641' }}>
+              ✓ Livrable complet — prêt à soumettre
+            </div>
+          )}
+        </div>
         <button
-          style={{ ...S.btn, ...(canSubmit ? {} : S.btnDis) }}
           onClick={canSubmit ? submit : undefined}
+          style={{
+            background: canSubmit ? '#1a6641' : 'rgba(20,24,36,0.1)',
+            color: canSubmit ? 'white' : 'var(--ink-faint)',
+            border: 'none', borderRadius: 6,
+            padding: '9px 24px', fontSize: 13, fontWeight: 600,
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
+            transition: 'background .15s'
+          }}
         >
-          Soumettre au jury →
+          Envoyer à Sonia →
         </button>
       </div>
     </div>
