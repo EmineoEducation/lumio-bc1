@@ -18,7 +18,8 @@ const APP_META = {
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
-  livrable: { title: 'Livrable — BC1', w: 920, h: 700, icon: 'LivrableIcon' }
+  livrable:  { title: 'Livrable — BC1', w: 920, h: 700, icon: 'LivrableIcon' },
+  assistant: { title: 'PASS Assistant', w: 480, h: 620, icon: 'AssistantIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -220,24 +221,31 @@ function MenuBar({ activeApp, openLogout }) {
 }
 
 // ═════ Dock ═════════════════════════════════════════════════
-function Dock({ openApp, openWindows, livrableUnlocked }) {
-  const baseItems = [
-    { id: 'finder', label: 'Finder' },
-    { id: 'mail', label: 'Mail' },
-    { id: 'browser', label: 'Safari' },
-    { id: 'pdf', label: 'Aperçu' },
-    { id: 'voice', label: 'Mémos vocaux' },
-    { id: 'notes', label: 'Notes' },
-    { id: 'notepad', label: 'Bloc-notes' },
-    { id: 'slack', label: 'Slack' },
-    { id: 'calendar', label: 'Calendrier' },
-    { id: 'trash', label: 'Corbeille' }
+function Dock({ openApp, openWindows, livrableUnlocked, currentAct }) {
+  // Apps permanentes — toujours visibles dès le départ
+  const alwaysItems = [
+    { id: 'finder',    label: 'Finder' },
+    { id: 'mail',      label: 'Mail' },
+    { id: 'assistant', label: 'Guide', isAssistant: true },
   ];
-  const items = livrableUnlocked
-    ? [...baseItems.slice(0, -1), { id: 'livrable', label: 'Livrable', bounce: true }, baseItems[baseItems.length - 1]]
-    : baseItems;
 
-  // CSS bounce injecté une fois
+  // Apps déverrouillées selon l'acte (apparaissent progressivement)
+  const actItems = [];
+  if (currentAct >= 1) actItems.push({ id: 'browser',  label: 'Safari' });
+  if (currentAct >= 1) actItems.push({ id: 'pdf',      label: 'Aperçu' });
+  if (currentAct >= 2) actItems.push({ id: 'voice',    label: 'Mémos vocaux' });
+  if (currentAct >= 2) actItems.push({ id: 'notes',    label: 'Notes' });
+  if (currentAct >= 2) actItems.push({ id: 'notepad',  label: 'Bloc-notes' });
+  if (currentAct >= 2) actItems.push({ id: 'slack',    label: 'Slack' });
+  if (currentAct >= 2) actItems.push({ id: 'calendar', label: 'Calendrier' });
+
+  const endItems = [];
+  if (livrableUnlocked) endItems.push({ id: 'livrable', label: 'Livrable', bounce: true });
+  endItems.push({ id: 'trash', label: 'Corbeille' });
+
+  const items = [...alwaysItems, ...actItems, ...endItems];
+
+  // CSS injecté une fois
   useWmEffect(() => {
     if (!document.getElementById('dock-bounce-style')) {
       const s = document.createElement('style');
@@ -251,6 +259,11 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
           80%{transform:translateY(-2px) scale(1.01)}
         }
         .dock-bounce { animation: dock-bounce 0.9s ease 3; }
+        @keyframes dock-appear {
+          from { opacity: 0; transform: translateY(10px) scale(0.88); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .dock-appear { animation: dock-appear 0.32s cubic-bezier(.34,1.56,.64,1) both; }
       `;
       document.head.appendChild(s);
     }
@@ -273,36 +286,47 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
         const Icon = window[APP_META[it.id]?.icon];
         if (!Icon) return null;
         const isOpen = openWindows.some(w => w.app === it.id);
+        // Séparateur visuel après le bloc permanent (après l'assistant, idx 2)
+        const showSep = idx === 3;
         return (
-          <div key={it.id} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button
-              onClick={() => openApp(it.id)}
-              title={it.label}
-              className={it.bounce && livrableUnlocked ? 'dock-bounce' : ''}
-              style={{
-                background: 'transparent', border: 'none',
-                padding: 4, cursor: 'pointer',
-                transition: 'transform 180ms cubic-bezier(.34,1.56,.64,1)'
-              }}
-              onMouseEnter={(e) => { if (!it.bounce) e.currentTarget.style.transform = 'translateY(-6px) scale(1.18)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
+          <React.Fragment key={it.id}>
+            {showSep && (
+              <div style={{ width: 1, height: 40, background: 'rgba(20,24,36,0.15)', alignSelf: 'center', margin: '0 2px', flexShrink: 0 }} />
+            )}
+            <div
+              className="dock-appear"
+              style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             >
-              <Icon size={50} />
-            </button>
-            {it.bounce && livrableUnlocked && (
-              <div style={{
-                position: 'absolute', top: -6, right: -4,
-                width: 14, height: 14, borderRadius: '50%',
-                background: '#34c84a', border: '2px solid white',
-                fontSize: 8, color: 'white', fontWeight: 700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>!</div>
-            )}
-            {isOpen && (
-              <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(20,24,36,0.5)', position: 'absolute', bottom: -2 }} />
-            )}
-            {idx === 0 && <div style={{ width: 1, height: 40, background: 'rgba(20,24,36,0.15)', position: 'absolute', right: -7, top: 8 }} />}
-          </div>
+              <button
+                onClick={() => openApp(it.id)}
+                title={it.label}
+                className={it.bounce && livrableUnlocked ? 'dock-bounce' : ''}
+                style={{
+                  background: it.isAssistant ? 'rgba(26,36,54,0.08)' : 'transparent',
+                  border: it.isAssistant ? '1px solid rgba(26,36,54,0.12)' : 'none',
+                  borderRadius: it.isAssistant ? 12 : 0,
+                  padding: 4, cursor: 'pointer',
+                  transition: 'transform 180ms cubic-bezier(.34,1.56,.64,1)'
+                }}
+                onMouseEnter={(e) => { if (!it.bounce) e.currentTarget.style.transform = 'translateY(-6px) scale(1.18)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
+              >
+                <Icon size={50} />
+              </button>
+              {it.bounce && livrableUnlocked && (
+                <div style={{
+                  position: 'absolute', top: -6, right: -4,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: '#34c84a', border: '2px solid white',
+                  fontSize: 8, color: 'white', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>!</div>
+              )}
+              {isOpen && (
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(20,24,36,0.5)', position: 'absolute', bottom: -2 }} />
+              )}
+            </div>
+          </React.Fragment>
         );
       })}
     </div>
@@ -411,7 +435,24 @@ function Desktop({ onLogout }) {
   const [notifications, setNotifications] = useWmState([]);
   const [exchangeCount, setExchangeCount] = useWmState(0);
   const [livrableUnlocked, setLivrableUnlocked] = useWmState(false);
+  const [currentAct, setCurrentAct] = useWmState(1);
   const notifSeqRef = useWmRef(0);
+
+  // Recalcul de l'acte courant toutes les 30 secondes
+  useWmEffect(() => {
+    const getAct = () => {
+      if (!window.LUMIO_TIMER_START) return 1;
+      const min = Math.floor((Date.now() - window.LUMIO_TIMER_START) / 60000);
+      if (min < 20) return 1;
+      if (min < 50) return 2;
+      if (min < 95) return 3;
+      if (min < 175) return 4;
+      return 5;
+    };
+    setCurrentAct(getAct());
+    const interval = setInterval(() => setCurrentAct(getAct()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Expose pour que SlackApp puisse incrémenter
   useWmEffect(() => {
@@ -700,7 +741,7 @@ Camille`
             onResize={resizeWin}
           />
         ))}
-        <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} />
+        <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} currentAct={currentAct} />
         <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
         {/* Bouton ? — aide à la demande */}
         <button
