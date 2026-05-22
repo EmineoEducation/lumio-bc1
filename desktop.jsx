@@ -18,8 +18,7 @@ const APP_META = {
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
-  livrable:  { title: 'Livrable — BC1', w: 920, h: 700, icon: 'LivrableIcon' },
-  assistant: { title: 'PASS Assistant', w: 480, h: 620, icon: 'AssistantIcon' }
+  livrable: { title: 'Livrable — BC1', w: 920, h: 700, icon: 'LivrableIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -221,31 +220,24 @@ function MenuBar({ activeApp, openLogout }) {
 }
 
 // ═════ Dock ═════════════════════════════════════════════════
-function Dock({ openApp, openWindows, livrableUnlocked, currentAct }) {
-  // Apps permanentes — toujours visibles dès le départ
-  const alwaysItems = [
-    { id: 'finder',    label: 'Finder' },
-    { id: 'mail',      label: 'Mail' },
-    { id: 'assistant', label: 'Guide', isAssistant: true },
+function Dock({ openApp, openWindows, livrableUnlocked }) {
+  const baseItems = [
+    { id: 'finder', label: 'Finder' },
+    { id: 'mail', label: 'Mail' },
+    { id: 'browser', label: 'Safari' },
+    { id: 'pdf', label: 'Aperçu' },
+    { id: 'voice', label: 'Mémos vocaux' },
+    { id: 'notes', label: 'Notes' },
+    { id: 'notepad', label: 'Bloc-notes' },
+    { id: 'slack', label: 'Slack' },
+    { id: 'calendar', label: 'Calendrier' },
+    { id: 'trash', label: 'Corbeille' }
   ];
+  const items = livrableUnlocked
+    ? [...baseItems.slice(0, -1), { id: 'livrable', label: 'Livrable', bounce: true }, baseItems[baseItems.length - 1]]
+    : baseItems;
 
-  // Apps déverrouillées selon l'acte (apparaissent progressivement)
-  const actItems = [];
-  if (currentAct >= 1) actItems.push({ id: 'browser',  label: 'Safari' });
-  if (currentAct >= 1) actItems.push({ id: 'pdf',      label: 'Aperçu' });
-  if (currentAct >= 2) actItems.push({ id: 'voice',    label: 'Mémos vocaux' });
-  if (currentAct >= 2) actItems.push({ id: 'notes',    label: 'Notes' });
-  if (currentAct >= 2) actItems.push({ id: 'notepad',  label: 'Bloc-notes' });
-  if (currentAct >= 2) actItems.push({ id: 'slack',    label: 'Slack' });
-  if (currentAct >= 2) actItems.push({ id: 'calendar', label: 'Calendrier' });
-
-  const endItems = [];
-  if (livrableUnlocked) endItems.push({ id: 'livrable', label: 'Livrable', bounce: true });
-  endItems.push({ id: 'trash', label: 'Corbeille' });
-
-  const items = [...alwaysItems, ...actItems, ...endItems];
-
-  // CSS injecté une fois
+  // CSS bounce injecté une fois
   useWmEffect(() => {
     if (!document.getElementById('dock-bounce-style')) {
       const s = document.createElement('style');
@@ -259,11 +251,6 @@ function Dock({ openApp, openWindows, livrableUnlocked, currentAct }) {
           80%{transform:translateY(-2px) scale(1.01)}
         }
         .dock-bounce { animation: dock-bounce 0.9s ease 3; }
-        @keyframes dock-appear {
-          from { opacity: 0; transform: translateY(10px) scale(0.88); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .dock-appear { animation: dock-appear 0.32s cubic-bezier(.34,1.56,.64,1) both; }
       `;
       document.head.appendChild(s);
     }
@@ -286,47 +273,36 @@ function Dock({ openApp, openWindows, livrableUnlocked, currentAct }) {
         const Icon = window[APP_META[it.id]?.icon];
         if (!Icon) return null;
         const isOpen = openWindows.some(w => w.app === it.id);
-        // Séparateur visuel après le bloc permanent (après l'assistant, idx 2)
-        const showSep = idx === 3;
         return (
-          <React.Fragment key={it.id}>
-            {showSep && (
-              <div style={{ width: 1, height: 40, background: 'rgba(20,24,36,0.15)', alignSelf: 'center', margin: '0 2px', flexShrink: 0 }} />
-            )}
-            <div
-              className="dock-appear"
-              style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          <div key={it.id} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button
+              onClick={() => openApp(it.id)}
+              title={it.label}
+              className={it.bounce && livrableUnlocked ? 'dock-bounce' : ''}
+              style={{
+                background: 'transparent', border: 'none',
+                padding: 4, cursor: 'pointer',
+                transition: 'transform 180ms cubic-bezier(.34,1.56,.64,1)'
+              }}
+              onMouseEnter={(e) => { if (!it.bounce) e.currentTarget.style.transform = 'translateY(-6px) scale(1.18)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
             >
-              <button
-                onClick={() => openApp(it.id)}
-                title={it.label}
-                className={it.bounce && livrableUnlocked ? 'dock-bounce' : ''}
-                style={{
-                  background: it.isAssistant ? 'rgba(26,36,54,0.08)' : 'transparent',
-                  border: it.isAssistant ? '1px solid rgba(26,36,54,0.12)' : 'none',
-                  borderRadius: it.isAssistant ? 12 : 0,
-                  padding: 4, cursor: 'pointer',
-                  transition: 'transform 180ms cubic-bezier(.34,1.56,.64,1)'
-                }}
-                onMouseEnter={(e) => { if (!it.bounce) e.currentTarget.style.transform = 'translateY(-6px) scale(1.18)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
-              >
-                <Icon size={50} />
-              </button>
-              {it.bounce && livrableUnlocked && (
-                <div style={{
-                  position: 'absolute', top: -6, right: -4,
-                  width: 14, height: 14, borderRadius: '50%',
-                  background: '#34c84a', border: '2px solid white',
-                  fontSize: 8, color: 'white', fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>!</div>
-              )}
-              {isOpen && (
-                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(20,24,36,0.5)', position: 'absolute', bottom: -2 }} />
-              )}
-            </div>
-          </React.Fragment>
+              <Icon size={50} />
+            </button>
+            {it.bounce && livrableUnlocked && (
+              <div style={{
+                position: 'absolute', top: -6, right: -4,
+                width: 14, height: 14, borderRadius: '50%',
+                background: '#34c84a', border: '2px solid white',
+                fontSize: 8, color: 'white', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>!</div>
+            )}
+            {isOpen && (
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(20,24,36,0.5)', position: 'absolute', bottom: -2 }} />
+            )}
+            {idx === 0 && <div style={{ width: 1, height: 40, background: 'rgba(20,24,36,0.15)', position: 'absolute', right: -7, top: 8 }} />}
+          </div>
         );
       })}
     </div>
@@ -428,7 +404,104 @@ function NotificationStack({ notifications, onDismiss, onClick }) {
   );
 }
 
-// ═════ DESKTOP — top-level orchestrator ════════════════════
+// ═════ Barre Compétences ════════════════════════════════════
+function BarreCompetences({ livrableAnswers, currentAct }) {
+  const [collapsed, setCollapsed] = useWmState(false);
+  const cfg = window.PASS_CONFIG;
+  if (!cfg) return null;
+
+  const wc = (txt) => (txt || '').trim() ? (txt || '').trim().split(/\s+/).length : 0;
+
+  const getStatus = (c) => {
+    const words = wc(livrableAnswers?.[c.code] || '');
+    if (words === 0) return 'vide';
+    if (words < c.min) return 'encours';
+    return 'ok';
+  };
+
+  const statusColor = { vide: '#d1cec8', encours: '#c4420f', ok: '#1a6641' };
+  const statusLabel = { vide: '○', encours: '◑', ok: '●' };
+
+  const tempsActuel = cfg.temps[Math.min(currentAct - 1, 2)];
+
+  return (
+    <div style={{
+      position: 'fixed', right: 0, top: 28, zIndex: 8000,
+      width: collapsed ? 32 : 200,
+      background: 'rgba(26,36,54,0.92)',
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      borderRadius: '8px 0 0 8px',
+      border: '1px solid rgba(255,255,255,0.1)',
+      borderRight: 'none',
+      transition: 'width 0.25s ease',
+      overflow: 'hidden'
+    }}>
+      {/* Toggle */}
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        style={{
+          width: '100%', padding: '8px', background: 'transparent', border: 'none',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
+          borderBottom: '1px solid rgba(255,255,255,0.08)'
+        }}
+      >
+        {!collapsed && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Compétences</span>}
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{collapsed ? '◀' : '▶'}</span>
+      </button>
+
+      {!collapsed && (
+        <>
+          {/* Temps actuel */}
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginBottom: 3 }}>TEMPS {tempsActuel?.n}</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: tempsActuel?.couleur || 'white', lineHeight: 1.3 }}>{tempsActuel?.label}</div>
+          </div>
+
+          {/* Compétences */}
+          <div style={{ padding: '8px 0' }}>
+            {cfg.competences.map(c => {
+              const status = getStatus(c);
+              const words = wc(livrableAnswers?.[c.code] || '');
+              return (
+                <div key={c.code} style={{ padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 10, color: statusColor[status], minWidth: 10 }}>{statusLabel[status]}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: status === 'ok' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)' }}>{c.code} · {c.libelle}</div>
+                    {words > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: statusColor[status], marginTop: 1 }}>{words}/{c.min}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Indicateur global */}
+          <div style={{ padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            {(() => {
+              const total = cfg.competences.length;
+              const done = cfg.competences.filter(c => getStatus(c) === 'ok').length;
+              const pct = Math.round((done / total) * 100);
+              return (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em' }}>DOSSIER</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: pct === 100 ? '#34c84a' : 'rgba(255,255,255,0.5)' }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? '#34c84a' : '#c4420f', transition: 'width 0.3s ease', borderRadius: 2 }} />
+                  </div>
+                  <div style={{ marginTop: 5, fontSize: 9, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>
+                    {pct === 0 ? 'En friche' : pct < 50 ? 'En cours' : pct < 100 ? 'Avancé' : 'Prêt à soumettre'}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 function Desktop({ onLogout }) {
   const [windows, setWindows] = useWmState([]);
   const [zCounter, setZCounter] = useWmState(100);
@@ -436,6 +509,7 @@ function Desktop({ onLogout }) {
   const [exchangeCount, setExchangeCount] = useWmState(0);
   const [livrableUnlocked, setLivrableUnlocked] = useWmState(false);
   const [currentAct, setCurrentAct] = useWmState(1);
+  const [livrableAnswers, setLivrableAnswers] = useWmState({});
   const notifSeqRef = useWmRef(0);
 
   // Recalcul de l'acte courant toutes les 30 secondes
@@ -452,6 +526,11 @@ function Desktop({ onLogout }) {
     setCurrentAct(getAct());
     const interval = setInterval(() => setCurrentAct(getAct()), 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Callback pour LivrableApp — met à jour les réponses en temps réel
+  useWmEffect(() => {
+    window.__onLivrableChange = (answers) => setLivrableAnswers({ ...answers });
   }, []);
 
   // Expose pour que SlackApp puisse incrémenter
@@ -694,12 +773,30 @@ Camille`
       // 20 min — livrable débloqué mais pas ouvert
       { delay: 20 * 60 * 1000, key: 'ctx_livrable', cond: () => livrableUnlocked && !openedApps.has('livrable'),
         tip: { title: 'Le livrable t\'attend', body: 'L\'app Livrable rebondit dans le dock. Tu as assez d\'éléments pour commencer à rédiger.', click: { app: 'livrable', props: {} } } },
+      // T2 (75 min) — recentrage Sonia sur les contradictions
+      { delay: 75 * 60 * 1000, key: 'ctx_t2_start', cond: () => true,
+        tip: { title: 'Sonia · Temps 2', body: 'Avant de formaliser ta plateforme, assure-toi d\'avoir clarifié les chiffres clients, la certif MDR et le budget.', click: { app: 'slack', props: {} } } },
+      // T3 (150 min) — focus livrable
+      { delay: 150 * 60 * 1000, key: 'ctx_t3_start', cond: () => true,
+        tip: { title: 'Temps 3 — Production', body: 'Il reste 60 min. C.5 et C.6 sont les plus longues. Concentre-toi sur le livrable — les documents sont là si tu en as besoin.', click: { app: 'livrable', props: {} } } },
+      // Alerte 30 min avant fin
+      { delay: 180 * 60 * 1000, key: 'ctx_t3_urgence', cond: () => true,
+        tip: { title: '⏱ 30 minutes restantes', body: 'Soumets le livrable avant la deadline. Mieux vaut une version incomplète soumise qu\'une version parfaite non remise.', click: { app: 'livrable', props: {} } } },
     ];
 
     const timers = checks.map(c =>
       setTimeout(() => { if (c.cond()) pushTip(c.key, c.tip); }, c.delay)
     );
-    return () => timers.forEach(clearTimeout);
+
+    // Log formateur — tracker les apps ouvertes
+    const logInterval = setInterval(() => {
+      window.LUMIO_LOG = window.LUMIO_LOG || {};
+      window.LUMIO_LOG.appsOpened = [...openedApps];
+      window.LUMIO_LOG.slackSent = slackMessageSent.v;
+      window.LUMIO_LOG.elapsedMin = window.LUMIO_TIMER_START ? Math.floor((Date.now() - window.LUMIO_TIMER_START) / 60000) : 0;
+    }, 60000);
+
+    return () => { timers.forEach(clearTimeout); clearInterval(logInterval); };
   }, [livrableUnlocked]);
 
   // Notification scheduler ambiant (existant, allégé)
@@ -742,6 +839,16 @@ Camille`
           />
         ))}
         <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} currentAct={currentAct} />
+        <BarreCompetences livrableAnswers={livrableAnswers} currentAct={currentAct} />
+        <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
+        {currentAct >= 4 && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(20,24,36,0.22)',
+            pointerEvents: 'none',
+            animation: 'fadeIn 2s ease'
+          }} />
+        )}
         <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
         {/* Bouton ? — aide à la demande */}
         <button

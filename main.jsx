@@ -319,9 +319,142 @@ function WelcomeBriefCard({ onClose, studentName }) {
   );
 }
 
+// ─── Contrat pédagogique ─────────────────────────────────────
+function ContratPedagogique({ onClose, studentName }) {
+  const prenom = studentName.split(' ')[0];
+  const cfg = window.PASS_CONFIG;
+  const [accepted, setAccepted] = useRootState(false);
+
+  const couleurBloc = { C1: '#1b4f8a', C2: '#1b6e8a', C3: '#c4420f', C4: '#8a420f', C5: '#1a6641', C6: '#0d4a2e' };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 13000,
+      background: 'rgba(20,24,36,0.75)',
+      backdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      animation: 'fadeIn 400ms ease-out',
+      padding: '1rem', overflowY: 'auto'
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 640, background: 'white',
+        borderRadius: 14, boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
+        overflow: 'hidden'
+      }}>
+        {/* Header sombre */}
+        <div style={{ background: '#1a2436', padding: '24px 32px 20px' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: 8 }}>
+            RNCP 38504 · {cfg.bloc} · {cfg.epreuve}
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'white', marginBottom: 4 }}>
+            Contrat pédagogique
+          </div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+            {prenom}, ce que vous allez produire sera évalué sur 6 compétences RNCP. Lisez ce qui suit avant d'entrer.
+          </div>
+        </div>
+
+        <div style={{ padding: '24px 32px 28px', overflowY: 'auto', maxHeight: '65vh' }}>
+
+          {/* Section compétences */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ink-mute)', marginBottom: 12 }}>
+              6 compétences évaluées dans ce livrable
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {cfg.competences.map((c, i) => (
+                <div key={c.code} style={{
+                  background: '#f7f4ef', borderRadius: 8,
+                  padding: '10px 14px',
+                  borderLeft: `3px solid ${Object.values(couleurBloc)[i]}`
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: Object.values(couleurBloc)[i] }}>{c.code}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)' }}>{c.libelle}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-mute)', lineHeight: 1.5 }}>{c.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section livrable */}
+          <div style={{ background: '#f7f4ef', borderRadius: 8, padding: '14px 18px', marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink)', marginBottom: 10 }}>Ce que vous devez produire</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { ico: '📋', titre: 'Un livrable structuré en 6 parties', desc: 'Une partie par compétence RNCP. Chaque partie a un minimum de mots et des critères précis.' },
+                { ico: '⏱', titre: '3h30 en continu, sans assistance externe', desc: `Deadline : ${cfg.deadline}. L'horloge tourne dès que vous cliquez sur "Commencer".` },
+                { ico: '🤖', titre: 'Évaluation IA sur critères RNCP', desc: 'À la soumission, un jury IA évalue chaque compétence. Son retour arrive dans Slack.' },
+              ].map((it, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{it.ico}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{it.titre}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-mute)', lineHeight: 1.5 }}>{it.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 3 temps */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-mute)', marginBottom: 10 }}>Les 3 temps de la séance</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {cfg.temps.map(t => (
+                <div key={t.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 14px', background: '#f7f4ef', borderRadius: 8, borderLeft: `3px solid ${t.couleur}` }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: t.couleur, minWidth: 56, paddingTop: 1 }}>T{t.n} · {t.debut === 0 ? '0' : t.debut}–{t.fin} min</div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>{t.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-mute)', lineHeight: 1.5 }}>{t.objectif}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Engagement */}
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 0' }}
+            onClick={() => setAccepted(a => !a)}
+          >
+            <div style={{
+              width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+              border: accepted ? 'none' : '1.5px solid #c4420f',
+              background: accepted ? '#c4420f' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all .15s'
+            }}>
+              {accepted && <span style={{ color: 'white', fontSize: 11, fontWeight: 700 }}>✓</span>}
+            </div>
+            <span style={{ fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.4 }}>
+              J'ai lu le contrat. Je comprends que ce livrable est évalué sur les 6 compétences RNCP ci-dessus.
+            </span>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 32px 24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => accepted && onClose()}
+            style={{
+              padding: '11px 28px',
+              background: accepted ? '#1a2436' : '#d8d2c6',
+              color: accepted ? 'white' : '#9a9690',
+              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              cursor: accepted ? 'pointer' : 'default',
+              transition: 'all .2s', fontFamily: 'inherit'
+            }}
+          >Commencer la mission →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── ROOT ────────────────────────────────────────────────────
 function Root() {
-  const [phase, setPhase] = useRootState('loading'); // loading | name | login | brief | desktop
+  const [phase, setPhase] = useRootState('loading'); // loading | name | login | brief | contrat | desktop
   const [studentName, setStudentName] = useRootState('');
   const [showLogin, setShowLogin] = useRootState(false);
   const [sessionId, setSessionId] = useRootState(null);
@@ -367,10 +500,14 @@ function Root() {
   };
 
   const dismissBrief = () => {
+    // Brief → Contrat pédagogique
+    setPhase('contrat');
+  };
+
+  const dismissContrat = () => {
     const ts = Date.now();
     setTimerStart(ts);
     window.LUMIO_SESSION.save(sessionId, { phase: 'desktop', timerStart: ts });
-    // Exposer le timerStart pour desktop.jsx
     window.LUMIO_TIMER_START = ts;
     setPhase('desktop');
   };
@@ -400,6 +537,7 @@ function Root() {
       {phase === 'name' && <NameScreen onConfirm={handleNameConfirm} />}
       {phase === 'desktop' && <window.LumioDesktop onLogout={logout} studentName={studentName} timerStart={timerStart} />}
       {phase === 'brief' && <WelcomeBriefCard onClose={dismissBrief} studentName={studentName} />}
+      {phase === 'contrat' && <ContratPedagogique onClose={dismissContrat} studentName={studentName} />}
       {showLogin && phase !== 'name' && <LoginScreen onLogin={handleLogin} studentName={studentName} />}
     </>
   );

@@ -72,6 +72,19 @@ table { border-collapse: collapse; }
 <script type="text/babel" src="app-extras.jsx"></script>
 <script type="text/babel" src="app-livrable.jsx"></script>
 <script type="text/babel" src="app-assistant.jsx"></script>
+<script>
+// ── Export log formateur ──
+window.LUMIO_EXPORT_LOG = function() {
+  const log = window.LUMIO_LOG || {};
+  log.studentName = window.LUMIO_DATA?.student?.name;
+  log.exportedAt = new Date().toISOString();
+  const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lumio_log_${(log.studentName || 'etudiant').replace(/\s+/g, '_')}.json`;
+  a.click();
+};
+</script>
 <script type="text/babel" src="app-trash.jsx"></script>
 <script type="text/babel" src="desktop.jsx"></script>
 <script type="text/babel" src="main.jsx"></script>
