@@ -14,11 +14,11 @@ const APP_META = {
   voice:    { title: 'Mémos vocaux', w:  820, h: 560, icon: 'VoiceIcon' },
   notes:    { title: 'Notes',        w:  960, h: 660, icon: 'NotesIcon' },
   notepad:  { title: 'Bloc-notes',   w:  560, h: 620, icon: 'NotepadIcon' },
-  slack:    { title: 'Slack — Lumio Health', w: 900, h: 520, icon: 'SlackIcon' },
+  slack:    { title: 'Slack — Lumio Health', w: 980, h: 640, icon: 'SlackIcon' },
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
-  livrable: { title: 'Livrable — BC1', w: 920, h: 700, icon: 'LivrableIcon' }
+  livrable: { title: 'Livrable — BC1', w: 920, h: 620, icon: 'LivrableIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -549,17 +549,11 @@ Camille`
       const newZ = zCounter + 1;
       setZCounter(newZ);
       const offset = ws.length * 28;
-      // Viewport constraints: menubar=28px top, dock=76px bottom
-      const vp = { w: window.innerWidth, h: window.innerHeight };
-      const winH = meta.h;
-      const maxY = vp.h - 76 - winH - 8; // 8px breathing room above dock
-      const rawY = 60 + offset;
-      const safeY = Math.max(36, Math.min(rawY, maxY > 36 ? maxY : 36));
       return [
         ...ws.map(w => ({ ...w, focused: false })),
         {
           id, app, props,
-          x: 80 + offset, y: safeY,
+          x: 80 + offset, y: 60 + offset,
           w: meta.w, h: meta.h,
           z: newZ, focused: true, minimized: false, maximized: false
         }
