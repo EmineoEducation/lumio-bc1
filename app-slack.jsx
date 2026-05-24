@@ -187,12 +187,23 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
             `${m.isMe ? 'Lou' : 'Sonia'}: ${m.text}`
           ).join('\n');
           const userPrompt = `${history}\nLou: ${text}\n\nRéponds maintenant en tant que Sonia (2-4 messages courts séparés par ---SPLIT---).`;
-          const response = await window.claude.complete({
-            messages: [
-              { role: 'user', content: userPrompt }
-            ]
+          const resp = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-5',
+              max_tokens: 600,
+              system: SONIA_PROMPT,
+              messages: [{ role: 'user', content: userPrompt }]
+            })
           });
-          const replies = response.split('---SPLIT---').map(s => s.trim()).filter(Boolean);
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error || `HTTP ${resp.status}`);
+          }
+          const data = await resp.json();
+          const raw = data.content?.map(b => b.text || '').join('') || '';
+          const replies = raw.split('---SPLIT---').map(s => s.trim()).filter(Boolean);
           let delay = 800;
           for (const reply of replies) {
             await new Promise(r => setTimeout(r, delay));
@@ -230,21 +241,6 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
   };
 
   const activeMeta = [...channels, ...dms].find(x => x.id === activeId);
-
-  // Build system prompt context
-  React.useEffect(() => {
-    // Inject system prompt — tell window.claude.complete to use it
-    if (window.claude && !window.claude._configured) {
-      const orig = window.claude.complete;
-      window.claude.complete = function(input) {
-        if (typeof input === 'string') {
-          return orig.call(this, { messages: [{ role: 'user', content: input }], system: SONIA_PROMPT });
-        }
-        return orig.call(this, { ...input, system: SONIA_PROMPT });
-      };
-      window.claude._configured = true;
-    }
-  }, []);
 
   return (
     <div style={slackStyles.app}>
