@@ -33,82 +33,6 @@ Format de réponse :
 
 Ne dis JAMAIS "Bonjour Lou" ou "Merci pour ta livraison". Entre direct dans le sujet.`;
 
-// ─── Prompt Camille Ott ──────────────────────────────────────
-const CAMILLE_PROMPT = `Tu es Camille Ott, Responsable partenariats B2B chez Lumio Health depuis 6 ans. Tu es la commerciale historique — tu connais chaque client DRH par leur prénom.
-
-Contexte que tu vis de l'intérieur :
-- Tu gères 180 comptes actifs (pas 230 — tu sais très bien que les 50 autres sont des contacts dormants ou du pipe jamais converti)
-- Depuis début 2026, les clients posent des questions sur la certification MDR en début de réunion — embarassés, mais ils posent
-- Biostream a signé 3 contrats hospitaliers depuis janvier avec son IIa. Tu en as perdu un toi-même en mars
-- Tu penses que Sonia ne mesure pas vraiment la pression terrain. Elle arrive sur des slides, toi tu es dans les rendez-vous
-- Théo refuse de donner un calendrier MDR même en interne. Ça te met en difficulté quand les clients te demandent
-- Tu as des résultats d'une étude qualitative clients (mars 2026) que tu n'as jamais transmis à Sonia — par manque de temps, un peu par lassitude aussi
-- Tu n'es pas contre le pivot B2C mais tu penses qu'on ne peut pas l'assumer sans MDR
-
-Ton style Slack :
-- Ton de collègue, pas de hiérarchie — tu parles à un(e) consultant(e) externe, pas à ta DRH
-- Tu es directe, terrain, parfois un peu fatiguée
-- Tu donnes des exemples concrets, des noms (anonymisés), des chiffres de terrain
-- Tu n'embellies pas la situation
-- Pas de jargon marketing — tu parles RDV, clients, objections, signatures, perdus
-
-Format :
-- 2-3 bulles courtes séparées par "---SPLIT---"
-- Max 150 mots cumulés
-- Termine par une info concrète ou une mise en garde terrain
-
-Ne commence pas par "Bonjour" ou "Salut". Entre directement.`;
-
-// ─── Prompt Yanis Morel ──────────────────────────────────────
-const YANIS_PROMPT = `Tu es Yanis Morel, stagiaire Content Manager chez Lumio Health (stage de fin de Master, 5 mois). Tu as rédigé le rapport de veille concurrentielle que le/la consultant(e) a lu.
-
-Ce que tu sais et ce que tu as fait :
-- Tu as fait de ton mieux mais tu n'as que 5 mois d'expérience professionnelle
-- Tu n'as PAS réussi à obtenir le calendrier MDR de Lumio — Théo a refusé de te répondre malgré deux relances
-- Tu n'as PAS les résultats de l'étude qualitative clients de Camille (elle ne t'a jamais envoyé)
-- Tu as des doutes sur le statut MDR de Withings — l'info sur leur site institutionnel et leur discours commercial se contredisent
-- Sur Apple Health, tu as vu des rumeurs d'un partenariat avec Malakoff Humanis mais tu ne peux pas confirmer
-- Tu es un peu impressionné(e) par la situation — tu réalises que ton rapport est utilisé pour une vraie décision stratégique
-
-Ton style Slack :
-- Tu écris comme un stagiaire sérieux mais pas encore sûr de lui
-- Tu assumes tes lacunes — tu dis "je ne sais pas" quand tu ne sais pas
-- Tu peux donner des précisions sur ta méthode, tes sources, pourquoi tu n'as pas certaines infos
-- Parfois tu as une intuition que tu n'as pas osé mettre dans le rapport
-- Tu n'es pas dans la politique interne — tu es juste honnête
-
-Format :
-- 1-2 bulles courtes séparées par "---SPLIT---"
-- Max 100 mots cumulés
-- Honnête sur les limites de ton travail
-
-Ne commence pas par "Bonjour". Réponds directement à la question.`;
-
-// ─── Prompt Théo Marczak ─────────────────────────────────────
-const THEO_PROMPT = `Tu es Théo Marczak, CEO fondateur de Lumio Health (8 ans). Tu as accepté à contrecœur que Sonia fasse appel à un(e) consultant(e) externe pour ce diagnostic de marque.
-
-Ce que tu penses et vis :
-- Tu as construit Lumio sur la crédibilité B2B, la discrétion, la qualité de la data — pas sur le marketing
-- Le pivot B2C demandé par Northgate Capital te met mal à l'aise : tu penses qu'on va brûler ce qui fait notre valeur
-- La certification MDR est en cours mais le processus est plus long que prévu — l'organisme notifié a fait trois retours. Tu ne veux PAS communiquer de calendrier car tu risques de te tromper et ça créerait des attentes impossibles
-- Tu sais très bien que 230 clients c'est faux. 180 références actives, c'est le chiffre honnête. Tu n'as pas encore forcé Sonia à corriger ça publiquement
-- Tu respectes le travail de Sonia mais tu penses qu'elle sous-estime les risques juridiques d'un positionnement "expert santé" sans certification
-- Tu n'as rien contre ce consultant en particulier — mais tu n'as pas vraiment confiance dans les consultants extérieurs en général
-
-Ton style Slack :
-- Économe en mots — tu n'as pas beaucoup de temps
-- Tu réponds aux questions directement sans fioriture
-- Tu es poli mais pas chaleureux
-- Tu ne te justifies pas excessivement — tu poses les faits
-- Tu peux refuser de répondre à certaines questions si elles touchent à des infos confidentielles (calendrier MDR exact, détails du tour de table)
-
-Format :
-- 1-2 bulles très courtes séparées par "---SPLIT---"
-- Max 80 mots cumulés
-- Factuel, peu d'affect
-
-Ne commence pas par "Bonjour". Sois direct.`;
-
 function SlackApp({ openChannel }) {
   const D = window.LUMIO_DATA;
 
@@ -119,10 +43,9 @@ function SlackApp({ openChannel }) {
     { id: 'design-feed', name: 'design-feed', type: 'channel', members: 8 }
   ];
   const dms = [
-    { id: 'sonia',   name: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', status: 'online' },
-    { id: 'camille', name: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e', status: 'online' },
-    { id: 'theo',    name: 'Théo Marczak',   avatar: 'TM', color: '#5c2d8f', status: 'away'   },
-    { id: 'yanis',   name: 'Yanis Morel',    avatar: 'YM', color: '#5b6b85', status: 'away'   },
+    { id: 'sonia', name: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', status: 'online' },
+    { id: 'camille', name: 'Camille Ott', avatar: 'CO', color: '#0a7a6e', status: 'online' },
+    { id: 'yanis', name: 'Yanis Morel', avatar: 'YM', color: '#5b6b85', status: 'away' }
   ];
 
   // Unread counters in state so they clear on visit
@@ -234,16 +157,7 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
     return () => { window.__onSoniaLivrableReaction = null; };
   }, [chatHistory]);
 
-  // ─── Map personnages → prompts + meta ───────────────────────
-  const AI_DMS = {
-    sonia:   { prompt: SONIA_PROMPT,   from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', typing: 'Sonia est en train d\'écrire…',  maxBubbles: 4 },
-    camille: { prompt: CAMILLE_PROMPT, from: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e', typing: 'Camille est en train d\'écrire…', maxBubbles: 3 },
-    yanis:   { prompt: YANIS_PROMPT,   from: 'Yanis Morel',    avatar: 'YM', color: '#5b6b85', typing: 'Yanis est en train d\'écrire…',   maxBubbles: 2 },
-    theo:    { prompt: THEO_PROMPT,    from: 'Théo Marczak',   avatar: 'TM', color: '#5c2d8f', typing: 'Théo est en train d\'écrire…',    maxBubbles: 2 },
-  };
-
   const isSonia = activeId === 'sonia';
-  const isAiDm = !!AI_DMS[activeId];
   const messages = chatHistory[activeId] || [];
 
   const [exchangeCount, setExchangeCountLocal] = useSlackState(0);
@@ -254,79 +168,65 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
     setDraft('');
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    const studentName = window.LUMIO_DATA?.student?.name || 'Lou Bertrand';
-    const userMsg = { from: studentName, avatar: window.LUMIO_DATA?.student?.initial || 'LB', color: '#1a2436', time, text, isMe: true };
-    setChatHistory(h => ({ ...h, [activeId]: [...(h[activeId] || []), userMsg] }));
+    const userMsg = { from: window.LUMIO_DATA?.student?.name || "Lou Bertrand", avatar: window.LUMIO_DATA?.student?.initial || "LB", color: '#1a2436', time, text, isMe: true };
+    setChatHistory(h => ({ ...h, [activeId]: [...(h[activeId]||[]), userMsg] }));
 
-    // Compteur Sonia → déverrouille livrable
     if (isSonia) {
+      // Incrémenter le compteur d'échanges
       const newCount = exchangeCount + 1;
       setExchangeCountLocal(newCount);
       if (window.__onSlackExchange) window.__onSlackExchange(newCount);
       if (window.__onSlackSent) window.__onSlackSent();
-    }
 
-    if (!isAiDm) return; // canaux statiques — pas de réponse IA
-
-    const meta = AI_DMS[activeId];
-    const channelId = activeId;
-
-    setSending(true);
-    setTimeout(async () => {
-      try {
-        // Construire l'historique de la conversation
-        const history = (chatHistory[channelId] || [])
-          .filter(m => !m.typing)
-          .map(m => `${m.isMe ? studentName.split(' ')[0] : m.from.split(' ')[0]}: ${m.text}`)
-          .join('\n');
-
-        const userPrompt = `${history}\n${studentName.split(' ')[0]}: ${text}\n\nRéponds maintenant en tant que ${meta.from.split(' ')[0]} (bulles courtes séparées par ---SPLIT---).`;
-
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 350,
-            system: meta.prompt,
-            messages: [{ role: 'user', content: userPrompt }]
-          })
-        });
-        const data = await resp.json();
-        const raw = data.content?.map(b => b.text || '').join('') || '…';
-        const bubbles = raw.split('---SPLIT---').map(s => s.trim()).filter(Boolean).slice(0, meta.maxBubbles);
-
-        let delay = 700;
-        for (const bubble of bubbles) {
-          await new Promise(r => setTimeout(r, delay));
-          const t = new Date();
-          const tt = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+      setSending(true);
+      // Show typing indicator
+      setTimeout(async () => {
+        try {
+          // Build context with prior history
+          const history = (chatHistory.sonia || []).filter(m => !m.typing).map(m =>
+            `${m.isMe ? 'Lou' : 'Sonia'}: ${m.text}`
+          ).join('\n');
+          const userPrompt = `${history}\nLou: ${text}\n\nRéponds maintenant en tant que Sonia (2-4 messages courts séparés par ---SPLIT---).`;
+          const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 400,
+              system: SONIA_PROMPT,
+              messages: [{ role: 'user', content: userPrompt }]
+            })
+          });
+          const data = await resp.json();
+          const raw = data.content?.map(b => b.text || '').join('') || '';
+          const replies = raw.split('---SPLIT---').map(s => s.trim()).filter(Boolean);
+          let delay = 800;
+          for (const reply of replies) {
+            await new Promise(r => setTimeout(r, delay));
+            const t = new Date();
+            const tt = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+            setChatHistory(h => ({
+              ...h,
+              sonia: [...h.sonia, { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: tt, text: reply }]
+            }));
+            if (activeIdRef.current !== 'sonia') {
+              setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
+            }
+            delay = 1400 + reply.length * 8;
+          }
+        } catch(e) {
           setChatHistory(h => ({
             ...h,
-            [channelId]: [...(h[channelId] || []), { from: meta.from, avatar: meta.avatar, color: meta.color, time: tt, text: bubble }]
+            sonia: [...h.sonia, { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: 'maintenant', text: 'Désolée je dois sauter dans une réunion. On reprend ça plus tard.' }]
           }));
-          if (activeIdRef.current !== channelId) {
-            setUnreads(u => ({ ...u, [channelId]: (u[channelId] || 0) + 1 }));
+          if (activeIdRef.current !== 'sonia') {
+            setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
           }
-          delay = 1200 + bubble.length * 10;
+        } finally {
+          setSending(false);
         }
-      } catch (e) {
-        const fallbacks = {
-          sonia: 'Désolée je dois sauter dans une réunion. On reprend ça plus tard.',
-          camille: 'Je suis en rendez-vous, je te réponds dès que possible.',
-          yanis: 'Désolé, je suis en réunion d\'équipe. Je te réponds dans l\'heure.',
-          theo: 'Pas disponible. Revenez vers moi via Sonia.',
-        };
-        const t = new Date();
-        const tt = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
-        setChatHistory(h => ({
-          ...h,
-          [channelId]: [...(h[channelId] || []), { from: meta.from, avatar: meta.avatar, color: meta.color, time: tt, text: fallbacks[channelId] || '…' }]
-        }));
-      } finally {
-        setSending(false);
-      }
-    }, 500);
+      }, 600);
+    }
   };
 
   const onKeyDown = (e) => {
@@ -400,14 +300,14 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
           ))}
           {sending && (
             <div style={slackStyles.message}>
-              <div style={{ ...slackStyles.msgAvatar, background: AI_DMS[activeId]?.color || '#c4420f' }}>{AI_DMS[activeId]?.avatar || 'SF'}</div>
+              <div style={{ ...slackStyles.msgAvatar, background: '#c4420f' }}>SF</div>
               <div>
                 <div style={{ display: 'flex', gap: 4, padding: '6px 0' }}>
                   <span style={slackStyles.typeDot} />
                   <span style={{ ...slackStyles.typeDot, animationDelay: '0.15s' }} />
                   <span style={{ ...slackStyles.typeDot, animationDelay: '0.3s' }} />
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{AI_DMS[activeId]?.typing || 'En train d\'écrire…'}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Sonia est en train d'écrire…</div>
               </div>
             </div>
           )}
@@ -418,13 +318,7 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder={
-                activeId === 'sonia'   ? 'Écris à Sonia…  (Entrée pour envoyer)' :
-                activeId === 'camille' ? 'Écris à Camille…' :
-                activeId === 'yanis'   ? 'Pose une question à Yanis sur son rapport…' :
-                activeId === 'theo'    ? 'Écris à Théo… (il répond peu)' :
-                `Message ${activeMeta?.type === 'channel' ? '#' + activeMeta?.name : activeMeta?.name}`
-              }
+              placeholder={isSonia ? 'Écris à Sonia…  (Entrée pour envoyer)' : `Message ${activeMeta?.type === 'channel' ? '#' + activeMeta?.name : activeMeta?.name}`}
               style={slackStyles.textarea}
               rows={2}
             />
@@ -443,12 +337,9 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
               </button>
             </div>
           </div>
-          {isAiDm && messages.filter(m => m.isMe).length === 0 && (
+          {isSonia && messages.filter(m => m.isMe).length === 0 && (
             <div style={{ fontSize: 11, color: 'var(--ink-faint)', textAlign: 'center', marginTop: 8, fontStyle: 'italic' }}>
-              {activeId === 'sonia'   && '💬 Sonia attend ton premier retour. Décris-lui ce que tu as compris du dossier.'}
-              {activeId === 'camille' && '💬 Camille connaît le terrain mieux que quiconque. Pose-lui tes questions sur les clients.'}
-              {activeId === 'yanis'   && '💬 Yanis peut t\'expliquer ses lacunes et sa méthode. Il est honnête sur ses limites.'}
-              {activeId === 'theo'    && '⚠️ Théo répond peu et ne donnera pas le calendrier MDR. Choisis bien ta question.'}
+              💬 Sonia attend ton premier retour. Décris-lui ce que tu as compris du dossier — Sonia te répondra en direct.
             </div>
           )}
         </div>
