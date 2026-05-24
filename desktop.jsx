@@ -14,7 +14,7 @@ const APP_META = {
   voice:    { title: 'Mémos vocaux', w:  820, h: 560, icon: 'VoiceIcon' },
   notes:    { title: 'Notes',        w:  960, h: 660, icon: 'NotesIcon' },
   notepad:  { title: 'Bloc-notes',   w:  560, h: 620, icon: 'NotepadIcon' },
-  slack:    { title: 'Slack — Lumio Health', w: 980, h: 640, icon: 'SlackIcon' },
+  slack:    { title: 'Slack — Lumio Health', w: 980, h: 560, icon: 'SlackIcon' },
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
