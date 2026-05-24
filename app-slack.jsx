@@ -33,6 +33,26 @@ Format de réponse :
 
 Ne dis JAMAIS "Bonjour Lou" ou "Merci pour ta livraison". Entre direct dans le sujet.`;
 
+// ─── Appel API centralisé ─────────────────────────────────────
+async function callClaude({ system, messages, max_tokens = 600 }) {
+  const resp = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens,
+      system,
+      messages,
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.content?.map(b => b.text || '').join('') || '';
+}
+
 function SlackApp({ openChannel }) {
   const D = window.LUMIO_DATA;
 
@@ -48,18 +68,15 @@ function SlackApp({ openChannel }) {
     { id: 'yanis', name: 'Yanis Morel', avatar: 'YM', color: '#5b6b85', status: 'away' }
   ];
 
-  // Unread counters in state so they clear on visit
   const [unreads, setUnreads] = useSlackState({ 'mission-lumio': 1, camille: 2 });
-
   const [activeId, setActiveId] = useSlackState(openChannel || 'sonia');
   const activeIdRef = useSlackRef(openChannel || 'sonia');
   const setActive = (id) => { activeIdRef.current = id; setActiveId(id); };
-  const [chatHistory, setChatHistory] = useSlackState({}); // by channelId
+  const [chatHistory, setChatHistory] = useSlackState({});
   const [draft, setDraft] = useSlackState('');
   const [sending, setSending] = useSlackState(false);
   const scrollRef = useSlackRef(null);
 
-  // Initial messages (only Sonia DM and Camille DM and the channel get content)
   const seed = {
     sonia: [
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: '07:48', text: 'Salut Lou — bien reçu mon mail ?' },
@@ -89,11 +106,8 @@ function SlackApp({ openChannel }) {
     ]
   };
 
-  // Initialize history once
   useSlackEffect(() => {
-    if (Object.keys(chatHistory).length === 0) {
-      setChatHistory(seed);
-    }
+    if (Object.keys(chatHistory).length === 0) setChatHistory(seed);
   }, []);
 
   useSlackEffect(() => {
@@ -104,9 +118,7 @@ function SlackApp({ openChannel }) {
   }, [openChannel]);
 
   useSlackEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [chatHistory, activeId, sending]);
 
   // Réaction de Sonia quand le livrable est soumis
@@ -124,32 +136,21 @@ VEILLE : ${veille.substring(0, 600)}...
 PLATEFORME : ${plateforme.substring(0, 600)}...`;
 
       try {
-        const resp = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 400,
-            messages: [{ role: 'user', content: prompt }]
-          })
+        const reply = await callClaude({
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 400
         });
-        const data = await resp.json();
-        const reply = data.content?.map(b => b.text || '').join('') || '…';
         setChatHistory(h => ({
           ...h,
           sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: reply }]
         }));
-        if (activeIdRef.current !== 'sonia') {
-          setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
-        }
+        if (activeIdRef.current !== 'sonia') setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
       } catch(e) {
         setChatHistory(h => ({
           ...h,
           sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: 'Bien reçu. Je te reviens avant le board.' }]
         }));
-        if (activeIdRef.current !== 'sonia') {
-          setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
-        }
+        if (activeIdRef.current !== 'sonia') setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
       } finally {
         setSending(false);
       }
@@ -159,7 +160,6 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
 
   const isSonia = activeId === 'sonia';
   const messages = chatHistory[activeId] || [];
-
   const [exchangeCount, setExchangeCountLocal] = useSlackState(0);
 
   const sendMessage = async () => {
@@ -168,30 +168,33 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
     setDraft('');
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    const userMsg = { from: window.LUMIO_DATA?.student?.name || "Lou Bertrand", avatar: window.LUMIO_DATA?.student?.initial || "LB", color: '#1a2436', time, text, isMe: true };
-    setChatHistory(h => ({ ...h, [activeId]: [...(h[activeId]||[]), userMsg] }));
+    const userMsg = {
+      from: window.LUMIO_DATA?.student?.name || 'Lou Bertrand',
+      avatar: window.LUMIO_DATA?.student?.initial || 'LB',
+      color: '#1a2436', time, text, isMe: true
+    };
+    setChatHistory(h => ({ ...h, [activeId]: [...(h[activeId] || []), userMsg] }));
 
     if (isSonia) {
-      // Incrémenter le compteur d'échanges
       const newCount = exchangeCount + 1;
       setExchangeCountLocal(newCount);
       if (window.__onSlackExchange) window.__onSlackExchange(newCount);
       if (window.__onSlackSent) window.__onSlackSent();
 
       setSending(true);
-      // Show typing indicator
       setTimeout(async () => {
         try {
-          // Build context with prior history
           const history = (chatHistory.sonia || []).filter(m => !m.typing).map(m =>
             `${m.isMe ? 'Lou' : 'Sonia'}: ${m.text}`
           ).join('\n');
           const userPrompt = `${history}\nLou: ${text}\n\nRéponds maintenant en tant que Sonia (2-4 messages courts séparés par ---SPLIT---).`;
-          const response = await window.claude.complete({
-            messages: [
-              { role: 'user', content: userPrompt }
-            ]
+
+          const response = await callClaude({
+            system: SONIA_PROMPT,
+            messages: [{ role: 'user', content: userPrompt }],
+            max_tokens: 600
           });
+
           const replies = response.split('---SPLIT---').map(s => s.trim()).filter(Boolean);
           let delay = 800;
           for (const reply of replies) {
@@ -200,21 +203,18 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
             const tt = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
             setChatHistory(h => ({
               ...h,
-              sonia: [...h.sonia, { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: tt, text: reply }]
+              sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: tt, text: reply }]
             }));
-            if (activeIdRef.current !== 'sonia') {
-              setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
-            }
+            if (activeIdRef.current !== 'sonia') setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
             delay = 1400 + reply.length * 8;
           }
         } catch(e) {
+          console.error('Sonia error:', e);
           setChatHistory(h => ({
             ...h,
-            sonia: [...h.sonia, { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: 'maintenant', text: 'Désolée je dois sauter dans une réunion. On reprend ça plus tard.' }]
+            sonia: [...(h.sonia || []), { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: 'maintenant', text: 'Désolée je dois sauter dans une réunion. On reprend ça plus tard.' }]
           }));
-          if (activeIdRef.current !== 'sonia') {
-            setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
-          }
+          if (activeIdRef.current !== 'sonia') setUnreads(u => ({ ...u, sonia: (u.sonia || 0) + 1 }));
         } finally {
           setSending(false);
         }
@@ -223,35 +223,17 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
   };
 
   const onKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
   const activeMeta = [...channels, ...dms].find(x => x.id === activeId);
-
-  // Build system prompt context
-  React.useEffect(() => {
-    // Inject system prompt — tell window.claude.complete to use it
-    if (window.claude && !window.claude._configured) {
-      const orig = window.claude.complete;
-      window.claude.complete = function(input) {
-        if (typeof input === 'string') {
-          return orig.call(this, { messages: [{ role: 'user', content: input }], system: SONIA_PROMPT });
-        }
-        return orig.call(this, { ...input, system: SONIA_PROMPT });
-      };
-      window.claude._configured = true;
-    }
-  }, []);
 
   return (
     <div style={slackStyles.app}>
       <div style={slackStyles.sidebar} className="scroll">
         <div style={slackStyles.workspace}>
           <div style={{ fontSize: 14, fontWeight: 700 }}>Lumio Health</div>
-          <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>{`● ${window.LUMIO_DATA?.student?.name || "Lou Bertrand"} · invité`}</div>
+          <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>{`● ${window.LUMIO_DATA?.student?.name || 'Lou Bertrand'} · invité`}</div>
         </div>
         <div style={slackStyles.section}>
           <div style={slackStyles.sectionTitle}>▼ Canaux</div>
@@ -362,23 +344,17 @@ const slackStyles = {
   workspace: { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' },
   section: { padding: '12px 0' },
   sectionTitle: { padding: '4px 16px', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.02em' },
-  item: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '4px 16px', fontSize: 13.5,
-    cursor: 'pointer'
-  },
+  item: { display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px', fontSize: 13.5, cursor: 'pointer' },
   itemActive: { background: '#1164a3', color: 'white' },
   itemUnread: { fontWeight: 700, color: 'white' },
   statusDot: { width: 8, height: 8, borderRadius: '50%' },
   badge: { marginLeft: 'auto', background: '#cd2553', color: 'white', fontSize: 10, fontWeight: 700, padding: '0 6px', borderRadius: 9, minWidth: 16, textAlign: 'center', height: 16, lineHeight: '16px' },
-
   main: { flex: 1, display: 'flex', flexDirection: 'column', background: 'white', minWidth: 0, overflow: 'hidden' },
   chatHead: { padding: '10px 20px', borderBottom: '1px solid var(--rule)', flexShrink: 0 },
   chatBody: { flex: 1, padding: '12px 0', overflowY: 'auto', minHeight: 0 },
   message: { display: 'flex', gap: 12, padding: '6px 20px', alignItems: 'flex-start' },
   msgAvatar: { width: 32, height: 32, borderRadius: 4, color: 'white', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   typeDot: { width: 6, height: 6, borderRadius: '50%', background: '#9a9ea8', display: 'inline-block', animation: 'typedot 1.2s infinite' },
-
   composer: { padding: '0 20px 12px', flexShrink: 0 },
   composerInner: { border: '1px solid rgba(20,24,36,0.18)', borderRadius: 8, background: 'white' },
   textarea: { width: '100%', border: 'none', outline: 'none', padding: '10px 14px', fontSize: 14, fontFamily: 'inherit', resize: 'none', color: 'var(--ink)' },
@@ -387,11 +363,8 @@ const slackStyles = {
   sendBtnDisabled: { background: 'rgba(20,24,36,0.1)', color: 'var(--ink-faint)', cursor: 'not-allowed' }
 };
 
-// Typing animation keyframes
 const slackKeyframes = document.createElement('style');
-slackKeyframes.textContent = `
-@keyframes typedot { 0%,60%,100% { opacity: 0.2; } 30% { opacity: 1; } }
-`;
+slackKeyframes.textContent = `@keyframes typedot { 0%,60%,100% { opacity: 0.2; } 30% { opacity: 1; } }`;
 document.head.appendChild(slackKeyframes);
 
 window.LUMIO_APPS = window.LUMIO_APPS || {};
