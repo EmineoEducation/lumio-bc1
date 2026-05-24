@@ -14,7 +14,7 @@ const APP_META = {
   voice:    { title: 'Mémos vocaux', w:  820, h: 560, icon: 'VoiceIcon' },
   notes:    { title: 'Notes',        w:  960, h: 660, icon: 'NotesIcon' },
   notepad:  { title: 'Bloc-notes',   w:  560, h: 620, icon: 'NotepadIcon' },
-  slack:    { title: 'Slack — Lumio Health', w: 980, h: 640, icon: 'SlackIcon' },
+  slack:    { title: 'Slack — Lumio Health', w: 900, h: 520, icon: 'SlackIcon' },
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
@@ -404,134 +404,14 @@ function NotificationStack({ notifications, onDismiss, onClick }) {
   );
 }
 
-// ═════ Barre Compétences ════════════════════════════════════
-function BarreCompetences({ livrableAnswers, currentAct }) {
-  const [collapsed, setCollapsed] = useWmState(false);
-  const cfg = window.PASS_CONFIG;
-  if (!cfg) return null;
-
-  const wc = (txt) => (txt || '').trim() ? (txt || '').trim().split(/\s+/).length : 0;
-
-  const getStatus = (c) => {
-    const words = wc(livrableAnswers?.[c.code] || '');
-    if (words === 0) return 'vide';
-    if (words < c.min) return 'encours';
-    return 'ok';
-  };
-
-  const statusColor = { vide: '#d1cec8', encours: '#c4420f', ok: '#1a6641' };
-  const statusLabel = { vide: '○', encours: '◑', ok: '●' };
-
-  const tempsActuel = cfg.temps[Math.min(currentAct - 1, 2)];
-
-  return (
-    <div style={{
-      position: 'fixed', right: 0, top: 28, zIndex: 8000,
-      width: collapsed ? 32 : 200,
-      background: 'rgba(26,36,54,0.92)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      borderRadius: '8px 0 0 8px',
-      border: '1px solid rgba(255,255,255,0.1)',
-      borderRight: 'none',
-      transition: 'width 0.25s ease',
-      overflow: 'hidden'
-    }}>
-      {/* Toggle */}
-      <button
-        onClick={() => setCollapsed(c => !c)}
-        style={{
-          width: '100%', padding: '8px', background: 'transparent', border: 'none',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,0.08)'
-        }}
-      >
-        {!collapsed && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Compétences</span>}
-        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{collapsed ? '◀' : '▶'}</span>
-      </button>
-
-      {!collapsed && (
-        <>
-          {/* Temps actuel */}
-          <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginBottom: 3 }}>TEMPS {tempsActuel?.n}</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: tempsActuel?.couleur || 'white', lineHeight: 1.3 }}>{tempsActuel?.label}</div>
-          </div>
-
-          {/* Compétences */}
-          <div style={{ padding: '8px 0' }}>
-            {cfg.competences.map(c => {
-              const status = getStatus(c);
-              const words = wc(livrableAnswers?.[c.code] || '');
-              return (
-                <div key={c.code} style={{ padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 10, color: statusColor[status], minWidth: 10 }}>{statusLabel[status]}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: status === 'ok' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)' }}>{c.code} · {c.libelle}</div>
-                    {words > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: statusColor[status], marginTop: 1 }}>{words}/{c.min}</div>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Indicateur global */}
-          <div style={{ padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            {(() => {
-              const total = cfg.competences.length;
-              const done = cfg.competences.filter(c => getStatus(c) === 'ok').length;
-              const pct = Math.round((done / total) * 100);
-              return (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em' }}>DOSSIER</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: pct === 100 ? '#34c84a' : 'rgba(255,255,255,0.5)' }}>{pct}%</span>
-                  </div>
-                  <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: pct === 100 ? '#34c84a' : '#c4420f', transition: 'width 0.3s ease', borderRadius: 2 }} />
-                  </div>
-                  <div style={{ marginTop: 5, fontSize: 9, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>
-                    {pct === 0 ? 'En friche' : pct < 50 ? 'En cours' : pct < 100 ? 'Avancé' : 'Prêt à soumettre'}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+// ═════ DESKTOP — top-level orchestrator ════════════════════
 function Desktop({ onLogout }) {
   const [windows, setWindows] = useWmState([]);
   const [zCounter, setZCounter] = useWmState(100);
   const [notifications, setNotifications] = useWmState([]);
   const [exchangeCount, setExchangeCount] = useWmState(0);
   const [livrableUnlocked, setLivrableUnlocked] = useWmState(false);
-  const [currentAct, setCurrentAct] = useWmState(1);
-  const [livrableAnswers, setLivrableAnswers] = useWmState({});
   const notifSeqRef = useWmRef(0);
-
-  // Recalcul de l'acte courant toutes les 30 secondes
-  useWmEffect(() => {
-    const getAct = () => {
-      if (!window.LUMIO_TIMER_START) return 1;
-      const min = Math.floor((Date.now() - window.LUMIO_TIMER_START) / 60000);
-      if (min < 20) return 1;
-      if (min < 50) return 2;
-      if (min < 95) return 3;
-      if (min < 175) return 4;
-      return 5;
-    };
-    setCurrentAct(getAct());
-    const interval = setInterval(() => setCurrentAct(getAct()), 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Callback pour LivrableApp — met à jour les réponses en temps réel
-  useWmEffect(() => {
-    window.__onLivrableChange = (answers) => setLivrableAnswers({ ...answers });
-  }, []);
 
   // Expose pour que SlackApp puisse incrémenter
   useWmEffect(() => {
@@ -669,11 +549,17 @@ Camille`
       const newZ = zCounter + 1;
       setZCounter(newZ);
       const offset = ws.length * 28;
+      // Viewport constraints: menubar=28px top, dock=76px bottom
+      const vp = { w: window.innerWidth, h: window.innerHeight };
+      const winH = meta.h;
+      const maxY = vp.h - 76 - winH - 8; // 8px breathing room above dock
+      const rawY = 60 + offset;
+      const safeY = Math.max(36, Math.min(rawY, maxY > 36 ? maxY : 36));
       return [
         ...ws.map(w => ({ ...w, focused: false })),
         {
           id, app, props,
-          x: 80 + offset, y: 60 + offset,
+          x: 80 + offset, y: safeY,
           w: meta.w, h: meta.h,
           z: newZ, focused: true, minimized: false, maximized: false
         }
@@ -773,30 +659,12 @@ Camille`
       // 20 min — livrable débloqué mais pas ouvert
       { delay: 20 * 60 * 1000, key: 'ctx_livrable', cond: () => livrableUnlocked && !openedApps.has('livrable'),
         tip: { title: 'Le livrable t\'attend', body: 'L\'app Livrable rebondit dans le dock. Tu as assez d\'éléments pour commencer à rédiger.', click: { app: 'livrable', props: {} } } },
-      // T2 (75 min) — recentrage Sonia sur les contradictions
-      { delay: 75 * 60 * 1000, key: 'ctx_t2_start', cond: () => true,
-        tip: { title: 'Sonia · Temps 2', body: 'Avant de formaliser ta plateforme, assure-toi d\'avoir clarifié les chiffres clients, la certif MDR et le budget.', click: { app: 'slack', props: {} } } },
-      // T3 (150 min) — focus livrable
-      { delay: 150 * 60 * 1000, key: 'ctx_t3_start', cond: () => true,
-        tip: { title: 'Temps 3 — Production', body: 'Il reste 60 min. C.5 et C.6 sont les plus longues. Concentre-toi sur le livrable — les documents sont là si tu en as besoin.', click: { app: 'livrable', props: {} } } },
-      // Alerte 30 min avant fin
-      { delay: 180 * 60 * 1000, key: 'ctx_t3_urgence', cond: () => true,
-        tip: { title: '⏱ 30 minutes restantes', body: 'Soumets le livrable avant la deadline. Mieux vaut une version incomplète soumise qu\'une version parfaite non remise.', click: { app: 'livrable', props: {} } } },
     ];
 
     const timers = checks.map(c =>
       setTimeout(() => { if (c.cond()) pushTip(c.key, c.tip); }, c.delay)
     );
-
-    // Log formateur — tracker les apps ouvertes
-    const logInterval = setInterval(() => {
-      window.LUMIO_LOG = window.LUMIO_LOG || {};
-      window.LUMIO_LOG.appsOpened = [...openedApps];
-      window.LUMIO_LOG.slackSent = slackMessageSent.v;
-      window.LUMIO_LOG.elapsedMin = window.LUMIO_TIMER_START ? Math.floor((Date.now() - window.LUMIO_TIMER_START) / 60000) : 0;
-    }, 60000);
-
-    return () => { timers.forEach(clearTimeout); clearInterval(logInterval); };
+    return () => timers.forEach(clearTimeout);
   }, [livrableUnlocked]);
 
   // Notification scheduler ambiant (existant, allégé)
@@ -838,17 +706,7 @@ Camille`
             onResize={resizeWin}
           />
         ))}
-        <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} currentAct={currentAct} />
-        <BarreCompetences livrableAnswers={livrableAnswers} currentAct={currentAct} />
-        <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
-        {currentAct >= 4 && (
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 100,
-            background: 'rgba(20,24,36,0.22)',
-            pointerEvents: 'none',
-            animation: 'fadeIn 2s ease'
-          }} />
-        )}
+        <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} />
         <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
         {/* Bouton ? — aide à la demande */}
         <button
