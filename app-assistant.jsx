@@ -160,7 +160,7 @@ function AssistantApp() {
       const studentName = window.LUMIO_DATA?.student?.name || '';
       const elapsed = getElapsedMin();
 
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

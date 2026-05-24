@@ -124,7 +124,7 @@ VEILLE : ${veille.substring(0, 600)}...
 PLATEFORME : ${plateforme.substring(0, 600)}...`;
 
       try {
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        const resp = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -187,7 +187,7 @@ PLATEFORME : ${plateforme.substring(0, 600)}...`;
             `${m.isMe ? 'Lou' : 'Sonia'}: ${m.text}`
           ).join('\n');
           const userPrompt = `${history}\nLou: ${text}\n\nRéponds maintenant en tant que Sonia (2-4 messages courts séparés par ---SPLIT---).`;
-          const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          const resp = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
