@@ -19,7 +19,7 @@ const APP_META = {
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
   livrable:  { title: 'Livrable — BC1',        w: 920, h: 620, icon: 'LivrableIcon' },
-  jefferson: { title: 'Jefferson · Guide PAC', w: 480, h: 560, icon: 'JeffersonIcon' }
+  jefferson: { title: 'Jefferson · Guide PAC', w: 420, h: 540, icon: 'JeffersonIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -50,6 +50,7 @@ function Win({ win, onFocus, onClose, onMinimize, onMove, onResize }) {
 
   const meta = APP_META[win.app];
   const AppComp = (window.LUMIO_APPS || {})[win.app];
+  const isJefferson = win.app === 'jefferson';
 
   const style = win.maximized ? {
     left: 0, top: 28, width: '100%', height: 'calc(100% - 28px - 76px)'
@@ -60,13 +61,16 @@ function Win({ win, onFocus, onClose, onMinimize, onMove, onResize }) {
   return (
     <div
       onMouseDown={() => onFocus(win.id)}
+      className={isJefferson ? 'jeff-window-enter' : ''}
       style={{
         position: 'absolute',
         ...style,
         background: 'white',
-        borderRadius: 10,
+        borderRadius: isJefferson ? 20 : 10,
         boxShadow: win.focused
-          ? '0 24px 60px rgba(20,24,36,0.32), 0 6px 18px rgba(20,24,36,0.18), 0 0 0 0.5px rgba(20,24,36,0.4)'
+          ? (isJefferson
+              ? '0 30px 60px rgba(11,43,45,0.30), 0 10px 24px rgba(11,43,45,0.18), 0 0 0 0.5px rgba(11,43,45,0.25)'
+              : '0 24px 60px rgba(20,24,36,0.32), 0 6px 18px rgba(20,24,36,0.18), 0 0 0 0.5px rgba(20,24,36,0.4)')
           : '0 10px 24px rgba(20,24,36,0.18), 0 0 0 0.5px rgba(20,24,36,0.3)',
         zIndex: win.z,
         display: win.minimized ? 'none' : 'flex',
@@ -255,6 +259,12 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
           80%{transform:translateY(-2px) scale(1.01)}
         }
         .dock-bounce { animation: dock-bounce 0.9s ease 3; }
+        @keyframes jeff-pop-in {
+          0% { opacity: 0; transform: translate(20px, 20px) scale(0.85); }
+          60% { opacity: 1; transform: translate(-2px, -2px) scale(1.02); }
+          100% { opacity: 1; transform: translate(0, 0) scale(1); }
+        }
+        .jeff-window-enter { animation: jeff-pop-in 380ms cubic-bezier(.34,1.56,.64,1); transform-origin: bottom right; }
       `;
       document.head.appendChild(s);
     }
@@ -659,12 +669,28 @@ Camille`
       const id = `w_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
       const newZ = zCounter + 1;
       setZCounter(newZ);
-      const offset = ws.length * 28;
+
+      // Jefferson = compagnon : toujours en bas-droite, hors du dock central
+      // Les autres apps : cascade habituelle 80,60 + offset
+      let initialX, initialY;
+      if (app === 'jefferson') {
+        const vw = window.innerWidth || 1280;
+        const vh = window.innerHeight || 800;
+        const margin = 20;
+        const dockClearance = 90; // hauteur dock + marge
+        initialX = Math.max(margin, vw - meta.w - margin);
+        initialY = Math.max(60, vh - meta.h - dockClearance);
+      } else {
+        const offset = ws.length * 28;
+        initialX = 80 + offset;
+        initialY = 60 + offset;
+      }
+
       return [
         ...ws.map(w => ({ ...w, focused: false })),
         {
           id, app, props,
-          x: 80 + offset, y: 60 + offset,
+          x: initialX, y: initialY,
           w: meta.w, h: meta.h,
           z: newZ, focused: true, minimized: false, maximized: false
         }

@@ -118,17 +118,17 @@ function JeffersonApp() {
 
       // Timer non démarré : expliquer à l'étudiant
       if (!window.LUMIO_TIMER_START) {
-        setMessages([{ role: 'assistant', text: `Bonjour. Je suis Jefferson — votre guide PAC.\n\nLe timer n'a pas encore démarré. Cliquez sur "Commencer l'affaire" dans le brief pour lancer la session. Je serai là dès que vous entrez sur le bureau.`, time: now() }]);
+        setMessages([{ role: 'assistant', text: `Salut ! Moi c'est Jefferson — je serai à vos côtés pendant toute la session.\n\nLe timer n'a pas encore démarré. Cliquez sur "Commencer l'affaire" dans le brief pour lancer la session — je vous retrouve dès que vous arrivez sur le bureau.`, time: now() }]);
         return;
       }
 
       const phase = getPhaseIndex(elapsed);
       const welcomeTexts = [
-        `Bonjour ${prenom}. Je suis Jefferson — votre guide.\n\nCommencez par ouvrir Mail. La lettre de mission de Sonia Ferracci est là. Lisez-la entièrement avant de faire quoi que ce soit d'autre.`,
-        `Vous êtes en Acte 2. Avez-vous lu le rapport de veille dans Aperçu PDF ? Et les mémos vocaux de Camille Ott ?\n\nSi oui : construisez votre hypothèse sur la tension B2B/B2C. Si non : faites-le maintenant.`,
-        `Acte 3 — il faut envoyer votre diagnostic à Sonia sur Slack.\n\nOuvrez Slack. Écrivez-lui votre position sur l'identité de marque Lumio. Soyez direct, même si ce n'est pas parfait.`,
-        `Acte 4 — le livrable vous attend.\n\nOuvrez l'app Livrable dans le dock. Remplissez les sections dans l'ordre. Chaque champ = une compétence RNCP évaluée.`,
-        `Acte 5 — relecture et soumission.\n\nRetournez dans Livrable. Relisez vos réponses. Appuyez sur Soumettre.`
+        `Salut ${prenom} ! Moi c'est Jefferson, je suis là pour vous accompagner tout au long du PAC. 🐰\n\nOn commence par ouvrir Mail — la lettre de mission de Sonia Ferracci vous y attend. Lisez-la entièrement avant de plonger dans le reste, je reste à côté si besoin.`,
+        `Bien, vous voilà en Acte 2 — on avance ensemble.\n\nAvez-vous lu le rapport de veille dans Aperçu PDF, et écouté les mémos vocaux de Camille Ott ? Si oui : construisez votre hypothèse sur la tension B2B/B2C. Si non : on s'en occupe maintenant.`,
+        `Acte 3 — c'est le moment d'envoyer votre diagnostic à Sonia sur Slack.\n\nOuvrez Slack et écrivez-lui votre position sur l'identité de marque Lumio. Soyez direct, même si ce n'est pas parfait — je reste là si vous avez un doute.`,
+        `Acte 4 — le livrable vous attend, on y va.\n\nOuvrez l'app Livrable dans le dock. Remplissez les sections dans l'ordre. Chaque champ = une compétence RNCP évaluée. Je vous guide si vous bloquez.`,
+        `Acte 5 — dernière ligne droite, relecture et soumission.\n\nRetournez dans Livrable. Relisez vos réponses tranquillement. Appuyez sur Soumettre quand c'est bon.`
       ];
       setMessages([{ role: 'assistant', text: welcomeTexts[phase], time: now() }]);
     }
@@ -216,10 +216,10 @@ function JeffersonApp() {
       {/* Header Éminéo */}
       <div style={{ padding: '14px 16px 12px', background: C.abysse, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          {/* Avatar Jefferson */}
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: '#E3FFF0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+          {/* Avatar Jefferson — cercle plein, plus compagnon */}
+          <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#E3FFF0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', boxShadow: '0 2px 6px rgba(11,43,45,0.18), inset 0 0 0 2px rgba(255,255,255,0.4)' }}>
             {window.JeffersonIcon
-              ? React.createElement(window.JeffersonIcon, { size: 36, state: isUrgent ? 'alert' : 'idle' })
+              ? React.createElement(window.JeffersonIcon, { size: 42, state: isUrgent ? 'alert' : 'idle' })
               : <span style={{ fontSize: 18 }}>🐰</span>
             }
           </div>
@@ -265,9 +265,9 @@ function JeffersonApp() {
         {messages.map((m, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
             {m.role === 'assistant' && (
-              <div style={{ width: 24, height: 24, borderRadius: 6, background: C.abysse, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2, overflow: 'hidden' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.givre, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2, overflow: 'hidden', boxShadow: '0 1px 3px rgba(11,43,45,0.12)' }}>
                 {window.JeffersonIcon
-                  ? React.createElement(window.JeffersonIcon, { size: 22, state: 'idle' })
+                  ? React.createElement(window.JeffersonIcon, { size: 28, state: 'idle' })
                   : <span style={{ fontSize: 11 }}>🐰</span>
                 }
               </div>
@@ -276,8 +276,8 @@ function JeffersonApp() {
               maxWidth: '80%',
               background: m.role === 'user' ? C.abysse : 'white',
               color: m.role === 'user' ? 'white' : C.abysse,
-              borderRadius: m.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
-              padding: '9px 12px', fontSize: 13, lineHeight: 1.6,
+              borderRadius: m.role === 'user' ? '18px 18px 6px 18px' : '18px 18px 18px 6px',
+              padding: '10px 14px', fontSize: 13, lineHeight: 1.6,
               boxShadow: '0 1px 4px rgba(11,43,45,0.08)',
               border: m.role === 'assistant' ? `1px solid rgba(93,226,152,0.2)` : 'none',
               whiteSpace: 'pre-wrap'
@@ -289,10 +289,10 @@ function JeffersonApp() {
         ))}
         {sending && (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
-            <div style={{ width: 24, height: 24, borderRadius: 6, background: C.abysse, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {window.JeffersonIcon ? React.createElement(window.JeffersonIcon, { size: 22, state: 'talking' }) : <span style={{ fontSize: 11 }}>🐰</span>}
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.givre, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 1px 3px rgba(11,43,45,0.12)' }}>
+              {window.JeffersonIcon ? React.createElement(window.JeffersonIcon, { size: 28, state: 'talking' }) : <span style={{ fontSize: 11 }}>🐰</span>}
             </div>
-            <div style={{ background: 'white', borderRadius: '12px 12px 12px 3px', padding: '10px 14px', border: `1px solid rgba(93,226,152,0.2)`, display: 'flex', gap: 4 }}>
+            <div style={{ background: 'white', borderRadius: '18px 18px 18px 6px', padding: '10px 14px', border: `1px solid rgba(93,226,152,0.2)`, display: 'flex', gap: 4 }}>
               {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: C.petrole, animation: 'typedot 1.2s ease-in-out infinite', animationDelay: `${i*0.2}s` }} />)}
             </div>
           </div>
