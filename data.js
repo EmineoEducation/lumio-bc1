@@ -4,10 +4,11 @@
 
 window.LUMIO_DATA = {
   student: {
-    name: "Lou Bertrand",
+    name: "",
     role: "Consultant·e externe — Brand Audit",
-    email: "lou.bertrand@consult.fr",
-    company: "Indépendant·e"
+    email: "",
+    company: "Indépendant·e",
+    initial: "?"
   },
   ceoEmail: {
     from: "Théo Marczak <theo@lumio-health.com>",
@@ -33,10 +34,10 @@ T.`
   },
   briefEmail: {
     from: "Sonia Ferracci <sonia@lumio-health.com>",
-    to: "lou.bertrand@consult.fr",
+    to: "{{EMAIL_ETUDIANT}}",
     subject: "Mission de diagnostic de marque — confidentiel",
     date: "3 septembre 2026, 07h42",
-    body: `Lou,
+    body: `{{PRENOM}},
 
 Je vous confie une mission dont j'ai besoin qu'elle soit terminée avant notre réunion de direction du 30 septembre. Je vais être directe sur le contexte, parce que vous ne pourrez pas travailler correctement sans le connaître.
 
@@ -228,7 +229,7 @@ Sonia`
   ],
   slackMessages: {
     initial: [
-      { from: "Sonia Ferracci", time: "07:48", text: "Salut Lou — bien reçu mon mail ? J'ai déposé tous les docs sur ton espace partagé.", read: true },
+      { from: "Sonia Ferracci", time: "07:48", text: "Salut {{PRENOM}} — bien reçu mon mail ? J'ai déposé tous les docs sur ton espace partagé.", read: true },
       { from: "Sonia Ferracci", time: "07:48", text: "Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture.", read: true },
     ],
     delayed: [
@@ -239,121 +240,76 @@ Sonia`
 };
 
 // ══════════════════════════════════════════════════════════════
-//  PASS_CONFIG — Configuration réutilisable BC1 à BC6
-//  Changer de BC = modifier uniquement cet objet
+//  PAC_CONFIG — Configuration du Parcours d'Activation BC1
+//  Remplace window.PASS_CONFIG dans app-livrable et app-assistant
 // ══════════════════════════════════════════════════════════════
 window.PASS_CONFIG = {
   bloc: 'BC1',
-  titre: 'Veille & Positionnement de marque',
-  epreuve: 'E3 — Note de synthèse + Plateforme de marque',
+  epreuve: 'MSMC RNCP 38504 · Bloc 1',
   deadline: '30 septembre 2026 · CODIR 09h00',
-  commanditaire: 'Sonia Ferracci',
-
-  // Les 3 temps de la séance (en minutes depuis le début)
-  temps: [
-    { n: 1, label: 'Exploration', debut: 0,   fin: 75,  couleur: '#1b4f8a',
-      objectif: 'Comprendre le contexte, identifier les acteurs et les enjeux clés',
-      todoSuggere: ['Lire la lettre de mission (Mail)', 'Lire le mail confidentiel du CEO (Mail)', 'Consulter le rapport de veille de Yanis (Aperçu)', 'Écouter les verbatims de Camille (Mémos vocaux)', 'Parcourir les articles de presse (Safari)'] },
-    { n: 2, label: 'Structuration', debut: 75,  fin: 150, couleur: '#1a6641',
-      objectif: 'Prendre position, structurer l\'analyse, commencer C.1 à C.4',
-      todoSuggere: ['Partager une première hypothèse à Sonia (Slack)', 'Remplir C.1 Veille et C.2 Signaux dans le Livrable', 'Traiter les contradictions (230 vs 180 clients, budget, MDR)', 'Construire le diagnostic C.3 et C.4'] },
-    { n: 3, label: 'Production', debut: 150, fin: 210, couleur: '#c4420f',
-      objectif: 'Finaliser C.5 et C.6, soumettre le livrable avant la deadline',
-      todoSuggere: ['Finaliser le positionnement C.5 (identité, tension B2B/B2C)', 'Formaliser la plateforme de marque C.6', 'Vérifier les minimums de mots', 'Envoyer à Sonia'] },
-  ],
-
-  // Compétences RNCP avec mots-clés attendus pour le feedback qualitatif
+  dureeMin: 210,
   competences: [
-    { code: 'C.1', label: 'Organiser une veille stratégique',
-      libelle: 'Veille',
-      rncp: 'Identifier et mobiliser des sources pertinentes (réglementaires, concurrentielles, sociocomportementales). Structurer la collecte et en assurer la traçabilité.',
-      placeholder: 'Quelles sources as-tu mobilisées ? Comment as-tu organisé ta veille sur l\'environnement Lumio ?',
-      min: 80,
-      motsCles: ['MDR', 'Biostream', 'Neuroflow', 'réglementaire', 'concurrentiel', 'sociocomportemental', 'sources'],
-      conseil: 'Cite tes sources explicitement (Les Échos, HBR, verbatims Camille…) et classe-les par catégorie.' },
-    { code: 'C.2', label: 'Qualifier les signaux : opportunité ou risque',
-      libelle: 'Signaux',
-      rncp: 'Pour chaque tendance identifiée, argumenter en quoi elle constitue une opportunité ou un risque pour la marque. Hiérarchiser selon l\'impact potentiel.',
-      placeholder: 'Pour chaque tendance repérée, justifie ton évaluation : opportunité ou risque pour Lumio, et pourquoi ?',
-      min: 100,
-      motsCles: ['opportunité', 'risque', 'certification', 'MDR', 'concurrence', 'B2C', 'B2B'],
-      conseil: 'Hiérarchise : quel signal a l\'impact le plus fort à court terme pour Lumio ?' },
-    { code: 'C.3', label: 'Exploiter les données disponibles',
-      libelle: 'Données',
-      rncp: 'Mobiliser les verbatims, benchmarks et données documentaires fournis. Traiter les contradictions entre sources plutôt que les ignorer.',
-      placeholder: 'Quelles données as-tu exploitées ? Comment as-tu traité les éléments contradictoires entre les documents ?',
-      min: 80,
-      motsCles: ['230', '180', '380', '200', 'verbatim', 'Camille', 'contradiction', 'chiffres'],
-      conseil: 'Traite explicitement la contradiction 230 vs 180 clients et le désaccord budgétaire 380K vs 200K.' },
-    { code: 'C.4', label: 'Construire un diagnostic fondé',
-      libelle: 'Diagnostic',
-      rncp: 'Produire une interprétation, pas une liste d\'observations. Mobiliser des outils d\'analyse (SWOT, PESTEL, etc.) et en tirer des conclusions actionnables.',
-      placeholder: 'Quel est ton diagnostic de la situation de Lumio ? Sur quels outils ou raisonnements t\'appuies-tu ?',
-      min: 100,
-      motsCles: ['SWOT', 'PESTEL', 'diagnostic', 'forces', 'faiblesses', 'opportunités', 'menaces', 'pivot'],
-      conseil: 'Un diagnostic sans outil structurant sera perçu comme une liste d\'impressions. SWOT ou PESTEL attendu.' },
-    { code: 'C.5', label: 'Analyser le positionnement et l\'identité de marque',
-      libelle: 'Identité',
-      rncp: 'Identifier l\'écart entre ce que Lumio dit être et ce que ses interlocuteurs perçoivent réellement. Nommer la tension B2B / B2C.',
-      placeholder: 'Comment perçois-tu l\'écart entre l\'identité déclarée de Lumio et la réalité de ses marchés ? Quelle tension identifies-tu ?',
-      min: 80,
-      motsCles: ['tension', 'B2B', 'B2C', 'identité', 'écart', 'perception', 'MDR', 'Northgate'],
-      conseil: 'Nomme la tension centrale : Lumio veut aller B2C mais n\'a pas la MDR pour l\'assumer.' },
-    { code: 'C.6', label: 'Formaliser la plateforme de marque',
-      libelle: 'Plateforme',
-      rncp: 'Proposer un territoire, une proposition de valeur, une personnalité et des engagements cohérents avec le diagnostic — et défendables au regard des contraintes (MDR, budget, cibles).',
-      placeholder: 'Formule ta plateforme de marque pour Lumio : territoire, proposition de valeur, personnalité, engagements. Justifie chaque choix.',
+    {
+      code: 'C.1',
+      label: 'Veille stratégique — tendances de l\'environnement',
+      rncp: 'Identifier et hiérarchiser les tendances de l\'environnement marketing et médiatique susceptibles d\'impacter la stratégie de marque.',
       min: 120,
-      motsCles: ['territoire', 'promesse', 'personnalité', 'engagements', 'cibles', 'valeur'],
-      conseil: 'Structure ta réponse : Territoire / Promesse / Personnalité / Engagements. Chaque élément doit découler du diagnostic.' },
-  ],
-
-  // Fiche identitaire Lumio pour mini-fiche C5/C6 (pré-remplie depuis les docs)
-  ficheIdentitaire: {
-    territoirePropose: '« La santé que les chiffres ne montrent pas encore »',
-    promesse: 'Lumio révèle ce que le corps sait mais que la médecine ne capte pas',
-    ciblesB2B: 'DRH des ETI et grands comptes (>500 salariés), prescripteurs',
-    ciblesB2C: 'Actifs 30-50 ans, urbains, en charge mentale élevée',
-    personnalite: 'Scientifique sans être froide · Rassurante sans être condescendante · Précise sans être technique',
-    engagements: '100% données anonymisées · Jamais revendues · Open data scientifique 5 ans',
-    source: 'Note de cadrage Sonia Ferracci — CODIR 12 juin 2026',
-    tension: 'Ce positionnement suppose la certification MDR IIa — non obtenue, fin Q2 2027 au mieux (email Théo, 14 juin)'
-  },
-
-  // Questions de cadrage forcées C5/C6
-  questionsCadrage: [
-    { id: 'q1', texte: 'Assumer le territoire « santé invisible » malgré l\'absence de certification MDR ?', options: ['Oui, avec un calendrier MDR explicite', 'Non, attendre la MDR avant de lancer', 'Bifurquer vers un territoire moins exposé réglementairement'] },
-    { id: 'q2', texte: 'Quel arbitrage B2B / B2C pour les 36 prochains mois ?', options: ['Consolider le B2B avant tout mouvement B2C', 'Lancer le B2C en parallèle dès l\'obtention MDR', 'Rester B2B et refuser le pivot demandé par le fonds'] },
-  ],
-
-  // Personnages actifs (pour adapter le Slack IA par BC)
-  personnages: {
-    commanditaire: { nom: 'Sonia Ferracci', role: 'Directrice Marketing', avatar: 'SF', couleur: '#c4420f' },
-    terrain: { nom: 'Camille Ott', role: 'Responsable partenariats B2B', avatar: 'CO', couleur: '#0a7a6e' },
-    direction: { nom: 'Théo Marczak', role: 'CEO fondateur', avatar: 'TM', couleur: '#5c2d8f' },
-  },
-
-  // Gabarits outils d'analyse optionnels (C4)
-  gabarits: {
-    SWOT: {
-      label: 'SWOT',
-      structure: [
-        { cle: 'forces', label: 'Forces', placeholder: 'Ex : 8 ans de données propriétaires, 180 clients fidèles, expertise B2B DRH…' },
-        { cle: 'faiblesses', label: 'Faiblesses', placeholder: 'Ex : Absence de certification MDR, tension sur les chiffres, budget contraint…' },
-        { cle: 'opportunites', label: 'Opportunités', placeholder: 'Ex : Marché B2C émergent, méfiance envers wearables grand public, fenêtre avant Apple Health…' },
-        { cle: 'menaces', label: 'Menaces', placeholder: 'Ex : Biostream et Neuroflow certifiés MDR, pression du fonds pour pivot B2C, attaque Biostream comparative…' },
-      ]
+      motsCles: ['MDR', 'certification', 'concurrence', 'tendance'],
+      conseil: 'Citez des faits issus des documents (données chiffrées, citations). Ne listez pas — hiérarchisez.',
+      placeholder: 'Identifiez les 3-4 tendances majeures qui pèsent sur Lumio Health. Pour chacune : faits + impact potentiel (opportunité ou risque).'
     },
-    PESTEL: {
-      label: 'PESTEL',
-      structure: [
-        { cle: 'politique', label: 'Politique', placeholder: 'Réglementation MDR européenne, politique de santé au travail…' },
-        { cle: 'economique', label: 'Économique', placeholder: 'Pression fonds américain, budget contraint, montée en gamme concurrents…' },
-        { cle: 'sociologique', label: 'Sociologique', placeholder: 'Méfiance wearables grand public, DRH et comités éthique, charge mentale urbaine…' },
-        { cle: 'technologique', label: 'Technologique', placeholder: 'Algorithmes IA stress, données propriétaires 8 ans, API recherche…' },
-        { cle: 'environnemental', label: 'Environnemental', placeholder: 'Non directement pertinent pour ce cas — à noter explicitement.' },
-        { cle: 'legal', label: 'Légal', placeholder: 'MDR classe IIa, RGPD données de santé, risque d\'attaque juridique concurrents…' },
-      ]
+    {
+      code: 'C.2',
+      label: 'Diagnostic — forces, faiblesses, opportunités, menaces',
+      rncp: 'Conduire un diagnostic stratégique interne et externe de la marque en s\'appuyant sur des sources documentées.',
+      min: 150,
+      motsCles: ['B2B', 'B2C', 'actif', 'risque', 'Biostream'],
+      conseil: 'Appuyez-vous sur les contradictions entre les documents (230 vs 180 clients, 380K vs 200K€, calendrier MDR).',
+      placeholder: 'Diagnostic de Lumio Health : forces (actifs réels), faiblesses (points de fragilité), opportunités (ce qui est à saisir), menaces (ce qui peut tuer la marque).'
+    },
+    {
+      code: 'C.3',
+      label: 'Identification des tensions et contradictions',
+      rncp: 'Repérer et analyser les tensions stratégiques internes susceptibles de bloquer la cohérence de la plateforme de marque.',
+      min: 100,
+      motsCles: ['tension', 'contradiction', 'MDR', 'budget', 'clients'],
+      conseil: 'Les documents se contredisent : 230 vs 180 clients, budget 380K vs 200K€, MDR "en cours" vs "fin Q2 2027". Ce sont des matériaux, pas des bugs.',
+      placeholder: 'Quelles contradictions avez-vous identifiées dans les documents ? Quelle est leur impact sur la cohérence de la marque ?'
+    },
+    {
+      code: 'C.4',
+      label: 'Recommandation stratégique',
+      rncp: 'Formuler une recommandation de positionnement argumentée, réaliste et hiérarchisée, adaptée aux contraintes internes et à la pression concurrentielle.',
+      min: 150,
+      motsCles: ['positionnement', 'recommandation', 'priorité', 'arbitrage'],
+      conseil: 'Votre recommandation doit être défendable face à Théo ET face à Sonia. Elle doit tenir compte du calendrier MDR réel.',
+      placeholder: 'Votre recommandation : quel positionnement, pour quelle cible prioritaire, avec quelles conditions de réussite ?',
+      gabarits: null
+    },
+    {
+      code: 'C.5',
+      label: 'Plateforme de marque — territoire et promesse',
+      rncp: 'Co-construire une plateforme de marque cohérente : territoire, promesse, personnalité, engagements.',
+      min: 150,
+      motsCles: ['territoire', 'promesse', 'personnalité', 'engagement'],
+      conseil: 'La plateforme doit être utilisable comme boussole par les équipes. Évitez le jargon — chaque mot doit être défendable en CODIR.',
+      placeholder: 'Territoire · Promesse · Personnalité · Engagements. Soyez précis — ce document sera soumis au board.'
+    },
+    {
+      code: 'C.6',
+      label: 'Prise de position — arbitrage et limites',
+      rncp: 'Identifier les limites de la plateforme proposée et formuler les conditions de sa mise en œuvre.',
+      min: 100,
+      motsCles: ['limite', 'condition', 'risque', 'arbitrage', 'MDR'],
+      conseil: 'Une bonne plateforme de marque sait ce qu\'elle ne peut pas promettre. Nommez explicitement les conditions qui doivent être remplies.',
+      placeholder: 'Quelles sont les limites de votre recommandation ? Quelles conditions doivent être remplies pour qu\'elle tienne ?'
     }
+  ],
+  // Grille d'évaluation pour le portfolio — niveaux RNCP
+  grilleEvaluation: {
+    niveaux: ['Maximale', 'Haute', 'Moyenne', 'Insuffisante'],
+    acquis: ['Maximale', 'Haute', 'Moyenne'] // tout sauf Insuffisante = acquis
   }
 };
+// Alias pour compatibilité
+window.PAC_CONFIG = window.PASS_CONFIG;
