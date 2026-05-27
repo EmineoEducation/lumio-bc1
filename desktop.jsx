@@ -14,11 +14,12 @@ const APP_META = {
   voice:    { title: 'Mémos vocaux', w:  820, h: 560, icon: 'VoiceIcon' },
   notes:    { title: 'Notes',        w:  960, h: 660, icon: 'NotesIcon' },
   notepad:  { title: 'Bloc-notes',   w:  560, h: 620, icon: 'NotepadIcon' },
-  slack:    { title: 'Slack — Lumio Health', w: 980, h: 560, icon: 'SlackIcon' },
+  slack:    { title: 'Slack — Lumio Health', w: 980, h: 640, icon: 'SlackIcon' },
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
-  livrable: { title: 'Livrable — BC1', w: 920, h: 620, icon: 'LivrableIcon' }
+  livrable:  { title: 'Livrable — BC1',        w: 920, h: 620, icon: 'LivrableIcon' },
+  jefferson: { title: 'Jefferson · Guide PAC', w: 480, h: 560, icon: 'JeffersonIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -126,13 +127,15 @@ const trafficLight = (color) => ({
 // ═════ Menu bar ═════════════════════════════════════════════
 // Temps fictif : 3h30 réelles = 18 jours fictifs (12→30 sept.)
 // Ratio : 1 min réelle = 5.14 min fictives. Départ : sam. 12 sept. 08:14
-const FICTIF_START_REAL = window.LUMIO_TIMER_START || Date.now(); // restauré depuis la session ou nouveau
+// NOTE : pas de const FICTIF_START_REAL au niveau module — on lit window.LUMIO_TIMER_START à chaque appel
 const FICTIF_START_MIN = 12 * 60 + 14; // 08h14 en minutes depuis minuit le 12 sept.
 const RATIO = 18 * 24 * 60 / (3 * 60 + 30); // ~74x (18 jours / 3h30)
 const SEPT_DAYS = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
-// 12 sept. 2026 = mardi → offset 2
+// 12 sept. 2026 = samedi → offset 6
 function getFictifTime() {
-  const realElapsed = (Date.now() - FICTIF_START_REAL) / 60000; // minutes réelles écoulées
+  // Lire window.LUMIO_TIMER_START à chaque appel — jamais stocker en closure de module
+  const startReal = window.LUMIO_TIMER_START || Date.now();
+  const realElapsed = (Date.now() - startReal) / 60000; // minutes réelles écoulées
   const fictifElapsed = realElapsed * RATIO; // minutes fictives
   const totalMin = FICTIF_START_MIN + fictifElapsed;
   // Calculer le jour (12 + jours écoulés)
@@ -190,7 +193,7 @@ function MenuBar({ activeApp, openLogout }) {
           <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#c4420f', color: 'white', fontSize: 9, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             {window.LUMIO_DATA?.student?.initial || 'L'}
           </span>
-          {window.LUMIO_DATA?.student?.name?.split(' ')[0] || 'Lou'} ▾
+          {window.LUMIO_DATA?.student?.name?.split(' ')[0] || 'Étudiant·e'} ▾
           {showUserMenu && (
             <div style={{
               position: 'absolute', top: 22, right: 0,
@@ -199,7 +202,7 @@ function MenuBar({ activeApp, openLogout }) {
               minWidth: 180, zIndex: 20000, overflow: 'hidden'
             }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--rule)' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{window.LUMIO_DATA?.student?.name || 'Lou Bertrand'}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{window.LUMIO_DATA?.student?.name || 'Étudiant·e'}</div>
                 <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Consultant·e externe</div>
               </div>
               <div
@@ -231,6 +234,7 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
     { id: 'notepad', label: 'Bloc-notes' },
     { id: 'slack', label: 'Slack' },
     { id: 'calendar', label: 'Calendrier' },
+    { id: 'jefferson', label: 'Jefferson' },
     { id: 'trash', label: 'Corbeille' }
   ];
   const items = livrableUnlocked
@@ -404,7 +408,114 @@ function NotificationStack({ notifications, onDismiss, onClick }) {
   );
 }
 
-// ═════ DESKTOP — top-level orchestrator ════════════════════
+// ═════ PAC Timeline — barre de progression 5 actes ══════════
+function PacTimeline() {
+  const [elapsed, setElapsed] = useWmState(0);
+
+  useWmEffect(() => {
+    const tick = () => {
+      if (!window.LUMIO_TIMER_START) { setElapsed(0); return; }
+      setElapsed(Math.floor((Date.now() - window.LUMIO_TIMER_START) / 60000));
+    };
+    tick();
+    const id = setInterval(tick, 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  const ACTES = [
+    { n: 1, label: 'Ancrage',    start: 0,   end: 20  },
+    { n: 2, label: 'Affaire',    start: 20,  end: 50  },
+    { n: 3, label: 'Diagnostic', start: 50,  end: 95  },
+    { n: 4, label: 'Production', start: 95,  end: 175 },
+    { n: 5, label: 'Réflexion',  start: 175, end: 210 }
+  ];
+  const TOTAL = 210;
+  const pct = Math.min(100, (elapsed / TOTAL) * 100);
+  const currentActe = ACTES.find(a => elapsed >= a.start && elapsed < a.end) || ACTES[ACTES.length - 1];
+  const isUrgent = elapsed >= 175;
+  const remaining = Math.max(0, TOTAL - elapsed);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 32, // just below menu bar (28px) + 4px gap
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: 'calc(100% - 320px)', // leave room for dock tooltip areas
+      maxWidth: 860,
+      zIndex: 9990,
+      background: 'rgba(11,43,45,0.88)',
+      backdropFilter: 'blur(18px) saturate(1.4)',
+      WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+      borderRadius: '0 0 12px 12px',
+      border: '1px solid rgba(93,226,152,0.18)',
+      borderTop: 'none',
+      padding: '6px 14px 7px',
+      boxShadow: '0 4px 20px rgba(11,43,45,0.25)'
+    }}>
+      {/* Ligne 1 : actes + timer */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        {ACTES.map(a => {
+          const done = elapsed >= a.end;
+          const active = a.n === currentActe.n;
+          return (
+            <div key={a.n} style={{
+              flex: a.n === 4 ? 2 : 1, // Acte 4 plus large (1h20)
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '3px 7px',
+              borderRadius: 6,
+              background: active ? 'rgba(93,226,152,0.18)' : 'transparent',
+              border: active ? '1px solid rgba(93,226,152,0.35)' : '1px solid transparent',
+              transition: 'all .3s'
+            }}>
+              <div style={{
+                width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                background: done ? '#5DE298' : active ? 'rgba(93,226,152,0.5)' : 'rgba(255,255,255,0.08)',
+                border: active ? '1.5px solid #5DE298' : done ? 'none' : '1px solid rgba(255,255,255,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 8, fontWeight: 700, color: done ? '#0B2B2D' : active ? '#5DE298' : 'rgba(255,255,255,0.3)'
+              }}>
+                {done ? '✓' : a.n}
+              </div>
+              <span style={{
+                fontSize: 9, fontWeight: active ? 700 : 400,
+                color: done ? '#9DF0C4' : active ? '#5DE298' : 'rgba(255,255,255,0.35)',
+                letterSpacing: '0.02em', whiteSpace: 'nowrap'
+              }}>{a.label}</span>
+            </div>
+          );
+        })}
+        {/* Timer */}
+        <div style={{
+          marginLeft: 4, flexShrink: 0,
+          background: isUrgent ? 'rgba(232,155,119,0.2)' : 'rgba(255,255,255,0.06)',
+          border: isUrgent ? '1px solid rgba(232,155,119,0.5)' : '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 6, padding: '2px 8px',
+          fontSize: 10, fontWeight: 700,
+          color: isUrgent ? '#E89B77' : 'rgba(255,255,255,0.55)',
+          fontFamily: 'var(--font-mono, monospace)'
+        }}>
+          {remaining}m
+        </div>
+      </div>
+
+      {/* Ligne 2 : barre de progression */}
+      <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          width: `${pct}%`,
+          background: isUrgent
+            ? 'linear-gradient(90deg, #5DE298, #E89B77)'
+            : 'linear-gradient(90deg, #5DE298, #9DF0C4)',
+          borderRadius: 2,
+          transition: 'width 1s linear'
+        }} />
+      </div>
+    </div>
+  );
+}
+
+
 function Desktop({ onLogout }) {
   const [windows, setWindows] = useWmState([]);
   const [zCounter, setZCounter] = useWmState(100);
@@ -446,7 +557,7 @@ function Desktop({ onLogout }) {
               preview: 'J\'ai une ancienne collègue chez Biostream. Ce qu\'elle m\'a dit sur leur certif…',
               unread: true,
               tags: ['TERRAIN'],
-              body: `Lou,
+              body: `${(window.LUMIO_DATA?.student?.name || '').split(' ')[0] || 'Bonjour'},
 
 Je préfère t'écrire par mail. Je ne suis pas à l'aise pour dire ça sur Slack — Théo lit les canaux.
 
@@ -666,7 +777,8 @@ Camille`
     const events = [
       { t: 12000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'Si tu veux qu\'on se parle dans la semaine, dis-moi 🙃', click: { app: 'slack', props: { openChannel: 'camille' } } } },
       { t: 60000, n: { app: 'Calendrier', icon: '📅', color: '#c4420f', title: 'CODIR de cadrage', body: 'Le 30 sept à 09:00 — dans 18 jours. V1 attendue.', click: { app: 'calendar' } } },
-      { t: 130000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'PS — j\'ai des verbatims clients qui peuvent t\'aider. Audio dispo dans Mémos vocaux.', click: { app: 'voice' } } }
+      { t: 130000, n: { app: 'Slack', icon: 'CO', color: '#0a7a6e', title: 'Camille Ott', body: 'PS — j\'ai des verbatims clients qui peuvent t\'aider. Audio dispo dans Mémos vocaux.', click: { app: 'voice' } } },
+      { t: 20 * 60 * 1000, n: { app: 'Safari', icon: 'LS', color: '#1a1a2e', title: 'Les Stratégies', body: 'Lumio Health : le wearable français coincé entre certification et grand public — un article vient d\'être indexé.', click: { app: 'browser', props: { openTab: 'fausse-une' } } } }
     ];
     const timers = events.map(ev => setTimeout(() => {
       const id = ++notifSeqRef.current;
@@ -701,6 +813,7 @@ Camille`
           />
         ))}
         <Dock openApp={openApp} openWindows={windows} livrableUnlocked={livrableUnlocked} />
+        <PacTimeline />
         <NotificationStack notifications={notifications} onDismiss={dismissNotif} onClick={clickNotif} />
         {/* Bouton ? — aide à la demande */}
         <button

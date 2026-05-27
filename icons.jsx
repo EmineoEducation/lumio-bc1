@@ -175,3 +175,47 @@ window.LivrableIcon = function LivrableIcon({ size = 50 }) {
 
 
 // ══════════════════════════════════════════════════════════════
+
+// ── JeffersonIcon — lapin à montre, compagnon PAC ──
+window.JeffersonIcon = function JeffersonIcon({ size = 50, state = 'idle' }) {
+  const earColor = '#F4C0D1';
+  const bodyFill = state === 'alert' ? '#FFF8F0' : state === 'talking' ? '#F0F8FF' : 'white';
+  const eyeY = state === 'alert' ? 30 : 32;
+  const browVisible = state === 'alert';
+  return (
+    React.createElement('svg', { width: size, height: size, viewBox: '0 0 52 52', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+      React.createElement('rect', { width: 52, height: 52, rx: 12, fill: state === 'alert' ? '#FEF3E2' : state === 'talking' ? '#E8F5FF' : '#F5F3EF' }),
+      React.createElement('ellipse', { cx: 17, cy: 14, rx: 5, ry: 13, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.8 }),
+      React.createElement('ellipse', { cx: 17, cy: 15, rx: 3, ry: 9, fill: earColor }),
+      React.createElement('ellipse', { cx: 35, cy: 14, rx: 5, ry: 13, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.8 }),
+      React.createElement('ellipse', { cx: 35, cy: 15, rx: 3, ry: 9, fill: earColor }),
+      React.createElement('ellipse', { cx: 26, cy: 34, rx: 15, ry: 13, fill: bodyFill, stroke: '#D3D1C7', strokeWidth: 0.8 }),
+      browVisible && React.createElement('path', { d: 'M19 27 Q22 25 25 27', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
+      browVisible && React.createElement('path', { d: 'M27 27 Q30 25 33 27', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
+      React.createElement('ellipse', { cx: 21, cy: eyeY, rx: 3, ry: state === 'alert' ? 2.5 : 3, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
+      React.createElement('ellipse', { cx: 31, cy: eyeY, rx: 3, ry: state === 'alert' ? 2.5 : 3, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
+      React.createElement('circle', { cx: 22, cy: eyeY + 0.5, r: 2, fill: '#2C2C2A' }),
+      React.createElement('circle', { cx: 32, cy: eyeY + 0.5, r: 2, fill: '#2C2C2A' }),
+      React.createElement('circle', { cx: 23, cy: eyeY - 0.5, r: 0.7, fill: 'white' }),
+      React.createElement('circle', { cx: 33, cy: eyeY - 0.5, r: 0.7, fill: 'white' }),
+      React.createElement('ellipse', { cx: 26, cy: eyeY + 6, rx: 2.5, ry: 1.8, fill: '#F4C0D1' }),
+      React.createElement('ellipse', { cx: 16, cy: eyeY + 5, rx: 3, ry: 2, fill: '#F4C0D1', opacity: 0.3 }),
+      React.createElement('ellipse', { cx: 36, cy: eyeY + 5, rx: 3, ry: 2, fill: '#F4C0D1', opacity: 0.3 }),
+      React.createElement('line', { x1: 10, y1: eyeY + 4, x2: 22, y2: eyeY + 5.5, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      React.createElement('line', { x1: 10, y1: eyeY + 7, x2: 22, y2: eyeY + 7, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      React.createElement('line', { x1: 30, y1: eyeY + 5.5, x2: 42, y2: eyeY + 4, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      React.createElement('line', { x1: 30, y1: eyeY + 7, x2: 42, y2: eyeY + 7, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      state === 'talking'
+        ? React.createElement('ellipse', { cx: 26, cy: eyeY + 10, rx: 3, ry: 2, fill: 'none', stroke: '#B4B2A9', strokeWidth: 1 })
+        : state === 'alert'
+        ? React.createElement('ellipse', { cx: 26, cy: eyeY + 10, rx: 2, ry: 1.5, fill: 'none', stroke: '#B4B2A9', strokeWidth: 1 })
+        : React.createElement('path', { d: `M22 ${eyeY + 10} Q26 ${eyeY + 13} 30 ${eyeY + 10}`, fill: 'none', stroke: '#B4B2A9', strokeWidth: 1, strokeLinecap: 'round' }),
+      React.createElement('circle', { cx: 40, cy: 40, r: 7, fill: '#2C2C2A' }),
+      React.createElement('circle', { cx: 40, cy: 40, r: 5, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
+      React.createElement('line', { x1: 40, y1: 40, x2: 40, y2: 36.5, stroke: '#2C2C2A', strokeWidth: 1.2, strokeLinecap: 'round' }),
+      React.createElement('line', { x1: 40, y1: 40, x2: 43, y2: 41.5, stroke: state === 'alert' ? '#E24B4A' : '#2C2C2A', strokeWidth: 1.2, strokeLinecap: 'round' }),
+      React.createElement('circle', { cx: 40, cy: 40, r: 0.8, fill: '#2C2C2A' }),
+      React.createElement('path', { d: 'M40 33.5 Q42 31 44 30', fill: 'none', stroke: '#D3D1C7', strokeWidth: 0.8, strokeLinecap: 'round' })
+    )
+  );
+};

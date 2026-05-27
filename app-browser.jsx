@@ -47,6 +47,16 @@ function BrowserApp({ openTab, openPortrait }) {
       url: 'https://duckduckgo.com/?q=mdr+classe+iia+wearable+santé',
       type: 'search'
     },
+    // Fausse Une — apparaît dès l'Acte 2 (>= 20 min de session)
+    ...((window.LUMIO_TIMER_START && (Date.now() - window.LUMIO_TIMER_START) >= 20 * 60 * 1000) ? [{
+      id: 'fausse-une',
+      favicon: 'LS',
+      faviconColor: '#1a1a2e',
+      host: 'lesstrategies.fr',
+      title: 'Lumio Health : le wearable français coincé entre certification et grand public · Les Stratégies',
+      url: 'https://lesstrategies.fr/medias/lumio-health-wearable-certif-b2b',
+      type: 'fausse-une'
+    }] : []),
     ...(portraitTab ? [portraitTab] : []),
   ];
 
@@ -101,6 +111,7 @@ function BrowserApp({ openTab, openPortrait }) {
         {tab.type === 'corporate' && <CorporateView />}
         {tab.type === 'linkedin' && <LinkedInView />}
         {tab.type === 'search' && <SearchView />}
+        {tab.type === 'fausse-une' && <FausseUneView />}
         {tab.type === 'portrait' && (
           <iframe
             src={tab.file}
@@ -253,6 +264,104 @@ function SearchView() {
           <div style={{ fontSize: 12.5, color: '#444', lineHeight: 1.5 }}>{r.desc}</div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Fausse Une — Les Stratégies · déclenchée à l'Acte 2 ──────
+function FausseUneView() {
+  const C = { dark: '#1a1a2e', accent: '#c4420f', muted: '#5b6473', rule: '#e8e6e0' };
+  return (
+    <div style={{ background: 'white', minHeight: '100%', fontFamily: 'var(--font-sans)' }}>
+
+      {/* Header journal */}
+      <div style={{ borderBottom: `3px solid ${C.dark}`, padding: '12px 0 10px' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ fontSize: 10, color: C.muted, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+            Les Stratégies · Médias & Marketing · Mis à jour le 14 sept. 2026
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', color: C.dark }}>
+            Les Stratégies
+          </div>
+        </div>
+      </div>
+
+      {/* Article */}
+      <div style={{ maxWidth: 780, margin: '0 auto', padding: '28px 24px' }}>
+
+        {/* Rubrique */}
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
+          Healthtech · Stratégie de marque
+        </div>
+
+        {/* Titre */}
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 700, lineHeight: 1.12, color: C.dark, marginBottom: 16 }}>
+          Lumio Health : le wearable français coincé entre certification médicale et virage grand public
+        </h1>
+
+        {/* Chapô */}
+        <p style={{ fontSize: 17, lineHeight: 1.65, color: '#2a3142', fontWeight: 400, marginBottom: 18, borderLeft: `3px solid ${C.accent}`, paddingLeft: 16 }}>
+          Huit ans après sa création, le fabricant parisien de wearables de mesure du stress au travail fait face à un dilemme stratégique rare : ses concurrents viennent d'obtenir la certification MDR IIa qui leur ouvre les portes des grandes structures, tandis que son fonds américain pousse à un pivot B2C risqué. Une identité de marque à reconstruire de toutes pièces.
+        </p>
+
+        {/* Photo fictive */}
+        <div style={{ height: 220, background: `linear-gradient(135deg, #1a2436 0%, #2d4a6e 60%, #3a6b9a 100%)`, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, color: 'white', fontWeight: 200, letterSpacing: '-0.02em' }}>lumio</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 4 }}>health</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: C.muted, fontStyle: 'italic', marginBottom: 24 }}>
+          Le siège de Lumio Health, 11e arrondissement de Paris. © DR
+        </div>
+
+        {/* Corps */}
+        <div style={{ fontSize: 15, lineHeight: 1.8, color: '#1a1a2e' }}>
+          <p><strong>Le 23 janvier 2026, Biostream a publié un communiqué de deux pages.</strong> Classe IIa MDR obtenue, tarifs B2B relevés de 22 %, trois contrats hospitaliers signés en moins de soixante jours. Pour les observateurs du secteur, le message était limpide : la fenêtre se ferme pour ceux qui n'ont pas encore le sésame réglementaire.</p>
+
+          <p>Lumio Health, la pépite parisienne cofondée en 2018 par l'ingénieur Théo Marczak, n'a pas communiqué sur le sujet. Pas de réponse à nos demandes d'interview. Pas de mise à jour sur le site institutionnel. Le seul indice tangible : une offre d'emploi parue en juin pour un « responsable affaires réglementaires MDR », pourvue depuis lors.</p>
+
+          <blockquote style={{ margin: '24px 0', padding: '14px 20px', background: '#f7f4ef', borderLeft: `3px solid ${C.dark}`, fontFamily: 'var(--font-display)', fontSize: 18, fontStyle: 'italic', color: C.dark, lineHeight: 1.5 }}>
+            « Sans certification, vous existez sur le marché grand public, mais vous disparaissez du circuit prescripteur. »
+            <div style={{ fontSize: 12, fontStyle: 'normal', color: C.muted, marginTop: 8, fontFamily: 'var(--font-sans)' }}>Florence Daubray, consultante healthtech, Roland Berger</div>
+          </blockquote>
+
+          <p>C'est dans ce contexte que Sonia Ferracci, recrutée début janvier au poste de Directrice Marketing, doit poser les bases d'un repositionnement de marque. La tâche est double et contradictoire : préserver la confiance des 180 clients DRH historiques — qui posent désormais des questions sur la certification — tout en répondant aux attentes de Northgate Capital, le fonds américain entré au capital en 2025 avec des ambitions grand public en 36 mois.</p>
+
+          <p>Plusieurs sources proches du dossier évoquent une tension sur les chiffres. Le site institutionnel affiche « 230 entreprises clientes ». Nos interlocuteurs parlent plutôt de 180 « références actives » — une distinction qui compte quand on construit une plateforme de marque sur la légitimité terrain.</p>
+
+          <div style={{ background: '#f0f7f4', borderRadius: 8, padding: '16px 20px', margin: '24px 0', border: '1px solid rgba(26,102,65,0.15)' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#1a6641', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>À retenir</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                'Biostream (jan. 2026) et Neuroflow (mars 2026) ont obtenu la certification MDR IIa',
+                'Lumio Health : statut certif non communiqué, recrutement réglementaire en cours',
+                'Pression du fonds Northgate Capital : pivot B2C en 36 mois, objectif 20M€ de CA',
+                '180 références actives (vs 230 "clients" affichés sur le site)'
+              ].map((point, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13 }}>
+                  <span style={{ color: '#1a6641', fontWeight: 700, flexShrink: 0 }}>·</span>
+                  <span style={{ color: '#1a3d28' }}>{point}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p style={{ color: C.muted, fontSize: 13, borderTop: `1px solid ${C.rule}`, paddingTop: 14, marginTop: 24 }}>
+            <em>Lumio Health n'a pas répondu à nos demandes d'interview. Théo Marczak et Sonia Ferracci n'ont pas souhaité commenter.</em>
+          </p>
+        </div>
+
+        {/* Signature */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.rule}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 12, color: C.muted }}>Par <strong>Mathieu Leblanc</strong> · Rédaction Les Stratégies · 14 sept. 2026</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {['Partager', 'Copier', 'S\'abonner'].map(btn => (
+              <div key={btn} style={{ fontSize: 11, color: C.dark, border: `1px solid ${C.rule}`, padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>{btn}</div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
