@@ -51,7 +51,7 @@ function GuideApp() {
   return (
     <div style={G.app}>
       <div style={G.header}>
-        <div style={G.eyebrow}>Guide de mission · BC1 · Clinique BEC</div>
+        <div style={G.eyebrow}>Guide de mission · BC1 · PAC</div>
         <div style={G.title}>Lumio Health — aide au parcours</div>
       </div>
       <div style={G.body}>
