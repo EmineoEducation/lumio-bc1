@@ -305,6 +305,18 @@ window.PASS_CONFIG = {
       placeholder: 'Quelles sont les limites de votre recommandation ? Quelles conditions doivent être remplies pour qu\'elle tienne ?'
     }
   ],
+  // Fiche identitaire — aide-mémoire latéral C.5/C.6
+  // Remappée verbatim depuis soniaNote.body (PLATEFORME PROPOSÉE) — aucun contenu inventé.
+  ficheIdentitaire: {
+    source: 'D\'après la note de cadrage de Sonia Ferracci (12 juin 2026) — proposition à challenger, pas à recopier.',
+    territoirePropose: '« La santé que les chiffres ne montrent pas encore »',
+    promesse: 'Lumio révèle ce que le corps sait mais que la médecine ne capte pas.',
+    ciblesB2B: 'DRH des ETI et grands comptes (>500 salariés), prescripteurs (médecine du travail, mutuelles).',
+    ciblesB2C: 'Actifs 30-50 ans, urbains, en charge mentale élevée.',
+    personnalite: 'Scientifique sans être froide · rassurante sans être condescendante · précise sans être technique.',
+    engagements: '100 % des données anonymisées · jamais revendues à des tiers · open data scientifique sur 5 ans.',
+    tension: 'Cette plateforme suppose la certification MDR classe IIa avant le lancement grand public. Or Théo ne s\'engage sur aucun calendrier (fin Q2 2027 au mieux en interne). Sans certification, le territoire « expert santé » est intenable et expose Lumio à des attaques juridiques des concurrents certifiés.'
+  },
   // Grille d'évaluation pour le portfolio — niveaux RNCP
   grilleEvaluation: {
     niveaux: ['Maximale', 'Haute', 'Moyenne', 'Insuffisante'],

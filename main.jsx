@@ -28,11 +28,40 @@ window.LUMIO_SESSION = {
   clear: (id) => apiSession('DELETE', id),
 };
 
+// ─── Substitution des placeholders étudiant ─────────────────
+// Remplace {{PRENOM}} / {{EMAIL_ETUDIANT}} dans toutes les données narratives.
+// Idempotent : utilise les gabarits d'origine conservés dans _tpl.
+function applyStudentPlaceholders(fullName) {
+  const D = window.LUMIO_DATA;
+  if (!D) return;
+  const prenom = (fullName || '').split(' ')[0] || 'Consultant·e';
+  const email = D.student?.email || '{{EMAIL_ETUDIANT}}';
+  const sub = (s) => (s || '')
+    .replace(/\{\{\s*PRENOM\s*\}\}/g, prenom)
+    .replace(/\{\{\s*EMAIL_ETUDIANT\s*\}\}/g, email);
+
+  // Conserver les gabarits d'origine pour rester idempotent (reload, changement de nom)
+  D._tpl = D._tpl || {
+    briefBody: D.briefEmail?.body,
+    briefTo: D.briefEmail?.to,
+    slackInitial: (D.slackMessages?.initial || []).map(m => m.text),
+  };
+  if (D.briefEmail) {
+    D.briefEmail.body = sub(D._tpl.briefBody);
+    D.briefEmail.to = sub(D._tpl.briefTo);
+  }
+  if (D.slackMessages?.initial) {
+    D.slackMessages.initial.forEach((m, i) => { m.text = sub(D._tpl.slackInitial[i]); });
+  }
+  // Aperçu Mail dérivé du nom (remplace l'ancien "Lou," codé en dur)
+  D._briefPreview = `${prenom}, Je vous confie une mission dont j'ai besoin qu'elle soit terminée avant…`;
+}
+window.applyStudentPlaceholders = applyStudentPlaceholders;
+
 // ─── Saisie du nom (avant le login) ─────────────────────────
 function NameScreen({ onConfirm }) {
   const [prenom, setPrenom] = useRootState('');
   const [nom, setNom] = useRootState('');
-  const [email, setEmail] = useRootState('');
   const [shake, setShake] = useRootState(false);
 
   const confirm = () => {
@@ -43,12 +72,9 @@ function NameScreen({ onConfirm }) {
     }
     const full = `${prenom.trim()}${nom.trim() ? ' ' + nom.trim() : ''}`;
     window.LUMIO_DATA.student.name = full;
-    // Email école saisi ou généré proprement
-    const base = (nom.trim() || 'consultant').toLowerCase();
-    const emailFinal = email.trim() || `${prenom.trim().toLowerCase()}.${base}@emineo.fr`;
-    window.LUMIO_DATA.student.email = emailFinal;
-    window.LUMIO_DATA.student.initial = prenom.trim()[0]?.toUpperCase() || '?';
-    onConfirm(full, emailFinal);
+    window.LUMIO_DATA.student.email = `${prenom.trim().toLowerCase()}.${(nom.trim() || 'consultant').toLowerCase()}@consult.fr`;
+    window.LUMIO_DATA.student.initial = prenom.trim()[0].toUpperCase();
+    onConfirm(full);
   };
 
   return (
@@ -77,12 +103,11 @@ function NameScreen({ onConfirm }) {
         animation: shake ? 'shake 0.4s ease' : 'none'
       }}>
         <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 24, lineHeight: 1.6 }}>
-          Tu entres dans cette affaire en tant que <strong>chargé·e de mission externe</strong>.<br/>
-          Sonia Ferracci, Directrice Marketing de Lumio Health, t'a confié un audit de marque urgent.<br/>
+          Tu vas entrer dans ce dossier en tant que consultant·e externe.<br/>
           <span style={{ opacity: 0.7 }}>Comment t'appelles-tu ?</span>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 14, width: '100%' }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20, width: '100%' }}>
           <input
             value={prenom}
             onChange={e => setPrenom(e.target.value)}
@@ -109,20 +134,6 @@ function NameScreen({ onConfirm }) {
             }}
           />
         </div>
-
-        <input
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') confirm(); }}
-          placeholder="Email école (ex: prenom.nom@emineo.fr)"
-          type="email"
-          style={{
-            width: '100%', padding: '10px 14px', marginBottom: 20,
-            border: '1.5px solid rgba(255,255,255,0.2)',
-            borderRadius: 10, background: 'rgba(255,255,255,0.15)',
-            color: 'white', fontSize: 13, outline: 'none', boxSizing: 'border-box'
-          }}
-        />
 
         <button
           onClick={confirm}
@@ -261,7 +272,7 @@ function WelcomeBriefCard({ onClose, studentName }) {
           Bienvenue, {prenom}.
         </h1>
         <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 10 }}>
-          Tu es <strong>{studentName}</strong>, consultant·e en stratégie de marque. Sonia Ferracci, Directrice Marketing de Lumio Health, t'a confié un audit de marque urgent. Tu as accès à son <strong>ordinateur de mission</strong> : lettre de mission, veille concurrentielle, note interne CEO, verbatims terrain — et quelques documents qui se contredisent. <em>À toi de trier.</em>
+          Tu es <strong>{studentName}</strong>, consultant·e en stratégie de marque. Sonia Ferracci, Directrice Marketing de Lumio Health, t'a confié un audit de marque urgent. Tu as accès à un <strong>poste de mission dédié</strong> : lettre de mission, veille concurrentielle, note interne CEO, verbatims terrain — et quelques documents qui se contredisent. <em>À toi de trier.</em>
         </p>
 
         {/* Bloc temporel — central */}
@@ -269,7 +280,7 @@ function WelcomeBriefCard({ onClose, studentName }) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 700, color: 'white', letterSpacing: '-0.02em' }}>3h30</span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)' }}>=</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>3 semaines dans la vraie vie</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>18 jours dans l'univers Lumio</span>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {actes.map(a => (
@@ -295,7 +306,7 @@ function WelcomeBriefCard({ onClose, studentName }) {
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Trois règles, pas de négociation</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { ico: '📄', txt: 'Tout ce que tu sais, c\'est dans les documents. Ne te souviens de rien — lis.' },
+              { ico: '📄', txt: 'Tout ce que tu sais, c\'est dans les documents.' },
               { ico: '🤐', txt: 'Le RP ne te dira pas "si c\'est juste". Il ne te dira pas par où commencer. Il observe.' },
               { ico: '💬', txt: 'Quand tu as une hypothèse solide → Slack → Sonia. Pas avant.' },
             ].map((r, i) => (
@@ -357,42 +368,24 @@ function Root() {
       setStudentName(n);
       setSessionId(savedId);
       if (session.timerStart) setTimerStart(session.timerStart);
-      // Patcher les données avec le nom et email sauvegardés
+      // Patcher les données avec le nom sauvegardé
       window.LUMIO_DATA.student.name = n;
-      window.LUMIO_DATA.student.initial = n[0]?.toUpperCase() || '?';
-      if (session.studentEmail) window.LUMIO_DATA.student.email = session.studentEmail;
-      const p0 = n.split(' ')[0] || n;
-      window.LUMIO_DATA.briefEmail.body = (window.LUMIO_DATA.briefEmail.body || '').replace('{{PRENOM}}', p0);
-      if (window.LUMIO_DATA.briefEmail?.to) {
-        window.LUMIO_DATA.briefEmail.to = window.LUMIO_DATA.briefEmail.to.replace('{{EMAIL_ETUDIANT}}', window.LUMIO_DATA.student.email || '');
-      }
-      if (Array.isArray(window.LUMIO_DATA.slackMessages?.initial) && window.LUMIO_DATA.slackMessages.initial[0]) {
-        window.LUMIO_DATA.slackMessages.initial[0].text = (window.LUMIO_DATA.slackMessages.initial[0].text || '').replace('{{PRENOM}}', p0);
-      }
+      applyStudentPlaceholders(n);
+      // Restaurer le timer fictif AVANT d'afficher le bureau (sinon l'horloge se réinitialise)
+      if (session.timerStart) window.LUMIO_TIMER_START = session.timerStart;
       // Reprendre directement sur le bureau
       setPhase('desktop');
     });
   }, []);
 
-  const handleNameConfirm = (name, emailFinal) => {
+  const handleNameConfirm = (name) => {
     const sid = makeSessionId(name + Date.now());
     localStorage.setItem('lumio_sid', sid);
     setSessionId(sid);
     setStudentName(name);
     window.LUMIO_DATA.student.name = name;
-    window.LUMIO_DATA.student.initial = name[0]?.toUpperCase() || '?';
-    const p0 = name.split(' ')[0] || name;
-    const base2 = (name.split(' ')[1] || 'consultant').toLowerCase();
-    window.LUMIO_DATA.student.email = emailFinal || `${p0.toLowerCase()}.${base2}@emineo.fr`;
-    // Remplacer {{PRENOM}} ciblé — une seule occurrence, pas de risque de double replace
-    window.LUMIO_DATA.briefEmail.body = (window.LUMIO_DATA.briefEmail.body || '').replace('{{PRENOM}}', p0);
-    if (window.LUMIO_DATA.briefEmail?.to) {
-      window.LUMIO_DATA.briefEmail.to = window.LUMIO_DATA.briefEmail.to.replace('{{EMAIL_ETUDIANT}}', window.LUMIO_DATA.student.email || '');
-    }
-    if (Array.isArray(window.LUMIO_DATA.slackMessages?.initial) && window.LUMIO_DATA.slackMessages.initial[0]) {
-      window.LUMIO_DATA.slackMessages.initial[0].text = (window.LUMIO_DATA.slackMessages.initial[0].text || '').replace('{{PRENOM}}', p0);
-    }
-    window.LUMIO_SESSION.save(sid, { studentName: name, studentEmail: emailFinal, phase: 'login' });
+    applyStudentPlaceholders(name);
+    window.LUMIO_SESSION.save(sid, { studentName: name, phase: 'login' });
     setShowLogin(true);
     setPhase('login');
   };

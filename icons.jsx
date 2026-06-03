@@ -176,66 +176,46 @@ window.LivrableIcon = function LivrableIcon({ size = 50 }) {
 
 // ══════════════════════════════════════════════════════════════
 
-// ── JeffersonIcon — lapin compagnon PAC (version arrondie, ludique) ──
+// ── JeffersonIcon — lapin à montre, compagnon PAC ──
 window.JeffersonIcon = function JeffersonIcon({ size = 50, state = 'idle' }) {
-  const earOuter = '#FFFFFF';
-  const earInner = '#F4C0D1';
-  const bodyFill = state === 'alert' ? '#FFF8F0' : state === 'talking' ? '#F2FAFF' : 'white';
-  const bgFill   = state === 'alert' ? '#FEF3E2' : state === 'talking' ? '#E8F5FF' : '#F5F3EF';
-  const eyeY = state === 'alert' ? 30 : 31;
+  const earColor = '#F4C0D1';
+  const bodyFill = state === 'alert' ? '#FFF8F0' : state === 'talking' ? '#F0F8FF' : 'white';
+  const eyeY = state === 'alert' ? 30 : 32;
   const browVisible = state === 'alert';
-
   return (
     React.createElement('svg', { width: size, height: size, viewBox: '0 0 52 52', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
-      // Fond très arrondi (presque pastille)
-      React.createElement('rect', { width: 52, height: 52, rx: 16, fill: bgFill }),
-
-      // Oreilles — courtes, en gouttes arrondies, légèrement inclinées vers l'extérieur
-      React.createElement('g', { transform: 'rotate(-14 18 14)' },
-        React.createElement('ellipse', { cx: 18, cy: 14, rx: 4.2, ry: 8.5, fill: earOuter, stroke: '#D3D1C7', strokeWidth: 0.8 }),
-        React.createElement('ellipse', { cx: 18, cy: 15, rx: 2.2, ry: 5.5, fill: earInner })
-      ),
-      React.createElement('g', { transform: 'rotate(14 34 14)' },
-        React.createElement('ellipse', { cx: 34, cy: 14, rx: 4.2, ry: 8.5, fill: earOuter, stroke: '#D3D1C7', strokeWidth: 0.8 }),
-        React.createElement('ellipse', { cx: 34, cy: 15, rx: 2.2, ry: 5.5, fill: earInner })
-      ),
-
-      // Corps — quasi sphérique, plus dodu
-      React.createElement('circle', { cx: 26, cy: 33, r: 14.5, fill: bodyFill, stroke: '#D3D1C7', strokeWidth: 0.8 }),
-
-      // Sourcils (alert only) — légèrement plus haut
-      browVisible && React.createElement('path', { d: 'M18.5 25.5 Q21.5 24 24.5 25.5', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
-      browVisible && React.createElement('path', { d: 'M27.5 25.5 Q30.5 24 33.5 25.5', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
-
-      // Yeux — gros, ronds, kawaii (juste pupilles + reflets, pas de blanc d'œil)
-      React.createElement('circle', { cx: 21, cy: eyeY, r: 2.6, fill: '#2C2C2A' }),
-      React.createElement('circle', { cx: 31, cy: eyeY, r: 2.6, fill: '#2C2C2A' }),
-      // Reflets vifs
-      React.createElement('circle', { cx: 22, cy: eyeY - 0.9, r: 0.9, fill: 'white' }),
-      React.createElement('circle', { cx: 32, cy: eyeY - 0.9, r: 0.9, fill: 'white' }),
-      React.createElement('circle', { cx: 20.3, cy: eyeY + 0.9, r: 0.4, fill: 'white', opacity: 0.75 }),
-      React.createElement('circle', { cx: 30.3, cy: eyeY + 0.9, r: 0.4, fill: 'white', opacity: 0.75 }),
-
-      // Joues roses bien rondes
-      React.createElement('circle', { cx: 16.5, cy: eyeY + 3.5, r: 2.2, fill: '#F4C0D1', opacity: 0.75 }),
-      React.createElement('circle', { cx: 35.5, cy: eyeY + 3.5, r: 2.2, fill: '#F4C0D1', opacity: 0.75 }),
-
-      // Petit nez triangulaire arrondi
-      React.createElement('path', { d: `M24.5 ${eyeY + 3.5} Q26 ${eyeY + 5} 27.5 ${eyeY + 3.5} Q26 ${eyeY + 4.3} 24.5 ${eyeY + 3.5} Z`, fill: '#E89AB0' }),
-
-      // Bouche — sourire selon état
+      React.createElement('rect', { width: 52, height: 52, rx: 12, fill: state === 'alert' ? '#FEF3E2' : state === 'talking' ? '#E8F5FF' : '#F5F3EF' }),
+      React.createElement('ellipse', { cx: 17, cy: 14, rx: 5, ry: 13, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.8 }),
+      React.createElement('ellipse', { cx: 17, cy: 15, rx: 3, ry: 9, fill: earColor }),
+      React.createElement('ellipse', { cx: 35, cy: 14, rx: 5, ry: 13, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.8 }),
+      React.createElement('ellipse', { cx: 35, cy: 15, rx: 3, ry: 9, fill: earColor }),
+      React.createElement('ellipse', { cx: 26, cy: 34, rx: 15, ry: 13, fill: bodyFill, stroke: '#D3D1C7', strokeWidth: 0.8 }),
+      browVisible && React.createElement('path', { d: 'M19 27 Q22 25 25 27', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
+      browVisible && React.createElement('path', { d: 'M27 27 Q30 25 33 27', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
+      React.createElement('ellipse', { cx: 21, cy: eyeY, rx: 3, ry: state === 'alert' ? 2.5 : 3, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
+      React.createElement('ellipse', { cx: 31, cy: eyeY, rx: 3, ry: state === 'alert' ? 2.5 : 3, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
+      React.createElement('circle', { cx: 22, cy: eyeY + 0.5, r: 2, fill: '#2C2C2A' }),
+      React.createElement('circle', { cx: 32, cy: eyeY + 0.5, r: 2, fill: '#2C2C2A' }),
+      React.createElement('circle', { cx: 23, cy: eyeY - 0.5, r: 0.7, fill: 'white' }),
+      React.createElement('circle', { cx: 33, cy: eyeY - 0.5, r: 0.7, fill: 'white' }),
+      React.createElement('ellipse', { cx: 26, cy: eyeY + 6, rx: 2.5, ry: 1.8, fill: '#F4C0D1' }),
+      React.createElement('ellipse', { cx: 16, cy: eyeY + 5, rx: 3, ry: 2, fill: '#F4C0D1', opacity: 0.3 }),
+      React.createElement('ellipse', { cx: 36, cy: eyeY + 5, rx: 3, ry: 2, fill: '#F4C0D1', opacity: 0.3 }),
+      React.createElement('line', { x1: 10, y1: eyeY + 4, x2: 22, y2: eyeY + 5.5, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      React.createElement('line', { x1: 10, y1: eyeY + 7, x2: 22, y2: eyeY + 7, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      React.createElement('line', { x1: 30, y1: eyeY + 5.5, x2: 42, y2: eyeY + 4, stroke: '#D3D1C7', strokeWidth: 0.6 }),
+      React.createElement('line', { x1: 30, y1: eyeY + 7, x2: 42, y2: eyeY + 7, stroke: '#D3D1C7', strokeWidth: 0.6 }),
       state === 'talking'
-        ? React.createElement('ellipse', { cx: 26, cy: eyeY + 7, rx: 1.6, ry: 1.4, fill: '#7E5A5A' })
+        ? React.createElement('ellipse', { cx: 26, cy: eyeY + 10, rx: 3, ry: 2, fill: 'none', stroke: '#B4B2A9', strokeWidth: 1 })
         : state === 'alert'
-        ? React.createElement('circle', { cx: 26, cy: eyeY + 6.5, r: 0.9, fill: 'none', stroke: '#7E5A5A', strokeWidth: 1 })
-        : React.createElement('path', { d: `M23.5 ${eyeY + 6} Q26 ${eyeY + 8.5} 28.5 ${eyeY + 6}`, fill: 'none', stroke: '#7E5A5A', strokeWidth: 1.1, strokeLinecap: 'round' }),
-
-      // Montre — plus petite et discrète, posée sur le côté du corps
-      React.createElement('circle', { cx: 41, cy: 41.5, r: 5.2, fill: '#2C2C2A' }),
-      React.createElement('circle', { cx: 41, cy: 41.5, r: 3.6, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
-      React.createElement('line', { x1: 41, y1: 41.5, x2: 41, y2: 39.3, stroke: '#2C2C2A', strokeWidth: 1, strokeLinecap: 'round' }),
-      React.createElement('line', { x1: 41, y1: 41.5, x2: 42.8, y2: 42.4, stroke: state === 'alert' ? '#E24B4A' : '#2C2C2A', strokeWidth: 1, strokeLinecap: 'round' }),
-      React.createElement('circle', { cx: 41, cy: 41.5, r: 0.6, fill: '#2C2C2A' })
+        ? React.createElement('ellipse', { cx: 26, cy: eyeY + 10, rx: 2, ry: 1.5, fill: 'none', stroke: '#B4B2A9', strokeWidth: 1 })
+        : React.createElement('path', { d: `M22 ${eyeY + 10} Q26 ${eyeY + 13} 30 ${eyeY + 10}`, fill: 'none', stroke: '#B4B2A9', strokeWidth: 1, strokeLinecap: 'round' }),
+      React.createElement('circle', { cx: 40, cy: 40, r: 7, fill: '#2C2C2A' }),
+      React.createElement('circle', { cx: 40, cy: 40, r: 5, fill: 'white', stroke: '#D3D1C7', strokeWidth: 0.5 }),
+      React.createElement('line', { x1: 40, y1: 40, x2: 40, y2: 36.5, stroke: '#2C2C2A', strokeWidth: 1.2, strokeLinecap: 'round' }),
+      React.createElement('line', { x1: 40, y1: 40, x2: 43, y2: 41.5, stroke: state === 'alert' ? '#E24B4A' : '#2C2C2A', strokeWidth: 1.2, strokeLinecap: 'round' }),
+      React.createElement('circle', { cx: 40, cy: 40, r: 0.8, fill: '#2C2C2A' }),
+      React.createElement('path', { d: 'M40 33.5 Q42 31 44 30', fill: 'none', stroke: '#D3D1C7', strokeWidth: 0.8, strokeLinecap: 'round' })
     )
   );
 };
