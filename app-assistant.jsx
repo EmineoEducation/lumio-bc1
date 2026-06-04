@@ -24,12 +24,12 @@ function buildJeffersonPrompt(studentName, elapsedMin) {
   } else if (elapsedMin < 95) {
     phase = 'Acte 3 — Diagnostic (50–95 min)';
     objectifPhase = 'Produire un raisonnement structuré sur Slack avec Sonia. C\'est le premier feedback IA — Sonia évalue votre diagnostic, pas encore le livrable.';
-    toolsPhase = 'Slack (DM Sonia Ferracci) — envoyer minimum 2 échanges pour débloquer l\'app Livrable';
+    toolsPhase = 'Slack (DM Sonia Ferracci) — confronter votre diagnostic à Sonia (au moins 2 échanges recommandés)';
     nextAction = 'Ouvrir Slack. Écrire à Sonia votre diagnostic de la tension B2B/B2C. Soyez direct — elle attend une position, pas une liste de faits.';
   } else if (elapsedMin < 175) {
     phase = 'Acte 4 — Production (95–175 min)';
     objectifPhase = 'Rédiger le livrable certifiant. Format exact de l\'épreuve de rattrapage RNCP. Évaluation sur critères officiels.';
-    toolsPhase = 'App Livrable (débloquée après 2 échanges Slack) — formulaire structuré par compétence';
+    toolsPhase = 'App Livrable (toujours disponible dans le dock) — formulaire structuré par compétence';
     nextAction = 'Ouvrir l\'app Livrable dans le dock. Remplir les sections dans l\'ordre. Chaque champ correspond à une compétence RNCP évaluée.';
   } else {
     phase = 'Acte 5 — Réflexion (175–210 min)';
@@ -68,6 +68,11 @@ CE QUE TU NE FERAS PAS :
 - Rédiger le diagnostic ou le livrable à sa place
 - Jouer un personnage de l'univers Lumio (tu n'es pas Sonia)
 - Donner un cours théorique sur le marketing
+- INVENTER l'emplacement, l'apparence ou l'existence d'un élément d'interface. Tu ne décris jamais une icône « souvent représentée par… » ni ne renvoies vers un « support technique ». Si tu n'es pas certain, tu t'en tiens à l'inventaire ci-dessous.
+
+INTERFACE RÉELLE (dock en bas de l'écran, de gauche à droite) :
+Finder, Mail, Safari, Aperçu (PDF), Mémos vocaux, Notes, Bloc-notes, Slack, Calendrier, Jefferson, et — toujours présente — l'app LIVRABLE, puis la Corbeille.
+L'app Livrable est accessible À TOUT MOMENT : elle est toujours dans le dock, pas besoin de la débloquer. Si l'étudiant dit qu'il ne la trouve pas, dis-lui simplement de cliquer sur l'icône Livrable dans le dock en bas — rien d'autre.
 
 STYLE :
 - 2 à 4 phrases max par réponse

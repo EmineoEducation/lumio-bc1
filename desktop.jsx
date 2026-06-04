@@ -237,9 +237,13 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
     { id: 'jefferson', label: 'Jefferson' },
     { id: 'trash', label: 'Corbeille' }
   ];
-  const items = livrableUnlocked
-    ? [...baseItems.slice(0, -1), { id: 'livrable', label: 'Livrable', bounce: true }, baseItems[baseItems.length - 1]]
-    : baseItems;
+  // Livrable TOUJOURS présent dans le dock (accessible à tout moment).
+  // Le bounce reste un indice visuel temporaire quand Sonia a assez d'éléments.
+  const items = [
+    ...baseItems.slice(0, -1),
+    { id: 'livrable', label: 'Livrable', bounce: livrableUnlocked },
+    baseItems[baseItems.length - 1]
+  ];
 
   // CSS bounce injecté une fois
   useWmEffect(() => {
