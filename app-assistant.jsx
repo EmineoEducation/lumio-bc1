@@ -203,18 +203,6 @@ function JeffersonApp() {
   ];
   const suggestions = suggestionsByPhase[phaseIdx] || suggestionsByPhase[0];
 
-  // Gate : n'apparaître qu'une fois la session démarrée (bureau)
-  if (!window.LUMIO_TIMER_START) return null;
-
-  // ── Rendu chatbot flottant (bas-droite) ──────────────────────
-  const elapsedR = getElapsedMin();
-  const phaseIdxR = getPhaseIndex(elapsedR);
-  const remainingR = Math.max(0, 210 - elapsedR);
-  const isUrgentR = remainingR < 45;
-  const jState = sending ? 'talking' : isUrgentR ? 'alert' : 'idle';
-  const C = { abysse: '#0B2B2D', petrole: '#134547', menthe: '#5DE298', givre: '#E3FFF0', eau: '#9DF0C4', saumon: '#E89B77' };
-  const Avatar = window.JeffersonAvatar || window.JeffersonIcon || (() => React.createElement('span', null, '🐰'));
-
   // injection unique de l'animation de pulsation + points
   useJEffect(() => {
     if (!document.getElementById('jeff-fab-style')) {
@@ -230,6 +218,19 @@ function JeffersonApp() {
       document.head.appendChild(s);
     }
   }, []);
+
+  // Gate : n'apparaître qu'une fois la session démarrée (bureau)
+  if (!window.LUMIO_TIMER_START) return null;
+
+  // ── Rendu chatbot flottant (bas-droite) ──────────────────────
+  const elapsedR = getElapsedMin();
+  const phaseIdxR = getPhaseIndex(elapsedR);
+  const remainingR = Math.max(0, 210 - elapsedR);
+  const isUrgentR = remainingR < 45;
+  const jState = sending ? 'talking' : isUrgentR ? 'alert' : 'idle';
+  const C = { abysse: '#0B2B2D', petrole: '#134547', menthe: '#5DE298', givre: '#E3FFF0', eau: '#9DF0C4', saumon: '#E89B77' };
+  const Avatar = window.JeffersonAvatar || window.JeffersonIcon || (() => React.createElement('span', null, '🐰'));
+
 
   return (
     <>
