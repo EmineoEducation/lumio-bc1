@@ -362,7 +362,10 @@ function Root() {
       const n = session.studentName;
       setStudentName(n);
       setSessionId(savedId);
-      if (session.timerStart) setTimerStart(session.timerStart);
+      if (session.timerStart) {
+        setTimerStart(session.timerStart);
+        window.LUMIO_TIMER_START = session.timerStart; // FIX : restaurer la globale au reload (sinon Jefferson + timer KO)
+      }
       // Patcher les données avec le nom sauvegardé
       window.LUMIO_DATA.student.name = n;
       if (session.studentEmail) window.LUMIO_DATA.student.email = session.studentEmail;
