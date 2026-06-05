@@ -219,3 +219,72 @@ window.JeffersonIcon = function JeffersonIcon({ size = 50, state = 'idle' }) {
     )
   );
 };
+
+// ── JeffersonAvatar — lapin universitaire (lunettes · nœud pap · toque · montre) ──
+//    Inspiré de la charte visuelle PAC. 3 états : idle / talking / alert.
+window.JeffersonAvatar = function JeffersonAvatar({ size = 50, state = 'idle' }) {
+  const ear = '#F4C0D1';
+  const fur = state === 'alert' ? '#FFFDF8' : 'white';
+  const jacket = '#2F5D3A';      // tweed vert
+  const jacketDk = '#244A2E';
+  const bow = '#7A2E3B';         // nœud pap bordeaux
+  const gold = '#C9A24B';        // montre / accents
+  const eyeY = state === 'alert' ? 29 : 30;
+  const C = React.createElement;
+  return C('svg', { width: size, height: size, viewBox: '0 0 64 64', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },
+    // halo de fond
+    C('circle', { cx: 32, cy: 32, r: 32, fill: state === 'alert' ? '#FEF3E2' : state === 'talking' ? '#E8F7EE' : '#EAF6F0' }),
+    C('circle', { cx: 32, cy: 32, r: 30, fill: 'none', stroke: 'rgba(93,226,152,0.35)', strokeWidth: 1 }),
+    // oreilles
+    C('ellipse', { cx: 22, cy: 13, rx: 4.5, ry: 12, fill: fur, stroke: '#E2D9CF', strokeWidth: 0.8, transform: 'rotate(-8 22 13)' }),
+    C('ellipse', { cx: 22, cy: 14, rx: 2.2, ry: 8, fill: ear, transform: 'rotate(-8 22 14)' }),
+    C('ellipse', { cx: 42, cy: 13, rx: 4.5, ry: 12, fill: fur, stroke: '#E2D9CF', strokeWidth: 0.8, transform: 'rotate(8 42 13)' }),
+    C('ellipse', { cx: 42, cy: 14, rx: 2.2, ry: 8, fill: ear, transform: 'rotate(8 42 14)' }),
+    // toque
+    C('path', { d: 'M20 12 L32 7 L44 12 L32 17 Z', fill: jacketDk }),
+    C('rect', { x: 28.5, y: 12.5, width: 7, height: 4, rx: 1, fill: jacketDk }),
+    C('line', { x1: 44, y1: 12, x2: 47, y2: 20, stroke: gold, strokeWidth: 1, strokeLinecap: 'round' }),
+    C('circle', { cx: 47, cy: 21, r: 1.4, fill: gold }),
+    // tête
+    C('ellipse', { cx: 32, cy: 30, rx: 14, ry: 12.5, fill: fur, stroke: '#E2D9CF', strokeWidth: 0.8 }),
+    // lunettes
+    C('circle', { cx: 26, cy: eyeY, r: 4.4, fill: 'rgba(255,255,255,0.5)', stroke: '#3A3A38', strokeWidth: 1.1 }),
+    C('circle', { cx: 38, cy: eyeY, r: 4.4, fill: 'rgba(255,255,255,0.5)', stroke: '#3A3A38', strokeWidth: 1.1 }),
+    C('line', { x1: 30.4, y1: eyeY, x2: 33.6, y2: eyeY, stroke: '#3A3A38', strokeWidth: 1.1 }),
+    // yeux
+    C('circle', { cx: 26, cy: eyeY + 0.3, r: 1.9, fill: '#2C2C2A' }),
+    C('circle', { cx: 38, cy: eyeY + 0.3, r: 1.9, fill: '#2C2C2A' }),
+    C('circle', { cx: 26.7, cy: eyeY - 0.4, r: 0.6, fill: 'white' }),
+    C('circle', { cx: 38.7, cy: eyeY - 0.4, r: 0.6, fill: 'white' }),
+    // sourcils alerte
+    state === 'alert' && C('path', { d: 'M22 24 Q26 22 30 24', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
+    state === 'alert' && C('path', { d: 'M34 24 Q38 22 42 24', stroke: '#B4A090', strokeWidth: 1.2, strokeLinecap: 'round', fill: 'none' }),
+    // museau + nez
+    C('ellipse', { cx: 32, cy: eyeY + 6, rx: 2.6, ry: 1.9, fill: ear }),
+    // bouche selon état
+    state === 'talking'
+      ? C('ellipse', { cx: 32, cy: eyeY + 10, rx: 2.4, ry: 1.8, fill: '#7A4A52' })
+      : state === 'alert'
+      ? C('ellipse', { cx: 32, cy: eyeY + 9.5, rx: 1.6, ry: 1.3, fill: 'none', stroke: '#9A6A72', strokeWidth: 1 })
+      : C('path', { d: `M28 ${eyeY + 9} Q32 ${eyeY + 12} 36 ${eyeY + 9}`, fill: 'none', stroke: '#9A6A72', strokeWidth: 1.1, strokeLinecap: 'round' }),
+    // moustaches
+    C('line', { x1: 16, y1: eyeY + 5, x2: 28, y2: eyeY + 6.5, stroke: '#E2D9CF', strokeWidth: 0.6 }),
+    C('line', { x1: 16, y1: eyeY + 8, x2: 28, y2: eyeY + 8, stroke: '#E2D9CF', strokeWidth: 0.6 }),
+    C('line', { x1: 36, y1: eyeY + 6.5, x2: 48, y2: eyeY + 5, stroke: '#E2D9CF', strokeWidth: 0.6 }),
+    C('line', { x1: 36, y1: eyeY + 8, x2: 48, y2: eyeY + 8, stroke: '#E2D9CF', strokeWidth: 0.6 }),
+    // épaules / veste tweed
+    C('path', { d: 'M18 64 Q18 48 32 47 Q46 48 46 64 Z', fill: jacket }),
+    C('path', { d: 'M32 47 L27 64 L32 56 L37 64 Z', fill: '#EDE7D8' }),  // chemise / gilet
+    C('path', { d: 'M32 47 L26 53 L32 51 L38 53 Z', fill: jacketDk }),   // revers
+    // nœud papillon
+    C('path', { d: 'M32 50 L27 47.5 L27 52.5 Z', fill: bow }),
+    C('path', { d: 'M32 50 L37 47.5 L37 52.5 Z', fill: bow }),
+    C('circle', { cx: 32, cy: 50, r: 1.3, fill: '#5C222C' }),
+    // montre à gousset (chaîne dorée)
+    C('path', { d: 'M37 53 Q42 56 41 61', stroke: gold, strokeWidth: 1, fill: 'none', strokeLinecap: 'round' }),
+    C('circle', { cx: 41, cy: 61, r: 3, fill: '#FFFDF8', stroke: gold, strokeWidth: 1 }),
+    C('line', { x1: 41, y1: 61, x2: 41, y2: 59.3, stroke: '#2C2C2A', strokeWidth: 0.9, strokeLinecap: 'round' }),
+    C('line', { x1: 41, y1: 61, x2: 42.4, y2: 61.7, stroke: state === 'alert' ? '#E24B4A' : '#2C2C2A', strokeWidth: 0.9, strokeLinecap: 'round' })
+  );
+};
+

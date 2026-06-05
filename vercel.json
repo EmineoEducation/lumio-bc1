@@ -5,6 +5,9 @@
     },
     "api/session.js": {
       "maxDuration": 10
+    },
+    "api/send-portfolio.js": {
+      "maxDuration": 15
     }
   }
 }

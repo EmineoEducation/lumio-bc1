@@ -28,7 +28,7 @@ function NotesApp({ openNote }) {
       id: 'd3', title: 'À régler avec Théo', date: '4 juin 2026',
       preview: 'MDR · budget · ce que je peux promettre au board…',
       distractor: false,
-      body: '— MDR : il faut qu\'il s\'engage. Pas un calendrier plâtré, juste une fenêtre.\n— Budget : 380K. S\'il refuse, j\'accepte 280 mais pas en dessous.\n— Le board : Northgate attend une roadmap brand pour Q1 2027. Si on n\'y est pas, ils vont nous demander de prendre quelqu\'un de Boston.\n\n→ Le truc qu\'il ne comprend pas : la MDR n\'est pas un détail technique. C\'est notre seule défense possible contre Biostream. Sans elle, on est mort à 18 mois.'
+      body: '— MDR : il faut qu\'il s\'engage. Pas un calendrier plâtré, juste une fenêtre.\n— Budget : 380K. S\'il refuse, j\'accepte 280 mais pas en dessous.\n— Le board : Athena attend une roadmap brand pour Q1 2027. Si on n\'y est pas, ils vont nous demander de prendre quelqu\'un de Boston.\n\n→ Le truc qu\'il ne comprend pas : la MDR n\'est pas un détail technique. C\'est notre seule défense possible contre Biostream. Sans elle, on est mort à 18 mois.'
     }
   ];
 
