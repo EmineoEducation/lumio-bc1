@@ -366,18 +366,7 @@ function JeffersonApp() {
   );
 }
 
-// ── Auto-montage du chatbot flottant (indépendant du dock) ──
-(function mountJefferson(){
-  function go(){
-    if (document.getElementById('jefferson-fab-root')) return;
-    var host = document.createElement('div');
-    host.id = 'jefferson-fab-root';
-    document.body.appendChild(host);
-    try { ReactDOM.createRoot(host).render(React.createElement(JeffersonApp)); }
-    catch(e){ try { ReactDOM.render(React.createElement(JeffersonApp), host); } catch(_){} }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
-  else go();
-})();
+// JeffersonApp est monté directement par le composant Desktop (portée Babel partagée via window)
+window.JeffersonApp = JeffersonApp;
 window.LUMIO_APPS = window.LUMIO_APPS || {};
 

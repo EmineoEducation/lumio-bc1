@@ -832,6 +832,7 @@ Camille`
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,102,65,0.85)'; e.currentTarget.style.color = 'white'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,243,239,0.55)'; e.currentTarget.style.color = 'var(--ink-soft)'; }}
         >?</button>
+        {window.JeffersonApp && React.createElement(window.JeffersonApp)}
       </div>
     </WindowsCtx.Provider>
   );
