@@ -377,9 +377,9 @@ function Root() {
       setStudentName(full);
       window.LUMIO_DATA.briefEmail.body = window.LUMIO_DATA.briefEmail.body.replace(/^Lou,/m, `${urlPrenom},`);
       window.LUMIO_DATA.slackMessages.initial[0].text = `Salut ${urlPrenom} — bien reçu mon mail ?`;
-      window.LUMIO_SESSION.save(sid, { studentName: full, studentEmail: email, phase: 'login' });
-      setShowLogin(true);
-      setPhase('login');
+      window.LUMIO_SESSION.save(sid, { studentName: full, studentEmail: email, phase: 'brief' });
+      // Bypass écran verrouillage — aller directement au brief
+      setPhase('brief');
       return;
     }
 
