@@ -352,26 +352,53 @@ function Root() {
   const [sessionId, setSessionId] = useRootState(null);
   const [timerStart, setTimerStart] = useRootState(null);
 
-  // Au montage : tenter de restaurer une session existante
+  // Au montage : lecture params URL (portail) puis restauration session
   useRootEffect(() => {
+    // ── Arrivée depuis msmc-pac : ?p=Prénom&n=Nom&e=email ──
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPrenom = urlParams.get('p') ? decodeURIComponent(urlParams.get('p')) : null;
+    const urlNom    = urlParams.get('n') ? decodeURIComponent(urlParams.get('n')) : null;
+    const urlEmail  = urlParams.get('e') ? decodeURIComponent(urlParams.get('e')) : null;
+
+    if (urlPrenom && urlEmail) {
+      // Bypass total de la saisie — identité récupérée depuis le portail
+      const full  = urlNom ? `${urlPrenom} ${urlNom}` : urlPrenom;
+      const email = urlEmail.toLowerCase().trim();
+      // Nettoyer l'URL sans rechargement (évite la re-soumission sur F5)
+      window.history.replaceState({}, '', window.location.pathname);
+      // Alimenter LUMIO_DATA
+      window.LUMIO_DATA.student.name    = full;
+      window.LUMIO_DATA.student.email   = email;
+      window.LUMIO_DATA.student.initial = urlPrenom.trim()[0].toUpperCase();
+      // Créer la session et passer directement au brief
+      const sid = makeSessionId(full + Date.now());
+      localStorage.setItem('lumio_sid', sid);
+      setSessionId(sid);
+      setStudentName(full);
+      window.LUMIO_DATA.briefEmail.body = window.LUMIO_DATA.briefEmail.body.replace(/^Lou,/m, `${urlPrenom},`);
+      window.LUMIO_DATA.slackMessages.initial[0].text = `Salut ${urlPrenom} — bien reçu mon mail ?`;
+      window.LUMIO_SESSION.save(sid, { studentName: full, studentEmail: email, phase: 'login' });
+      setShowLogin(true);
+      setPhase('login');
+      return;
+    }
+
+    // ── Restauration session classique ──
     const savedId = localStorage.getItem('lumio_sid');
     if (!savedId) { setPhase('name'); return; }
     window.LUMIO_SESSION.load(savedId).then(session => {
       if (!session || !session.studentName) { setPhase('name'); return; }
-      // Session trouvée — restaurer
       const n = session.studentName;
       setStudentName(n);
       setSessionId(savedId);
       if (session.timerStart) {
         setTimerStart(session.timerStart);
-        window.LUMIO_TIMER_START = session.timerStart; // FIX : restaurer la globale au reload (sinon Jefferson + timer KO)
+        window.LUMIO_TIMER_START = session.timerStart;
       }
-      // Patcher les données avec le nom sauvegardé
       window.LUMIO_DATA.student.name = n;
       if (session.studentEmail) window.LUMIO_DATA.student.email = session.studentEmail;
       window.LUMIO_DATA.briefEmail.body = window.LUMIO_DATA.briefEmail.body.replace(/^Lou,/m, `${n.split(' ')[0]},`);
       window.LUMIO_DATA.slackMessages.initial[0].text = `Salut ${n.split(' ')[0]} — bien reçu mon mail ?`;
-      // Reprendre directement sur le bureau
       setPhase('desktop');
     });
   }, []);
@@ -400,7 +427,6 @@ function Root() {
     const ts = Date.now();
     setTimerStart(ts);
     window.LUMIO_SESSION.save(sessionId, { phase: 'desktop', timerStart: ts });
-    // Exposer le timerStart pour desktop.jsx
     window.LUMIO_TIMER_START = ts;
     setPhase('desktop');
   };
@@ -416,7 +442,6 @@ function Root() {
     localStorage.removeItem('lumio_sid');
     window.location.reload();
   };
-  // Exposer reset pour un éventuel bouton dans le bureau
   window.LUMIO_RESET = resetSession;
 
   if (phase === 'loading') return (
