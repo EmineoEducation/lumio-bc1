@@ -1,7 +1,36 @@
 // api/send-portfolio.js — Envoi du portfolio de compétences par email (Resend)
+// + écriture complétion dans msmc-pac (Redis via portail)
 // Variables d'environnement Vercel requises :
 //   RESEND_API_KEY   (clé API Resend)
-//   PORTFOLIO_FROM   (expéditeur vérifié, ex: "PAC Éminéo <portfolio@emineo.fr>") — optionnel
+//   PORTFOLIO_FROM   (expéditeur vérifié, ex: "PAC Éminéo <portfolio@emineo-education.fr>") — optionnel
+
+import { createHash } from 'crypto';
+
+const PORTAIL_URL = 'https://msmc-pac.vercel.app/api/progress';
+const BLOC_ID     = 'bc1';
+
+function hashEmail(email) {
+  return createHash('sha256')
+    .update(email.toLowerCase().trim())
+    .digest('hex')
+    .slice(0, 24);
+}
+
+async function markCompleted(email) {
+  if (!email) return;
+  try {
+    const hash = hashEmail(email);
+    await fetch(PORTAIL_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash, bloc: BLOC_ID, status: 'completed' }),
+    });
+  } catch (err) {
+    // Non bloquant — la complétion est best-effort
+    console.warn('markCompleted error:', err.message);
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -22,7 +51,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields: email, portfolioHTML' });
     }
     if (!resendKey) {
-      // Pas de clé configurée : on ne fait pas échouer l'UX, mais on le signale clairement.
       console.error('RESEND_API_KEY not configured — portfolio not sent');
       return res.status(503).json({ error: 'RESEND_API_KEY not configured', sent: false });
     }
@@ -40,6 +68,7 @@ export default async function handler(req, res) {
         to: [email],
         subject,
         html: portfolioHTML,
+        reply_to: [],
       }),
     });
 
@@ -48,6 +77,9 @@ export default async function handler(req, res) {
       console.error('Resend API error:', data);
       return res.status(response.status).json({ error: 'Resend error', detail: data, sent: false });
     }
+
+    // Email envoyé → marquer le bloc comme complété (best-effort, non bloquant)
+    await markCompleted(email);
 
     return res.status(200).json({ sent: true, id: data.id || null });
   } catch (err) {
