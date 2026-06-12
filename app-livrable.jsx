@@ -150,7 +150,7 @@ RÈGLES STRICTES :
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-5',
+            model: 'claude-sonnet-4-6',
             max_tokens: 400,
             system: sys,
             messages: [{ role: 'user', content: reponsesText }]
@@ -528,7 +528,7 @@ function LivrableInner({ cfg, COMPETENCES }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1200,
           system: JURY_PROMPT,
           messages: [{ role: 'user', content: livrableText }]

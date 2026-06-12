@@ -157,7 +157,7 @@ ${plateforme.substring(0, 600)}...`;
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-5',
+            model: 'claude-sonnet-4-6',
             max_tokens: 400,
             messages: [{ role: 'user', content: prompt }]
           })
@@ -211,7 +211,7 @@ ${plateforme.substring(0, 600)}...`;
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'claude-sonnet-4-5',
+              model: 'claude-sonnet-4-6',
               max_tokens: 600,
               system: SONIA_PROMPT,
               messages: [{ role: 'user', content: userPrompt }]
