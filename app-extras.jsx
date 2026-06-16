@@ -160,7 +160,7 @@ function CalendarApp() {
   const daysLeft = Math.max(0, codirDay - today);
 
   const events = {
-    14: [{ label: '16h — Athena Capital (call)', color: '#2c5d99', bg: 'rgba(60,100,180,0.12)' }],
+    14: [{ label: '16h — Northgate Capital (call)', color: '#2c5d99', bg: 'rgba(60,100,180,0.12)' }],
     16: [{ label: 'Brief Sonia — retour terrain', color: '#0a7a6e', bg: 'rgba(10,122,110,0.12)' }],
     18: [{ label: 'Deadline : V1 livrable', color: '#c4420f', bg: 'rgba(196,66,15,0.12)', bold: true }],
     22: [{ label: 'Préventica Lyon — Camille', color: '#0a7a6e', bg: 'rgba(10,122,110,0.12)' }],
@@ -196,7 +196,7 @@ function CalendarApp() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2c5d99' }} />
-            <span style={{ color: 'var(--ink-soft)' }}>Athena Capital <strong style={{ color: 'var(--ink)' }}>14 sept.</strong></span>
+            <span style={{ color: 'var(--ink-soft)' }}>Northgate Capital <strong style={{ color: 'var(--ink)' }}>14 sept.</strong></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#b85c00' }} />

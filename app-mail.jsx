@@ -16,7 +16,7 @@ function MailApp({ winId, openId }) {
       avatarColor: '#c4420f',
       subject: 'Mission de diagnostic de marque — confidentiel',
       date: '03/09/26 · 07:42',
-      preview: 'Lou, Je vous confie une mission dont j\'ai besoin qu\'elle soit terminée avant…',
+      preview: window.LUMIO_DATA?._briefPreview || 'Je vous confie une mission dont j\'ai besoin qu\'elle soit terminée avant…',
       unread: false,
       flagged: true,
       body: D.briefEmail.body,

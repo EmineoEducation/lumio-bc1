@@ -123,7 +123,7 @@ function VoiceApp() {
             </div>
           ) : (
             <div style={voiceStyles.transcriptText}>
-              «&nbsp;{displayTranscript}{playing && '▌'}{position >= selected.durationSec && '&nbsp;»'}
+              \u00AB\u00A0{displayTranscript}{playing && '▌'}{position >= selected.durationSec && '\u00A0\u00BB'}
             </div>
           )}
         </div>

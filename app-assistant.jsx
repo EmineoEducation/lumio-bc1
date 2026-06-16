@@ -24,12 +24,12 @@ function buildJeffersonPrompt(studentName, elapsedMin) {
   } else if (elapsedMin < 95) {
     phase = 'Acte 3 — Diagnostic (50–95 min)';
     objectifPhase = 'Produire un raisonnement structuré sur Slack avec Sonia. C\'est le premier feedback IA — Sonia évalue votre diagnostic, pas encore le livrable.';
-    toolsPhase = 'Slack (DM Sonia Ferracci) — envoyer minimum 2 échanges pour débloquer l\'app Livrable';
+    toolsPhase = 'Slack (DM Sonia Ferracci) — confronter votre diagnostic à Sonia (au moins 2 échanges recommandés)';
     nextAction = 'Ouvrir Slack. Écrire à Sonia votre diagnostic de la tension B2B/B2C. Soyez direct — elle attend une position, pas une liste de faits.';
   } else if (elapsedMin < 175) {
     phase = 'Acte 4 — Production (95–175 min)';
     objectifPhase = 'Rédiger le livrable certifiant. Format exact de l\'épreuve de rattrapage RNCP. Évaluation sur critères officiels.';
-    toolsPhase = 'App Livrable (débloquée après 2 échanges Slack) — formulaire structuré par compétence';
+    toolsPhase = 'App Livrable (toujours disponible dans le dock) — formulaire structuré par compétence';
     nextAction = 'Ouvrir l\'app Livrable dans le dock. Remplir les sections dans l\'ordre. Chaque champ correspond à une compétence RNCP évaluée.';
   } else {
     phase = 'Acte 5 — Réflexion (175–210 min)';
@@ -68,6 +68,11 @@ CE QUE TU NE FERAS PAS :
 - Rédiger le diagnostic ou le livrable à sa place
 - Jouer un personnage de l'univers Lumio (tu n'es pas Sonia)
 - Donner un cours théorique sur le marketing
+- INVENTER l'emplacement, l'apparence ou l'existence d'un élément d'interface. Tu ne décris jamais une icône « souvent représentée par… » ni ne renvoies vers un « support technique ». Si tu n'es pas certain, tu t'en tiens à l'inventaire ci-dessous.
+
+INTERFACE RÉELLE (dock en bas de l'écran, de gauche à droite) :
+Finder, Mail, Safari, Aperçu (PDF), Mémos vocaux, Notes, Bloc-notes, Slack, Calendrier, Jefferson, et — toujours présente — l'app LIVRABLE, puis la Corbeille.
+L'app Livrable est accessible À TOUT MOMENT : elle est toujours dans le dock, pas besoin de la débloquer. Si l'étudiant dit qu'il ne la trouve pas, dis-lui simplement de cliquer sur l'icône Livrable dans le dock en bas — rien d'autre.
 
 STYLE :
 - 2 à 4 phrases max par réponse
@@ -83,15 +88,9 @@ function JeffersonApp() {
   });
   const [draft, setDraft] = useJState('');
   const [sending, setSending] = useJState(false);
-  const [open, setOpen] = useJState(false);
-  const [unread, setUnread] = useJState(0);
-  const [, force] = useJState(0);
   const scrollRef = useJRef(null);
   const inputRef = useJRef(null);
   const welcomeShown = useJRef(false);
-
-  // Tick (compte à rebours + apparition après démarrage)
-  useJEffect(() => { const t = setInterval(() => force(n => n + 1), 2000); return () => clearInterval(t); }, []);
 
   const getElapsedMin = () => {
     if (!window.LUMIO_TIMER_START) return 0;
@@ -117,11 +116,16 @@ function JeffersonApp() {
 
   // Message de bienvenue contextuel
   useJEffect(() => {
-    if (!window.LUMIO_TIMER_START) return;
     if (messages.length === 0 && !welcomeShown.current) {
       welcomeShown.current = true;
       const prenom = (window.LUMIO_DATA?.student?.name || '').split(' ')[0] || 'toi';
       const elapsed = getElapsedMin();
+
+      // Timer non démarré : expliquer à l'étudiant
+      if (!window.LUMIO_TIMER_START) {
+        setMessages([{ role: 'assistant', text: `Bonjour. Je suis Jefferson — votre guide PAC.\n\nLe timer n'a pas encore démarré. Cliquez sur "Commencer l'affaire" dans le brief pour lancer la session. Je serai là dès que vous entrez sur le bureau.`, time: now() }]);
+        return;
+      }
 
       const phase = getPhaseIndex(elapsed);
       const welcomeTexts = [
@@ -132,9 +136,8 @@ function JeffersonApp() {
         `Acte 5 — relecture et soumission.\n\nRetournez dans Livrable. Relisez vos réponses. Appuyez sur Soumettre.`
       ];
       setMessages([{ role: 'assistant', text: welcomeTexts[phase], time: now() }]);
-      if (!open) setUnread(u => u + 1);
     }
-  }, [window.LUMIO_TIMER_START]);
+  }, []);
 
   useJEffect(() => {
     try { sessionStorage.setItem('pac_jefferson_history', JSON.stringify(messages)); } catch {}
@@ -162,7 +165,7 @@ function JeffersonApp() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
+          model: 'claude-sonnet-4-6',
           max_tokens: 300,
           system: buildJeffersonPrompt(studentName, elapsed),
           messages: apiHistory
@@ -174,7 +177,6 @@ function JeffersonApp() {
         ? data.content[0].text
         : 'Jefferson ne peut pas répondre — l\'API est indisponible. Réessayez dans quelques secondes.';
       setMessages(h => [...h, { role: 'assistant', text: reply, time: now() }]);
-      if (!open) setUnread(u => u + 1);
     } catch (err) {
       const errMsg = err?.message?.includes('API error')
         ? `Jefferson est temporairement indisponible (${err.message}). Réessayez.`
@@ -203,170 +205,163 @@ function JeffersonApp() {
   ];
   const suggestions = suggestionsByPhase[phaseIdx] || suggestionsByPhase[0];
 
-  // injection unique de l'animation de pulsation + points
-  useJEffect(() => {
-    if (!document.getElementById('jeff-fab-style')) {
-      const s = document.createElement('style');
-      s.id = 'jeff-fab-style';
-      s.textContent = `
-        @keyframes jeff-pulse { 0%,100%{box-shadow:0 6px 22px rgba(11,43,45,.35),0 0 0 0 rgba(93,226,152,.5)} 50%{box-shadow:0 6px 22px rgba(11,43,45,.35),0 0 0 10px rgba(93,226,152,0)} }
-        @keyframes jeff-in { from{opacity:0;transform:translateY(14px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes jeff-dot { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-4px);opacity:1} }
-        .jeff-panel{animation:jeff-in .22s cubic-bezier(.34,1.4,.64,1) both}
-        .jeff-fab-attn{animation:jeff-pulse 2.4s ease-in-out infinite}
-      `;
-      document.head.appendChild(s);
-    }
-  }, []);
-
-  // Gate : n'apparaître qu'une fois la session démarrée (bureau)
-  if (!window.LUMIO_TIMER_START) return null;
-
-  // ── Rendu chatbot flottant (bas-droite) ──────────────────────
-  const elapsedR = getElapsedMin();
-  const phaseIdxR = getPhaseIndex(elapsedR);
-  const remainingR = Math.max(0, 210 - elapsedR);
-  const isUrgentR = remainingR < 45;
-  const jState = sending ? 'talking' : isUrgentR ? 'alert' : 'idle';
-  const C = { abysse: '#0B2B2D', petrole: '#134547', menthe: '#5DE298', givre: '#E3FFF0', eau: '#9DF0C4', saumon: '#E89B77' };
-  const Avatar = window.JeffersonAvatar || window.JeffersonIcon || (() => React.createElement('span', null, '🐰'));
-
+  // Couleurs Éminéo
+  const C = {
+    abysse: '#0B2B2D',
+    petrole: '#134547',
+    menthe: '#5DE298',
+    givre: '#E3FFF0',
+    eau: '#9DF0C4',
+    saumon: '#E89B77',
+  };
 
   return (
-    <>
-      {/* Lanceur flottant — la tête du lapin */}
-      <button
-        onClick={() => { setOpen(o => !o); setUnread(0); }}
-        aria-label="Jefferson — Guide PAC"
-        title="Jefferson — votre guide"
-        className={!open && unread > 0 ? 'jeff-fab-attn' : ''}
-        style={{
-          position: 'fixed', bottom: 22, right: 22, zIndex: 100000,
-          width: 60, height: 60, borderRadius: '50%', padding: 0,
-          border: open ? `2px solid ${C.menthe}` : '2px solid rgba(255,255,255,0.7)',
-          background: C.givre, cursor: 'pointer', overflow: 'hidden',
-          boxShadow: '0 6px 22px rgba(11,43,45,0.35)',
-          transition: 'transform .18s cubic-bezier(.34,1.56,.64,1)'
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
-        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-      >
-        {React.createElement(Avatar, { size: 56, state: open ? 'idle' : jState })}
-        {!open && unread > 0 && (
-          <span style={{ position: 'absolute', top: 2, right: 2, minWidth: 18, height: 18, padding: '0 4px', borderRadius: 9, background: C.saumon, color: C.abysse, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>{unread}</span>
-        )}
-      </button>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.givre, overflow: 'hidden', fontFamily: "'IBM Plex Sans', -apple-system, sans-serif" }}>
 
-      {/* Panneau de conversation */}
-      {open && (
-        <div className="jeff-panel" style={{
-          position: 'fixed', bottom: 92, right: 22, zIndex: 100000,
-          width: 360, maxWidth: 'calc(100vw - 44px)', height: 520, maxHeight: 'calc(100vh - 130px)',
-          background: C.givre, borderRadius: 18, overflow: 'hidden',
-          display: 'flex', flexDirection: 'column',
-          boxShadow: '0 18px 60px rgba(11,43,45,0.34)', border: '1px solid rgba(93,226,152,0.35)',
-          fontFamily: "'IBM Plex Sans', -apple-system, sans-serif"
-        }}>
-          {/* Header */}
-          <div style={{ padding: '12px 14px', background: `linear-gradient(135deg, ${C.petrole}, ${C.abysse})`, display: 'flex', alignItems: 'center', gap: 11, flexShrink: 0 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: C.givre, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-              {React.createElement(Avatar, { size: 38, state: jState })}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>Jefferson</div>
-              <div style={{ fontSize: 10, color: C.menthe, letterSpacing: '0.04em', opacity: 0.9 }}>Guide PAC · {phaseLabels[phaseIdxR]}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: isUrgentR ? C.saumon : 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '4px 9px', flexShrink: 0 }}>
-              <span style={{ fontSize: 10 }}>⏱</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: isUrgentR ? C.abysse : 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-mono, monospace)' }}>{remainingR}′</span>
-            </div>
-            <button onClick={() => setOpen(false)} aria-label="Réduire" style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(255,255,255,0.12)', border: 'none', color: 'white', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+      {/* Header Éminéo */}
+      <div style={{ padding: '14px 16px 12px', background: C.abysse, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          {/* Avatar Jefferson */}
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: '#E3FFF0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+            {window.JeffersonIcon
+              ? React.createElement(window.JeffersonIcon, { size: 36, state: isUrgent ? 'alert' : 'idle' })
+              : <span style={{ fontSize: 18 }}>🐰</span>
+            }
           </div>
-
-          {/* Messages */}
-          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
-                {m.role === 'assistant' && (
-                  <div style={{ width: 24, height: 24, borderRadius: 7, background: C.abysse, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, marginBottom: 2 }}>
-                    {React.createElement(Avatar, { size: 22, state: 'idle' })}
-                  </div>
-                )}
-                <div style={{
-                  maxWidth: '80%',
-                  background: m.role === 'user' ? C.abysse : 'white',
-                  color: m.role === 'user' ? 'white' : C.abysse,
-                  borderRadius: m.role === 'user' ? '13px 13px 3px 13px' : '13px 13px 13px 3px',
-                  padding: '9px 12px', fontSize: 13, lineHeight: 1.6,
-                  boxShadow: '0 1px 4px rgba(11,43,45,0.08)',
-                  border: m.role === 'assistant' ? '1px solid rgba(93,226,152,0.22)' : 'none',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {m.text}
-                  {m.time && <div style={{ fontSize: 9, marginTop: 3, textAlign: 'right', opacity: 0.35 }}>{m.time}</div>}
-                </div>
-              </div>
-            ))}
-            {sending && (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
-                <div style={{ width: 24, height: 24, borderRadius: 7, background: C.abysse, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {React.createElement(Avatar, { size: 22, state: 'talking' })}
-                </div>
-                <div style={{ background: 'white', borderRadius: '13px 13px 13px 3px', padding: '11px 14px', border: '1px solid rgba(93,226,152,0.22)', display: 'flex', gap: 4 }}>
-                  {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: C.petrole, animation: 'jeff-dot 1.2s ease-in-out infinite', animationDelay: `${i*0.18}s` }} />)}
-                </div>
-              </div>
-            )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'white', letterSpacing: '0.01em' }}>Jefferson</div>
+            <div style={{ fontSize: 10, color: C.menthe, letterSpacing: '0.04em', opacity: 0.85 }}>Guide PAC · Éminéo MSMC</div>
           </div>
+          <button
+            onClick={() => { if (window.confirm('Effacer l\'historique Jefferson ?')) { sessionStorage.removeItem('pac_jefferson_history'); setMessages([]); welcomeShown.current = false; } }}
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.2)', cursor: 'pointer', fontSize: 11, padding: '4px 8px', borderRadius: 5, fontFamily: 'inherit' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.55)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+          >effacer</button>
+        </div>
 
-          {/* Suggestions */}
-          {messages.length <= 2 && (
-            <div style={{ padding: '0 12px 8px', display: 'flex', flexDirection: 'column', gap: 5, flexShrink: 0 }}>
-              {(suggestions || []).map((q, i) => (
-                <button key={i} onClick={() => send(q)} style={{
-                  background: 'white', border: '1px solid rgba(93,226,152,0.3)', borderRadius: 8,
-                  padding: '7px 11px', fontSize: 12, color: C.abysse, cursor: 'pointer', textAlign: 'left',
-                  fontFamily: 'inherit', transition: 'all .12s'
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.background = C.eau; e.currentTarget.style.borderColor = C.menthe; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = 'rgba(93,226,152,0.3)'; }}
-                >{q}</button>
-              ))}
-            </div>
-          )}
-
-          {/* Saisie */}
-          <div style={{ padding: '9px 12px 12px', borderTop: '1px solid rgba(93,226,152,0.22)', background: 'white', flexShrink: 0 }}>
-            <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
-              <textarea
-                ref={inputRef} value={draft}
-                onChange={e => setDraft(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                placeholder="Demandez à Jefferson…"
-                rows={1}
-                style={{ flex: 1, resize: 'none', border: '1px solid rgba(11,43,45,0.15)', borderRadius: 9, padding: '8px 10px', fontSize: 13, color: C.abysse, background: C.givre, outline: 'none', fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 80 }}
-                onFocus={e => e.target.style.borderColor = C.menthe}
-                onBlur={e => e.target.style.borderColor = 'rgba(11,43,45,0.15)'}
-              />
-              <button onClick={() => send()} disabled={!draft.trim() || sending} style={{
-                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-                background: draft.trim() && !sending ? C.abysse : 'rgba(11,43,45,0.08)', border: 'none',
-                cursor: draft.trim() && !sending ? 'pointer' : 'default',
-                color: draft.trim() && !sending ? 'white' : 'rgba(11,43,45,0.25)',
-                fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s'
-              }}>↑</button>
-            </div>
-            <div style={{ fontSize: 9, color: C.petrole, marginTop: 4, paddingLeft: 2, opacity: 0.5 }}>
-              Jefferson dit quoi faire, pas quoi penser
-            </div>
+        {/* Bandeau phase + timer */}
+        <div style={{ display: 'flex', gap: 7 }}>
+          <div style={{
+            flex: 1, display: 'flex', alignItems: 'center', gap: 7,
+            background: phaseColors[phaseIdx], borderRadius: 7, padding: '6px 10px'
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: phaseTextColors[phaseIdx], opacity: 0.7 }} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: phaseTextColors[phaseIdx], letterSpacing: '0.04em' }}>
+              {phaseLabels[phaseIdx].toUpperCase()}
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            background: isUrgent ? C.saumon : 'rgba(255,255,255,0.08)',
+            borderRadius: 7, padding: '6px 10px',
+            border: isUrgent ? 'none' : '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <span style={{ fontSize: 11, color: isUrgent ? C.abysse : 'rgba(255,255,255,0.5)' }}>⏱</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: isUrgent ? C.abysse : 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono, monospace)' }}>
+              {remaining} min
+            </span>
           </div>
         </div>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
+            {m.role === 'assistant' && (
+              <div style={{ width: 24, height: 24, borderRadius: 6, background: C.abysse, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2, overflow: 'hidden' }}>
+                {window.JeffersonIcon
+                  ? React.createElement(window.JeffersonIcon, { size: 22, state: 'idle' })
+                  : <span style={{ fontSize: 11 }}>🐰</span>
+                }
+              </div>
+            )}
+            <div style={{
+              maxWidth: '80%',
+              background: m.role === 'user' ? C.abysse : 'white',
+              color: m.role === 'user' ? 'white' : C.abysse,
+              borderRadius: m.role === 'user' ? '12px 12px 3px 12px' : '12px 12px 12px 3px',
+              padding: '9px 12px', fontSize: 13, lineHeight: 1.6,
+              boxShadow: '0 1px 4px rgba(11,43,45,0.08)',
+              border: m.role === 'assistant' ? `1px solid rgba(93,226,152,0.2)` : 'none',
+              whiteSpace: 'pre-wrap'
+            }}>
+              {m.text}
+              <div style={{ fontSize: 9, marginTop: 3, textAlign: 'right', opacity: 0.35 }}>{m.time}</div>
+            </div>
+          </div>
+        ))}
+        {sending && (
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+            <div style={{ width: 24, height: 24, borderRadius: 6, background: C.abysse, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {window.JeffersonIcon ? React.createElement(window.JeffersonIcon, { size: 22, state: 'talking' }) : <span style={{ fontSize: 11 }}>🐰</span>}
+            </div>
+            <div style={{ background: 'white', borderRadius: '12px 12px 12px 3px', padding: '10px 14px', border: `1px solid rgba(93,226,152,0.2)`, display: 'flex', gap: 4 }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: C.petrole, animation: 'typedot 1.2s ease-in-out infinite', animationDelay: `${i*0.2}s` }} />)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Suggestions rapides */}
+      {messages.length <= 2 && (
+        <div style={{ padding: '0 14px 8px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ fontSize: 9, color: C.petrole, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2, opacity: 0.6 }}>Actions rapides</div>
+          {suggestions.map((q, i) => (
+            <button key={i} onClick={() => send(q)} style={{
+              background: 'white', border: `1px solid rgba(93,226,152,0.3)`,
+              borderRadius: 7, padding: '7px 11px', fontSize: 12,
+              color: C.abysse, cursor: 'pointer', textAlign: 'left',
+              fontFamily: 'inherit', transition: 'all .12s'
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.eau; e.currentTarget.style.borderColor = C.menthe; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = 'rgba(93,226,152,0.3)'; }}
+            >{q}</button>
+          ))}
+        </div>
       )}
-    </>
+
+      {/* Zone saisie */}
+      <div style={{ padding: '8px 12px 12px', borderTop: `1px solid rgba(93,226,152,0.2)`, background: 'white', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
+          <textarea
+            ref={inputRef} value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Demandez à Jefferson…"
+            rows={2}
+            style={{
+              flex: 1, resize: 'none', border: `1px solid rgba(11,43,45,0.15)`,
+              borderRadius: 8, padding: '8px 10px', fontSize: 13,
+              color: C.abysse, background: C.givre, outline: 'none',
+              fontFamily: 'inherit', lineHeight: 1.5
+            }}
+            onFocus={e => e.target.style.borderColor = C.menthe}
+            onBlur={e => e.target.style.borderColor = 'rgba(11,43,45,0.15)'}
+          />
+          <button
+            onClick={() => send()}
+            disabled={!draft.trim() || sending}
+            style={{
+              width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+              background: draft.trim() && !sending ? C.abysse : 'rgba(11,43,45,0.08)',
+              border: 'none',
+              cursor: draft.trim() && !sending ? 'pointer' : 'default',
+              color: draft.trim() && !sending ? 'white' : 'rgba(11,43,45,0.25)',
+              fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all .15s', marginBottom: 1
+            }}
+          >↑</button>
+        </div>
+        <div style={{ fontSize: 9, color: C.petrole, marginTop: 4, paddingLeft: 2, opacity: 0.5 }}>
+          Entrée pour envoyer · Jefferson dit quoi faire, pas quoi penser
+        </div>
+      </div>
+    </div>
   );
 }
 
-// JeffersonApp est monté directement par le composant Desktop (portée Babel partagée via window)
-window.JeffersonApp = JeffersonApp;
+// ─── Mise à jour APP_META icon + enregistrement ──────────────
 window.LUMIO_APPS = window.LUMIO_APPS || {};
-
+window.LUMIO_APPS['jefferson'] = JeffersonApp;

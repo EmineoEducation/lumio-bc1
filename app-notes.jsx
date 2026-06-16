@@ -28,7 +28,7 @@ function NotesApp({ openNote }) {
       id: 'd3', title: 'À régler avec Théo', date: '4 juin 2026',
       preview: 'MDR · budget · ce que je peux promettre au board…',
       distractor: false,
-      body: '— MDR : il faut qu\'il s\'engage. Pas un calendrier plâtré, juste une fenêtre.\n— Budget : 380K. S\'il refuse, j\'accepte 280 mais pas en dessous.\n— Le board : Athena attend une roadmap brand pour Q1 2027. Si on n\'y est pas, ils vont nous demander de prendre quelqu\'un de Boston.\n\n→ Le truc qu\'il ne comprend pas : la MDR n\'est pas un détail technique. C\'est notre seule défense possible contre Biostream. Sans elle, on est mort à 18 mois.'
+      body: '— MDR : il faut qu\'il s\'engage. Pas un calendrier plâtré, juste une fenêtre.\n— Budget : 380K. S\'il refuse, j\'accepte 280 mais pas en dessous.\n— Le board : Northgate attend une roadmap brand pour Q1 2027. Si on n\'y est pas, ils vont nous demander de prendre quelqu\'un de Boston.\n\n→ Le truc qu\'il ne comprend pas : la MDR n\'est pas un détail technique. C\'est notre seule défense possible contre Biostream. Sans elle, on est mort à 18 mois.'
     }
   ];
 
@@ -94,10 +94,10 @@ function SoniaNoteRender({ data }) {
 
       <div style={{ background: '#f4f2ee', padding: '18px 22px', borderRadius: 6, marginBottom: 22, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.9 }}>
         <div style={{ marginBottom: 10, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)' }}>Plateforme proposée</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Territoire&nbsp;&nbsp;&nbsp;</span> « La santé que les chiffres ne montrent pas encore »</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Promesse&nbsp;&nbsp;&nbsp;&nbsp;</span> Lumio révèle ce que le corps sait mais que la médecine ne capte pas</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2B&nbsp;</span> DRH des ETI/grands comptes, prescripteurs (méd. travail, mutuelles)</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2C&nbsp;</span> actifs 30-50 ans, urbains, charge mentale élevée</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Territoire\u00A0\u00A0\u00A0</span> « La santé que les chiffres ne montrent pas encore »</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Promesse\u00A0\u00A0\u00A0\u00A0</span> Lumio révèle ce que le corps sait mais que la médecine ne capte pas</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2B\u00A0</span> DRH des ETI/grands comptes, prescripteurs (méd. travail, mutuelles)</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2C\u00A0</span> actifs 30-50 ans, urbains, charge mentale élevée</div>
         <div><span style={{ color: 'var(--ink-mute)' }}>Personnalité</span> scientifique sans être froide · rassurante sans condescendance</div>
         <div><span style={{ color: 'var(--ink-mute)' }}>Engagements</span> 100 % données anonymisées · jamais revendues</div>
       </div>

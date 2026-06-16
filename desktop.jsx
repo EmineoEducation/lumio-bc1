@@ -18,7 +18,8 @@ const APP_META = {
   finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
   calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
   trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
-  livrable:  { title: 'Livrable — BC1',        w: 920, h: 620, icon: 'LivrableIcon' }
+  livrable:  { title: 'Livrable — BC1',        w: 920, h: 620, icon: 'LivrableIcon' },
+  jefferson: { title: 'Jefferson · Guide PAC', w: 480, h: 560, icon: 'JeffersonIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -233,11 +234,16 @@ function Dock({ openApp, openWindows, livrableUnlocked }) {
     { id: 'notepad', label: 'Bloc-notes' },
     { id: 'slack', label: 'Slack' },
     { id: 'calendar', label: 'Calendrier' },
+    { id: 'jefferson', label: 'Jefferson' },
     { id: 'trash', label: 'Corbeille' }
   ];
-  const items = livrableUnlocked
-    ? [...baseItems.slice(0, -1), { id: 'livrable', label: 'Livrable', bounce: true }, baseItems[baseItems.length - 1]]
-    : baseItems;
+  // Livrable TOUJOURS présent dans le dock (accessible à tout moment).
+  // Le bounce reste un indice visuel temporaire quand Sonia a assez d'éléments.
+  const items = [
+    ...baseItems.slice(0, -1),
+    { id: 'livrable', label: 'Livrable', bounce: livrableUnlocked },
+    baseItems[baseItems.length - 1]
+  ];
 
   // CSS bounce injecté une fois
   useWmEffect(() => {
@@ -514,7 +520,9 @@ function PacTimeline() {
 }
 
 
-function Desktop({ onLogout }) {
+function Desktop({ onLogout, timerStart }) {
+  // Sur restauration de session, réinstaller le timer fictif AVANT tout rendu d'horloge
+  if (timerStart && !window.LUMIO_TIMER_START) window.LUMIO_TIMER_START = timerStart;
   const [windows, setWindows] = useWmState([]);
   const [zCounter, setZCounter] = useWmState(100);
   const [notifications, setNotifications] = useWmState([]);
@@ -585,7 +593,7 @@ Camille`
             color: '#e0b53a',
             title: 'Note déposée',
             body: 'Sonia a partagé une note : "À régler avec Théo"',
-            click: { app: 'notes', props: { openNote: 'theo_regler' } }
+            click: { app: 'notes', props: { openNote: 'd3' } }
           }]);
           setTimeout(() => setNotifications(ns => ns.filter(n => n.id !== id)), 14000);
           // Activer la note dans NotesApp
@@ -832,7 +840,6 @@ Camille`
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,102,65,0.85)'; e.currentTarget.style.color = 'white'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,243,239,0.55)'; e.currentTarget.style.color = 'var(--ink-soft)'; }}
         >?</button>
-        {window.JeffersonApp && React.createElement(window.JeffersonApp)}
       </div>
     </WindowsCtx.Provider>
   );

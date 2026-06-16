@@ -256,7 +256,7 @@ function SearchView() {
         { url: 'biostream.com › press › certification-2026', title: 'Biostream obtient la certification MDR Classe IIa pour Flow Patch Pro', desc: '« Une étape réglementaire majeure qui valide huit ans de R&D », commente Marc Léger, CEO. La certification ouvre l\'accès aux marchés hospitaliers et permet une revendication médicale étendue.' },
         { url: 'snitem.fr › classement-mdr-iia-criteres', title: 'Classification MDR IIa : critères et procédure', desc: 'La classe IIa regroupe les dispositifs présentant un risque modéré. La procédure d\'évaluation par un organisme notifié dure en moyenne 14 à 22 mois selon le type de dispositif…' },
         { url: 'wikipedia.org › Lumio_Health', title: 'Lumio Health — Wikipédia', desc: 'Lumio Health est une medtech française fondée en 2018, spécialisée dans la mesure du stress chronique en milieu professionnel. L\'entreprise a levé 22 M$ en série B en 2025…' },
-        { url: 'usine-digitale.fr › lumio-health-leve-22m', title: 'Lumio Health lève 22 M$ pour passer au grand public', desc: 'La startup parisienne, jusque-là discrète sur le segment B2B, ambitionne d\'atteindre 20 M€ de chiffre d\'affaires en 36 mois. Le tour est mené par le fonds américain Athena Health Capital…' }
+        { url: 'usine-digitale.fr › lumio-health-leve-22m', title: 'Lumio Health lève 22 M$ pour passer au grand public', desc: 'La startup parisienne, jusque-là discrète sur le segment B2B, ambitionne d\'atteindre 20 M€ de chiffre d\'affaires en 36 mois. Le tour est mené par le fonds américain Northgate Capital…' }
       ].map((r, i) => (
         <div key={i} style={browserStyles.searchResult}>
           <div style={{ fontSize: 11, color: '#888' }}>{r.url}</div>
