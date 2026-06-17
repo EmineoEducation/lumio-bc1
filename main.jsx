@@ -99,7 +99,9 @@ function NameScreen({ onConfirm }) {
     }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8 }}>{(window.PAC_CONFIG ? window.PAC_CONFIG.dispositif + ' · ' + window.PAC_CONFIG.bloc : 'PAC')}</div>
       <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 200, letterSpacing: '-0.02em', marginBottom: 8, textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>Lumio Health</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, opacity: 0.7, marginBottom: 40 }}>Une recommandation à défendre</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, opacity: 0.7, marginBottom: 40 }}>
+        {(window.PAC_CONFIG && window.PAC_CONFIG.accroche_namescreen) || (window.LUMIO_DATA && window.LUMIO_DATA.mission && window.LUMIO_DATA.mission.titre_affaire) || 'Une mission à traiter'}
+      </div>
 
       <div style={{
         background: 'rgba(255,255,255,0.12)',
@@ -112,8 +114,20 @@ function NameScreen({ onConfirm }) {
         animation: shake ? 'shake 0.4s ease' : 'none'
       }}>
         <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>
-          Tu vas entrer dans ce dossier en tant que consultant·e externe.<br/>
-          <span style={{ opacity: 0.7 }}>Identifie-toi pour recevoir ton portfolio de compétences.</span>
+          {(() => {
+            const cfg = window.PAC_CONFIG || {};
+            const data = window.LUMIO_DATA || {};
+            const role = (data.student && data.student.role) || cfg.role_etudiant || 'consultant·e externe';
+            const dispositif = cfg.dispositif || 'PAC';
+            const bloc = cfg.bloc || '';
+            return (
+              <>
+                Tu vas entrer dans ce dossier en tant que <strong>{role}</strong>
+                {cfg.commanditaire ? <> — mission confiée par <strong>{cfg.commanditaire}</strong></> : null}.<br/>
+                <span style={{ opacity: 0.7 }}>Identifie-toi pour accéder à ton poste de travail {dispositif}{bloc ? ' · ' + bloc : ''}.</span>
+              </>
+            );
+          })()}
         </div>
 
         {/* Prénom + Nom */}
