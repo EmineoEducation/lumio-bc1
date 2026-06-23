@@ -256,6 +256,87 @@ function LoginScreen({ onLogin, studentName }) {
   );
 }
 
+// ─── Bouton vidéo Lumio Health (incipit PAC) ────────────────
+function LumioVideoButton() {
+  const [showVideo, setShowVideo] = useRootState(false);
+  return (
+    <>
+      <div
+        onClick={() => setShowVideo(true)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          background: 'rgba(93,226,152,0.10)',
+          border: '1px solid rgba(93,226,152,0.28)',
+          borderRadius: 9, padding: '12px 16px',
+          marginBottom: 16, cursor: 'pointer',
+          transition: 'background .15s'
+        }}
+      >
+        <span style={{ fontSize: 20, flexShrink: 0 }}>▶</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0B2B2D', lineHeight: 1.3, marginBottom: 2 }}>
+            Découvrez Lumio Health avant de commencer
+          </div>
+          <div style={{ fontSize: 11, color: '#5c5c5c', lineHeight: 1.4 }}>
+            Présentation de l'entreprise, du produit et des enjeux — 6 min
+          </div>
+        </div>
+        <div style={{
+          background: '#5DE298', color: '#0B2B2D',
+          padding: '6px 14px', borderRadius: 6,
+          fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0
+        }}>
+          Regarder →
+        </div>
+      </div>
+      {showVideo && (
+        <div
+          onClick={() => setShowVideo(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 99999,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '2rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 860, position: 'relative' }}
+          >
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+              <iframe
+                src="https://www.youtube.com/embed/LR91Xy4b4G0?rel=0&modestbranding=1&autoplay=1"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: '100%', height: '100%',
+                  border: 'none', borderRadius: 8
+                }}
+              />
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button
+                onClick={() => setShowVideo(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: 6, padding: '8px 20px',
+                  color: 'white', fontSize: 13, cursor: 'pointer',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Fermer et commencer l'affaire
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Welcome overlay ─────────────────────────────────────────
 function WelcomeBriefCard({ onClose, studentName }) {
   const prenom = studentName.split(' ')[0];
@@ -349,37 +430,8 @@ function WelcomeBriefCard({ onClose, studentName }) {
           </div>
         </div>
 
-        {/* ── Présentation Lumio Health (NotebookLM) ── */}
-        <a
-          href="https://notebooklm.google.com/notebook/a8628e67-6af3-4c49-bb30-b288e07679ca/artifact/8e52c599-8f78-4b67-a2fc-f3d9782c2aa8?utm_source=nlm_web_share&utm_medium=google_oo&utm_campaign=art_share_1&utm_content=&utm_smc=nlm_web_share_google_oo_art_share_1_"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            background: 'rgba(93,226,152,0.10)',
-            border: '1px solid rgba(93,226,152,0.28)',
-            borderRadius: 9, padding: '12px 16px',
-            marginBottom: 16, textDecoration: 'none',
-            transition: 'background .15s'
-          }}
-        >
-          <span style={{ fontSize: 20, flexShrink: 0 }}>▶</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#0B2B2D', lineHeight: 1.3, marginBottom: 2 }}>
-              Découvrez Lumio Health avant de commencer
-            </div>
-            <div style={{ fontSize: 11, color: '#5c5c5c', lineHeight: 1.4 }}>
-              Présentation de l'entreprise, du produit et des enjeux — 6 min
-            </div>
-          </div>
-          <div style={{
-            background: '#5DE298', color: '#0B2B2D',
-            padding: '6px 14px', borderRadius: 6,
-            fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0
-          }}>
-            Regarder →
-          </div>
-        </a>
+        {/* ── Présentation Lumio Health (vidéo embed) ── */}
+        <LumioVideoButton />
 
         {/* Checkbox engagement + bouton */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer' }} onClick={() => setAccepted(a => !a)}>
