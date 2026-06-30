@@ -28,54 +28,63 @@ window.LUMIO_SESSION = {
   clear: (id) => apiSession('DELETE', id),
 };
 
-// ─── Substitution des placeholders étudiant ─────────────────
-// Remplace {{PRENOM}} / {{EMAIL_ETUDIANT}} dans toutes les données narratives.
-// Idempotent : utilise les gabarits d'origine conservés dans _tpl.
-function applyStudentPlaceholders(fullName) {
-  const D = window.LUMIO_DATA;
-  if (!D) return;
-  const prenom = (fullName || '').split(' ')[0] || 'Consultant·e';
-  const email = D.student?.email || '{{EMAIL_ETUDIANT}}';
-  const sub = (s) => (s || '')
-    .replace(/\{\{\s*PRENOM\s*\}\}/g, prenom)
-    .replace(/\{\{\s*EMAIL_ETUDIANT\s*\}\}/g, email);
-
-  // Conserver les gabarits d'origine pour rester idempotent (reload, changement de nom)
-  D._tpl = D._tpl || {
-    briefBody: D.briefEmail?.body,
-    briefTo: D.briefEmail?.to,
-    slackInitial: (D.slackMessages?.initial || []).map(m => m.text),
-  };
-  if (D.briefEmail) {
-    D.briefEmail.body = sub(D._tpl.briefBody);
-    D.briefEmail.to = sub(D._tpl.briefTo);
-  }
-  if (D.slackMessages?.initial) {
-    D.slackMessages.initial.forEach((m, i) => { m.text = sub(D._tpl.slackInitial[i]); });
-  }
-  // Aperçu Mail dérivé du nom (remplace l'ancien "Lou," codé en dur)
-  D._briefPreview = `${prenom}, Je vous confie une mission dont j'ai besoin qu'elle soit terminée avant…`;
+// Substitue {{PRENOM}} {{NOM}} {{EMAIL_ETUDIANT}} PARTOUT dans LUMIO_DATA, en un seul passage.
+function applyStudent(fullName, email) {
+  // Échappe les seules entrées libres de l'étudiant (vecteur XSS via dangerouslySetInnerHTML).
+  // Le narratif de data.js, lui, reste du HTML riche contrôlé et n'est pas touché.
+  const escHtml = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const prenom = escHtml((fullName || '').split(' ')[0] || '');
+  const nom    = escHtml((fullName || '').split(' ').slice(1).join(' '));
+  const map = { '{{PRENOM}}': prenom, '{{NOM}}': nom, '{{EMAIL_ETUDIANT}}': escHtml(email || '') };
+  try {
+    const json = JSON.stringify(window.LUMIO_DATA)
+      .replace(/\{\{PRENOM\}\}|\{\{NOM\}\}|\{\{EMAIL_ETUDIANT\}\}/g, m => map[m]);
+    window.LUMIO_DATA = JSON.parse(json);
+  } catch (e) { /* données déjà substituées */ }
+  window.LUMIO_DATA.student = window.LUMIO_DATA.student || {};
+  window.LUMIO_DATA.student.name = fullName;
+  if (email) window.LUMIO_DATA.student.email = email;
+  window.LUMIO_DATA.student.initial = (prenom[0] || '?').toUpperCase();
 }
-window.applyStudentPlaceholders = applyStudentPlaceholders;
 
 // ─── Saisie du nom (avant le login) ─────────────────────────
 function NameScreen({ onConfirm }) {
   const [prenom, setPrenom] = useRootState('');
   const [nom, setNom] = useRootState('');
+  const [email, setEmail] = useRootState('');
   const [shake, setShake] = useRootState(false);
+  const [emailError, setEmailError] = useRootState('');
+
+  const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
   const confirm = () => {
+    setEmailError('');
     if (!prenom.trim()) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      return;
+    }
+    if (!email.trim() || !isValidEmail(email)) {
+      setEmailError('Un email valide est requis pour recevoir ton portfolio.');
       setShake(true);
       setTimeout(() => setShake(false), 500);
       return;
     }
     const full = `${prenom.trim()}${nom.trim() ? ' ' + nom.trim() : ''}`;
     window.LUMIO_DATA.student.name = full;
-    window.LUMIO_DATA.student.email = `${prenom.trim().toLowerCase()}.${(nom.trim() || 'consultant').toLowerCase()}@consult.fr`;
+    window.LUMIO_DATA.student.email = email.trim().toLowerCase();
     window.LUMIO_DATA.student.initial = prenom.trim()[0].toUpperCase();
-    onConfirm(full);
+    onConfirm(full, email.trim().toLowerCase());
   };
+
+  const inputStyle = (filled) => ({
+    width: '100%', padding: '10px 14px',
+    border: filled ? '1.5px solid rgba(255,255,255,0.5)' : '1.5px solid rgba(255,255,255,0.2)',
+    borderRadius: 10, background: 'rgba(255,255,255,0.15)',
+    color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s'
+  });
 
   return (
     <div style={{
@@ -88,9 +97,9 @@ function NameScreen({ onConfirm }) {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       color: 'white', padding: '2rem'
     }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8 }}>PAC · MSMC · BC1</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8 }}>{(window.PAC_CONFIG ? window.PAC_CONFIG.dispositif + ' · ' + window.PAC_CONFIG.bloc : 'PAC')}</div>
       <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 200, letterSpacing: '-0.02em', marginBottom: 8, textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>Lumio Health</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, opacity: 0.7, marginBottom: 48 }}>Une affaire à résoudre</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, opacity: 0.7, marginBottom: 40 }}>{(window.PAC_CONFIG && window.PAC_CONFIG.accroche_namescreen && window.PAC_CONFIG.accroche_namescreen.subtitle) || 'Un dossier à traiter'}</div>
 
       <div style={{
         background: 'rgba(255,255,255,0.12)',
@@ -98,39 +107,51 @@ function NameScreen({ onConfirm }) {
         border: '1px solid rgba(255,255,255,0.25)',
         borderRadius: 16,
         padding: '32px 36px',
-        width: '100%', maxWidth: 420,
+        width: '100%', maxWidth: 440,
         textAlign: 'center',
         animation: shake ? 'shake 0.4s ease' : 'none'
       }}>
-        <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 24, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 22, lineHeight: 1.6 }}>
           Tu vas entrer dans ce dossier en tant que consultant·e externe.<br/>
-          <span style={{ opacity: 0.7 }}>Comment t'appelles-tu ?</span>
+          <span style={{ opacity: 0.7 }}>Identifie-toi pour recevoir ton portfolio de compétences.</span>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, width: '100%' }}>
+        {/* Prénom + Nom */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 12, width: '100%' }}>
           <input
             value={prenom}
             onChange={e => setPrenom(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') confirm(); }}
             placeholder="Prénom *"
             autoFocus
-            style={{
-              flex: 1, minWidth: 0, padding: '10px 14px',
-              border: prenom.trim() ? '1.5px solid rgba(255,255,255,0.5)' : '1.5px solid rgba(255,255,255,0.2)',
-              borderRadius: 10, background: 'rgba(255,255,255,0.15)',
-              color: 'white', fontSize: 14, outline: 'none', transition: 'border-color .2s'
-            }}
+            className="placeholder-dark"
+            style={inputStyle(prenom.trim())}
           />
           <input
             value={nom}
             onChange={e => setNom(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') confirm(); }}
             placeholder="Nom"
+            className="placeholder-dark"
+            style={inputStyle(nom.trim())}
+          />
+        </div>
+
+        {/* Email école */}
+        <div style={{ marginBottom: 20 }}>
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setEmailError(''); }}
+            onKeyDown={e => { if (e.key === 'Enter') confirm(); }}
+            placeholder="Email école (ex: prenom.nom@emineo.fr)"
+            className="placeholder-dark"
             style={{
-              flex: 1, minWidth: 0, padding: '10px 14px',
-              border: '1.5px solid rgba(255,255,255,0.2)',
-              borderRadius: 10, background: 'rgba(255,255,255,0.15)',
-              color: 'white', fontSize: 14, outline: 'none'
+              ...inputStyle(isValidEmail(email)),
+              width: '100%',
+              border: isValidEmail(email)
+                ? '1.5px solid rgba(255,255,255,0.5)'
+                : '1.5px solid rgba(255,255,255,0.2)'
             }}
           />
         </div>
@@ -149,8 +170,10 @@ function NameScreen({ onConfirm }) {
         >
           Entrer dans l'affaire →
         </button>
-        {!prenom.trim() && (
-          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 10 }}>Le prénom est requis</div>
+        {(!prenom.trim() || emailError) && (
+          <div style={{ fontSize: 11, opacity: 0.5, marginTop: 10 }}>
+            {emailError || 'Le prénom est requis'}
+          </div>
         )}
       </div>
     </div>
@@ -181,8 +204,8 @@ function LoginScreen({ onLogin, studentName }) {
       animation: stage === 'unlocking' ? 'fadeOutLogin 1.1s forwards' : 'none'
     }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.8, marginBottom: 8 }}>samedi 12 septembre 2026</div>
-        <div style={{ fontSize: 96, fontWeight: 200, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>08:14</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.8, marginBottom: 8 }}>lundi 12 octobre 2026</div>
+        <div style={{ fontSize: 96, fontWeight: 200, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>07:19</div>
       </div>
 
       <div style={{
@@ -233,10 +256,93 @@ function LoginScreen({ onLogin, studentName }) {
   );
 }
 
+// ─── Bouton vidéo Lumio Health (incipit PAC) ────────────────
+function LumioVideoButton() {
+  const [showVideo, setShowVideo] = useRootState(false);
+  return (
+    <>
+      <div
+        onClick={() => setShowVideo(true)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          background: 'rgba(93,226,152,0.10)',
+          border: '1px solid rgba(93,226,152,0.28)',
+          borderRadius: 9, padding: '12px 16px',
+          marginBottom: 16, cursor: 'pointer',
+          transition: 'background .15s'
+        }}
+      >
+        <span style={{ fontSize: 20, flexShrink: 0 }}>▶</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0B2B2D', lineHeight: 1.3, marginBottom: 2 }}>
+            Découvrez Lumio Health avant de commencer
+          </div>
+          <div style={{ fontSize: 11, color: '#5c5c5c', lineHeight: 1.4 }}>
+            Présentation de l'entreprise, du produit et des enjeux — 6 min
+          </div>
+        </div>
+        <div style={{
+          background: '#5DE298', color: '#0B2B2D',
+          padding: '6px 14px', borderRadius: 6,
+          fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0
+        }}>
+          Regarder →
+        </div>
+      </div>
+      {showVideo && (
+        <div
+          onClick={() => setShowVideo(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 99999,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '2rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 860, position: 'relative' }}
+          >
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+              <iframe
+                src="https://www.youtube.com/embed/LR91Xy4b4G0?rel=0&modestbranding=1&autoplay=1"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                style={{
+                  position: 'absolute', top: 0, left: 0,
+                  width: '100%', height: '100%',
+                  border: 'none', borderRadius: 8
+                }}
+              />
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button
+                onClick={() => setShowVideo(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: 6, padding: '8px 20px',
+                  color: 'white', fontSize: 13, cursor: 'pointer',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Fermer et commencer l'affaire
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Welcome overlay ─────────────────────────────────────────
 function WelcomeBriefCard({ onClose, studentName }) {
   const prenom = studentName.split(' ')[0];
   const [accepted, setAccepted] = useRootState(false);
+  const __acc = (window.PAC_CONFIG && window.PAC_CONFIG.accroche_namescreen) || null;
+
 
   const handleStart = () => {
     if (!accepted) return;
@@ -267,12 +373,18 @@ function WelcomeBriefCard({ onClose, studentName }) {
         padding: '32px 36px', boxShadow: '0 30px 80px rgba(0,0,0,0.45)'
       }}>
         {/* Header */}
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.25em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 10 }}>PAC · MSMC RNCP 38504 · Bloc 1</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.25em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 10 }}>{(window.PAC_CONFIG ? window.PAC_CONFIG.dispositif + ' · ' + window.PAC_CONFIG.bloc : 'PAC')}</div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.15, marginBottom: 14 }}>
           Bienvenue, {prenom}.
         </h1>
-        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 10 }}>
-          Tu es <strong>{studentName}</strong>, consultant·e en stratégie de marque. Sonia Ferracci, Directrice Marketing de Lumio Health, t'a confié un audit de marque urgent. Tu as accès à un <strong>poste de mission dédié</strong> : lettre de mission, veille concurrentielle, note interne CEO, verbatims terrain — et quelques documents qui se contredisent. <em>À toi de trier.</em>
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 10 }}>
+          {__acc && __acc.intro
+            ? __acc.intro.split('{{STUDENT}}').reduce((out, part, i) => {
+                if (i > 0) out.push(<strong key={'s'+i}>{studentName}</strong>);
+                out.push(<React.Fragment key={'t'+i}>{part}</React.Fragment>);
+                return out;
+              }, [])
+            : <span>Tu es <strong>{studentName}</strong>, consultant·e externe. Tu disposes d'un poste de mission dédié pour produire le livrable attendu par le jury.</span>}
         </p>
 
         {/* Bloc temporel — central */}
@@ -280,7 +392,7 @@ function WelcomeBriefCard({ onClose, studentName }) {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 700, color: 'white', letterSpacing: '-0.02em' }}>3h30</span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)' }}>=</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>18 jours dans l'univers Lumio</span>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>{__acc && __acc.ratio_label ? __acc.ratio_label : '3 semaines dans la vraie vie'}</span>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {actes.map(a => (
@@ -305,11 +417,11 @@ function WelcomeBriefCard({ onClose, studentName }) {
         <div style={{ background: '#f7f4ef', borderRadius: 8, padding: '14px 18px', marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Trois règles, pas de négociation</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { ico: '📄', txt: 'Tout ce que tu sais, c\'est dans les documents.' },
-              { ico: '🤐', txt: 'Le RP ne te dira pas "si c\'est juste". Il ne te dira pas par où commencer. Il observe.' },
-              { ico: '💬', txt: 'Quand tu as une hypothèse solide → Slack → Sonia. Pas avant.' },
-            ].map((r, i) => (
+            {(__acc && __acc.regles && __acc.regles.length ? __acc.regles : [
+              { ico: '📄', txt: 'Tout ce que tu sais, c\'est dans les documents du poste de mission.' },
+              { ico: '🤐', txt: 'Le jury teste chaque hypothèse. Il ne cherche pas à t\'aider — il évalue.' },
+              { ico: '💬', txt: 'Quand tu as une hypothèse solide → Slack → ton commanditaire. Sa réaction débloque la suite.' },
+            ]).map((r, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>{r.ico}</span>
                 <span style={{ fontSize: 13, color: '#2a2620', lineHeight: 1.55 }}>{r.txt}</span>
@@ -317,6 +429,9 @@ function WelcomeBriefCard({ onClose, studentName }) {
             ))}
           </div>
         </div>
+
+        {/* ── Présentation Lumio Health (vidéo embed) ── */}
+        <LumioVideoButton />
 
         {/* Checkbox engagement + bouton */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer' }} onClick={() => setAccepted(a => !a)}>
@@ -350,42 +465,93 @@ function WelcomeBriefCard({ onClose, studentName }) {
 }
 
 // ─── ROOT ────────────────────────────────────────────────────
+// Lit les URL params transmis par le portail (?p=Prénom&n=Nom&e=email).
+// ══════════════════════════════════════════════════════════════
+//  Redirect portail — aucun écran intermédiaire dans le PAC.
+//  L'identité vient TOUJOURS du portail (?p=&n=&e=&c=).
+// ══════════════════════════════════════════════════════════════
+function getPortalUrl() {
+  var h = (window.location.hostname || '').toLowerCase();
+  if (h.indexOf('cdrh') >= 0) return 'https://cdrh-pac.vercel.app';
+  if (h.indexOf('lumio') >= 0) return 'https://msmc-pac.vercel.app';
+  return 'https://emineo-pac.vercel.app';
+}
+
+// Si les 3 sont présents ET email valide → bypass NameScreen + lockscreen.
+function readPortalParams() {
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    const p = (sp.get('p') || '').trim();
+    const n = (sp.get('n') || '').trim();
+    const e = (sp.get('e') || '').trim().toLowerCase();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+    if (p && emailOk) return { prenom: p, nom: n, email: e, fullName: p + (n ? ' ' + n : '') };
+  } catch (_) { /* SSR-safe / malformed URL */ }
+  return null;
+}
+
 function Root() {
-  const [phase, setPhase] = useRootState('loading'); // loading | name | login | brief | desktop
+  const [phase, setPhase] = useRootState('loading'); // loading | brief | desktop
   const [studentName, setStudentName] = useRootState('');
   const [showLogin, setShowLogin] = useRootState(false);
   const [sessionId, setSessionId] = useRootState(null);
   const [timerStart, setTimerStart] = useRootState(null);
 
-  // Au montage : tenter de restaurer une session existante
+  // Au montage : 1) URL params du portail → bypass direct au brief
+  //              2) sinon, tenter de restaurer une session existante
+  //              3) sinon, démarrer en NameScreen
   useRootEffect(() => {
+    // ── 1. URL params du portail (?p=&n=&e=) ──
+    const portal = readPortalParams();
+    if (portal) {
+      const sid = makeSessionId(portal.fullName + Date.now());
+      localStorage.setItem('lumio_sid', sid);
+      setSessionId(sid);
+      setStudentName(portal.fullName);
+      applyStudent(portal.fullName, portal.email);
+      window.LUMIO_SESSION.save(sid, {
+        studentName: portal.fullName,
+        studentEmail: portal.email,
+        phase: 'brief',
+        fromPortal: true
+      });
+      // Direct au brief (sans NameScreen ni lockscreen)
+      setPhase('brief');
+      return;
+    }
+
+    // ── 2. Session existante en cache ──
     const savedId = localStorage.getItem('lumio_sid');
-    if (!savedId) { setPhase('name'); return; }
+    if (!savedId) { window.location.replace(getPortalUrl()); return; }
     window.LUMIO_SESSION.load(savedId).then(session => {
-      if (!session || !session.studentName) { setPhase('name'); return; }
+      if (!session || !session.studentName) { window.location.replace(getPortalUrl()); return; }
       // Session trouvée — restaurer
       const n = session.studentName;
       setStudentName(n);
       setSessionId(savedId);
-      if (session.timerStart) setTimerStart(session.timerStart);
-      // Patcher les données avec le nom sauvegardé
-      window.LUMIO_DATA.student.name = n;
-      applyStudentPlaceholders(n);
-      // Restaurer le timer fictif AVANT d'afficher le bureau (sinon l'horloge se réinitialise)
-      if (session.timerStart) window.LUMIO_TIMER_START = session.timerStart;
+      if (session.timerStart) {
+        setTimerStart(session.timerStart);
+        window.LUMIO_TIMER_START = session.timerStart; // FIX : sans ça le timer repartait de 0 au reload
+      }
+      // Substituer le nom/email partout dans les données
+      applyStudent(n, session.studentEmail);
+      // Si la session vient du portail (fromPortal) : brief ou desktop, jamais lockscreen
+      if (session.fromPortal) {
+        setPhase(session.timerStart ? 'desktop' : 'brief');
+        return;
+      }
       // Reprendre directement sur le bureau
       setPhase('desktop');
     });
   }, []);
 
-  const handleNameConfirm = (name) => {
+  const handleNameConfirm = (name, studentEmail) => {
     const sid = makeSessionId(name + Date.now());
     localStorage.setItem('lumio_sid', sid);
     setSessionId(sid);
     setStudentName(name);
-    window.LUMIO_DATA.student.name = name;
-    applyStudentPlaceholders(name);
-    window.LUMIO_SESSION.save(sid, { studentName: name, phase: 'login' });
+    applyStudent(name, studentEmail || `${name.split(' ')[0].toLowerCase()}@consult.fr`);
+    window.LUMIO_SESSION.save(sid, { studentName: name, studentEmail: studentEmail || '', phase: 'login' });
     setShowLogin(true);
     setPhase('login');
   };
@@ -406,9 +572,9 @@ function Root() {
   };
 
   const logout = () => {
-    window.LUMIO_SESSION.save(sessionId, { phase: 'login' });
-    setPhase('login');
-    setShowLogin(true);
+    if (sessionId) window.LUMIO_SESSION.clear(sessionId);
+    localStorage.removeItem('lumio_sid');
+    window.location.replace(getPortalUrl());
   };
 
   const resetSession = () => {
@@ -427,13 +593,22 @@ function Root() {
 
   return (
     <>
-      {phase === 'name' && <NameScreen onConfirm={handleNameConfirm} />}
       {phase === 'desktop' && <window.LumioDesktop onLogout={logout} studentName={studentName} timerStart={timerStart} />}
       {phase === 'brief' && <WelcomeBriefCard onClose={dismissBrief} studentName={studentName} />}
-      {showLogin && phase !== 'name' && <LoginScreen onLogin={handleLogin} studentName={studentName} />}
     </>
   );
 }
+
+// Titre d'onglet piloté par la config — jamais codé en dur par bloc.
+(function setDocTitle() {
+  try {
+    const c = window.PAC_CONFIG || {};
+    const ent = c.entreprise || 'Lumio Health';
+    const bloc = (c.bloc || '').toUpperCase();
+    const disp = c.dispositif || 'PAC';
+    document.title = [disp, ent, bloc].filter(Boolean).join(' · ');
+  } catch (e) {}
+})();
 
 // Mount
 ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
