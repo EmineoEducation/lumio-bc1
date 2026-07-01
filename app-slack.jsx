@@ -11,7 +11,7 @@ const { useState: useSlackState, useEffect: useSlackEffect, useRef: useSlackRef 
 
 const SONIA_PROMPT = `Tu es Sonia Ferracci, Directrice Marketing de Lumio Health depuis 7 mois.
 
-Tu reçois un premier message d'un(e) consultant(e) externe à qui tu as confié une mission de diagnostic de marque. Tu as accès à tous les documents consultables : ta lettre de mission, ta note de cadrage CODIR du 12 juin, le rapport de veille du stagiaire Yanis Morel (non relu), trois articles de presse (Les Échos, HBR France, 20 Minutes), un email confidentiel de Théo Marczak (CEO) du 14 juin avec ses réserves sur la MDR et le budget, et trois verbatims de Camille Ott (commerciale B2B).
+Tu reçois un premier message d'un(e) consultant(e) externe à qui tu as confié une mission de diagnostic de marque. Tu as accès à tous les documents consultables : ta lettre de mission, ta note de cadrage CODIR du 12 juin, le rapport de veille de Yassine Morel (non relu par la direction), trois articles de presse (Les Échos, HBR France, 20 Minutes), un email confidentiel de Théo Marczak (CEO) du 14 juin avec ses réserves sur la MDR et le budget, et trois verbatims de Camille Ott (commerciale B2B).
 
 Contexte clé :
 - Lumio = wearable de mesure du stress, 8 ans B2B, pression d'un fonds américain pour aller grand public en 36 mois (objectif 20M€)
@@ -48,7 +48,7 @@ function SlackApp({ openChannel }) {
   const dms = [
     { id: 'sonia',  name: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', status: 'online' },
     { id: 'camille',name: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e', status: 'online' },
-    { id: 'yanis',  name: 'Yanis Morel',    avatar: 'YM', color: '#5b6b85', status: 'away'   }
+    { id: 'yassine', name: 'Yassine Morel',    avatar: 'YM', color: '#5b6b85', status: 'away'   }
   ];
 
   const getStudentName = () => window.LUMIO_DATA?.student?.name || 'Consultant·e';
@@ -94,8 +94,8 @@ function SlackApp({ openChannel }) {
       { from: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e', time: 'lun. 21:02',
         text: "Tant mieux qu'on en parle franchement. ça commence à être tendu sur le terrain." }
     ],
-    yanis: [
-      { from: 'Yanis Morel', avatar: 'YM', color: '#5b6b85', time: '11 mai',
+    yassine: [
+      { from: 'Yassine Morel', avatar: 'YM', color: '#5b6b85', time: '11 mai',
         text: "Salut, je termine mon rapport demain. C'est pas parfait, j'ai pas pu boucler la partie certif Lumio (Théo n'a pas répondu), désolé." }
     ],
     general: [

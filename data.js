@@ -110,10 +110,10 @@ Pour les acteurs medtech français, la fenêtre est étroite : prouver la rigueu
   ],
   yanisReport: {
     title: "Rapport de veille concurrentielle wearables santé",
-    author: "Yanis Morel — Stagiaire marketing",
+    author: "Yassine Morel, Content Manager",
     date: "12 mai 2026",
     pages: 4,
-    note: "Document non relu — finalisé la veille de la fin de stage",
+    note: "Document rédigé en autonomie — non relu par la direction avant transmission",
     body: `INTRODUCTION
 
 Le marché mondial des wearables santé dépasse 95 Md$ en 2025 et croît à un rythme de +18 %/an (source : Statista, IDC, March 2026). Trois forces structurent désormais le secteur :
@@ -364,8 +364,8 @@ window.PAC_CONFIG = window.PASS_CONFIG;
 // === [PAC v2 complétion] fin ===
 
 
-// === [Chantier PDF+Browser] dossiers/guide/portraits — 02/07/2026 ===
-// Restructuration de D.yanisReport (déjà écrit) en D.dossiers[]. Guide laissé sans tips : bc1 ne dispose ni de PAC_CONFIG.temps[].objectif ni de documents[].role_narratif pour en construire sans inventer de contenu.
+// === [Chantier PDF+Browser] dossiers/guide/portraits — 02/07/2026 (régénéré 01/07 après correction Yassine Morel) ===
+// Restructuration de D.yanisReport (déjà écrit, nom/rôle corrigés) en D.dossiers[]. Guide laissé sans tips.
 // Aucun contenu narratif nouveau : uniquement restructuration + câblage.
 (function() {
   var D = window.LUMIO_DATA;
@@ -379,9 +379,9 @@ window.PAC_CONFIG = window.PASS_CONFIG;
     "type": "rich",
     "pages": [
       {
-        "kicker": "Yanis Morel — Stagiaire marketing",
+        "kicker": "Yassine Morel, Content Manager",
         "title": "Rapport de veille concurrentielle wearables santé",
-        "byline": "Yanis Morel — Stagiaire marketing · 12 mai 2026",
+        "byline": "Yassine Morel, Content Manager · 12 mai 2026",
         "blocks": [
           {
             "type": "h3",
