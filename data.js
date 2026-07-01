@@ -362,3 +362,193 @@ window.PAC_CONFIG = window.PASS_CONFIG;
   window.PASS_CONFIG = cfg;
 })();
 // === [PAC v2 complétion] fin ===
+
+
+// === [Chantier PDF+Browser] dossiers/guide/portraits — 02/07/2026 ===
+// Restructuration de D.yanisReport (déjà écrit) en D.dossiers[]. Guide laissé sans tips : bc1 ne dispose ni de PAC_CONFIG.temps[].objectif ni de documents[].role_narratif pour en construire sans inventer de contenu.
+// Aucun contenu narratif nouveau : uniquement restructuration + câblage.
+(function() {
+  var D = window.LUMIO_DATA;
+  if (!D) return;
+  D.dossiers = [
+  {
+    "id": "rapport-veille",
+    "title": "Rapport de veille concurrentielle wearables santé",
+    "tab": "Veille concurrentielle",
+    "accent": "#1b3a6b",
+    "type": "rich",
+    "pages": [
+      {
+        "kicker": "Yanis Morel — Stagiaire marketing",
+        "title": "Rapport de veille concurrentielle wearables santé",
+        "byline": "Yanis Morel — Stagiaire marketing · 12 mai 2026",
+        "blocks": [
+          {
+            "type": "h3",
+            "text": "INTRODUCTION"
+          },
+          {
+            "type": "p",
+            "text": "Le marché mondial des wearables santé dépasse 95 Md$ en 2025 et croît à un rythme de +18 %/an (source : Statista, IDC, March 2026). Trois forces structurent désormais le secteur :"
+          },
+          {
+            "type": "ul",
+            "items": [
+              "La pression réglementaire (MDR en Europe, FDA aux US)",
+              "L'intégration verticale par les géants tech (Apple, Samsung, Google/Fitbit)",
+              "L'émergence de spécialistes verticaux sur des indications précises (sommeil, stress, glycémie continue)"
+            ]
+          },
+          {
+            "type": "p",
+            "text": "Lumio Health se positionne historiquement sur le créneau du stress chronique mesuré en milieu professionnel, avec une approche B2B-DRH. Le présent rapport recense les acteurs concurrents directs et indirects, et propose une cartographie de la pression concurrentielle."
+          },
+          {
+            "type": "h3",
+            "text": "I. CARTOGRAPHIE CONCURRENTIELLE"
+          },
+          {
+            "type": "h3",
+            "text": "[TABLEAU PRINCIPAL]"
+          },
+          {
+            "type": "h3",
+            "text": "II. ANALYSE DES SIGNAUX FAIBLES"
+          },
+          {
+            "type": "p",
+            "text": "a) Salon Préventica 2026 (Lyon, 20-22 mars)"
+          },
+          {
+            "type": "p",
+            "text": "Les DRH et préventeurs interrogés citent la certification MDR comme critère de décision n°1 dans 73 % des cas (n=42 entretiens informels sur stand). Citation récurrente : « Sans certif, je peux pas justifier l'achat à mon comité d'éthique. »"
+          },
+          {
+            "type": "p",
+            "text": "b) Étude Kantar Health Monitor 2026"
+          },
+          {
+            "type": "p",
+            "text": "La certification réglementaire devient un signal de crédibilité — pas seulement une obligation légale. 58 % des DRH déclarent l'utiliser comme proxy de qualité scientifique, même quand ils ne comprennent pas le détail du règlement."
+          },
+          {
+            "type": "p",
+            "text": "c) Mouvement des prix"
+          },
+          {
+            "type": "p",
+            "text": "Les acteurs certifiés ont tous augmenté leurs tarifs B2B de 15 à 25 % dans les six mois suivant l'obtention. Les non-certifiés sont sous pression à la baisse."
+          },
+          {
+            "type": "h3",
+            "text": "III. LACUNES NON COUVERTES"
+          },
+          {
+            "type": "p",
+            "text": "— Statut exact de la certification chez Withings (information contradictoire entre site institutionnel et discours commercial)\n— Calendrier MDR de Lumio (Théo a refusé de me communiquer l'information malgré relances)\n— Résultats de l'étude qualitative clients B2B menée par Camille Ott en mars 2026 (jamais reçus)\n— Position d'Apple Health sur le marché entreprise français (rumeurs de partenariat avec Malakoff Humanis non confirmées)"
+          },
+          {
+            "type": "h3",
+            "text": "IV. RECOMMANDATIONS"
+          },
+          {
+            "type": "p",
+            "text": "À ce stade, et sous toutes réserves liées à mon niveau d'expérience, j'identifie trois mouvements urgents :"
+          },
+          {
+            "type": "p",
+            "text": "1. Clarifier en interne le calendrier MDR de Lumio\n2. Cartographier précisément les 230 clients (ou 180 ?) pour distinguer comptes actifs et dormants\n3. Anticiper l'arrivée d'Apple Health sur le segment entreprise via un positionnement de niche défendable"
+          },
+          {
+            "type": "h3",
+            "text": "— FIN —"
+          }
+        ]
+      }
+    ]
+  }
+];
+  D.guide = {
+  "tips": []
+};
+  D.portraits = [
+  {
+    "key": "theo_marczak",
+    "title": "Théo Marczak",
+    "file": "portraits/portrait_theo_marczak.html"
+  },
+  {
+    "key": "sonia_ferracci",
+    "title": "Sonia Ferracci",
+    "file": "portraits/portrait_sonia_ferracci.html"
+  },
+  {
+    "key": "camille_ott",
+    "title": "Camille Ott",
+    "file": "portraits/portrait_camille_ott.html"
+  },
+  {
+    "key": "jakob_rein",
+    "title": "Jakob Rein",
+    "file": "portraits/portrait_jakob_rein.html"
+  },
+  {
+    "key": "yassine_morel",
+    "title": "Yassine Morel",
+    "file": "portraits/portrait_yassine_morel.html"
+  }
+];
+  D.finder = D.finder || { folders: {}, order: [] };
+  D.finder.folders.portraits = {
+  "title": "Portraits",
+  "sidebar": "👥 Portraits",
+  "icon": "👥",
+  "items": [
+    {
+      "kind": "portrait",
+      "name": "Théo Marczak",
+      "app": "browser",
+      "props": {
+        "openPortrait": "theo_marczak"
+      }
+    },
+    {
+      "kind": "portrait",
+      "name": "Sonia Ferracci",
+      "app": "browser",
+      "props": {
+        "openPortrait": "sonia_ferracci"
+      }
+    },
+    {
+      "kind": "portrait",
+      "name": "Camille Ott",
+      "app": "browser",
+      "props": {
+        "openPortrait": "camille_ott"
+      }
+    },
+    {
+      "kind": "portrait",
+      "name": "Jakob Rein",
+      "app": "browser",
+      "props": {
+        "openPortrait": "jakob_rein"
+      }
+    },
+    {
+      "kind": "portrait",
+      "name": "Yassine Morel",
+      "app": "browser",
+      "props": {
+        "openPortrait": "yassine_morel"
+      }
+    }
+  ]
+};
+  if (D.finder.order.indexOf('portraits') === -1) {
+    var gIdx = D.finder.order.indexOf('guide');
+    D.finder.order.splice(gIdx >= 0 ? gIdx + 1 : 0, 0, 'portraits');
+  }
+})();
+// === [Chantier PDF+Browser] fin ===
