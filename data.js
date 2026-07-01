@@ -237,6 +237,30 @@ Sonia`
       { from: "Sonia Ferracci", time: "+15min", text: "Au fait — n'oublie pas que Théo ne sait pas que tu as accès à son mail du 14 juin. À toi de juger comment l'utiliser.", channel: "DM" },
     ]
   }
+,
+  finder: {
+    folders: {
+      guide: {
+        title: 'Guide de mission',
+        sidebar: '⌘ Guide',
+        icon: '📕',
+        items: [
+          { kind: 'mail', name: 'Brief de mission', app: 'mail', props: { openId: 'brief' } }
+        ]
+      },
+      espace: {
+        title: 'Espace de travail',
+        sidebar: 'Espace de travail',
+        icon: '📁',
+        items: [
+          { kind: 'mail', name: 'Boîte mail', app: 'mail', props: {} },
+          { kind: 'note', name: 'Notes', app: 'notes', props: {} },
+          { kind: 'audio', name: 'Mémos vocaux', app: 'voice', props: {} }
+        ]
+      }
+    },
+    order: ['guide', 'espace']
+  }
 };
 
 // ══════════════════════════════════════════════════════════════
