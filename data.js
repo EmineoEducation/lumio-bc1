@@ -261,6 +261,36 @@ Sonia`
     },
     order: ['guide', 'espace']
   }
+,
+  voiceMemos: [
+    {
+      title: "Sur la rupture dans les conversations clients",
+      author: "Camille Ott",
+      role: "Responsable partenariats B2B",
+      date: "",
+      context: "Verbatim terrain",
+      durationSec: 102,
+      transcript: "Ce que je vis depuis six mois, c'est une vraie rupture dans les conversations avec nos clients. Avant, on nous achetait sur la confiance — sur huit ans de relation, sur des cas d'usage, sur la qualité de la data. Aujourd'hui, les DRH arrivent en réunion avec des questions sur la certification. Pas agressivement — embarrassés, comme si c'était indiscret de demander. Mais ils demandent quand même. Et c'est récent. C'est de cette année. C'est pas encore un dealbreaker, mais c'est une horloge. Je le sens à la façon dont ils tournent autour du sujet en début de rendez-vous, comme s'ils voulaient cocher la case avant de passer à la vraie discussion."
+    },
+    {
+      title: "Sur la pression Biostream",
+      author: "Camille Ott",
+      role: "Responsable partenariats B2B",
+      date: "",
+      context: "Verbatim terrain",
+      durationSec: 58,
+      transcript: "Nos clients actuels nous font encore confiance. Mais si Biostream se pointe chez eux avec sa certification IIa et un prix légèrement inférieur, la conversation va changer très vite. Moi je peux défendre Lumio sur la qualité des données, sur l'historique, sur la relation. Je ne peux pas défendre une absence de certification indéfiniment. Au bout d'un moment, le client va dire « j'ai un comité d'éthique, je peux pas continuer avec un fournisseur non certifié ». Et là j'aurai plus d'arguments."
+    },
+    {
+      title: "La question que personne ne pose",
+      author: "Camille Ott",
+      role: "Responsable partenariats B2B",
+      date: "",
+      context: "Verbatim terrain",
+      durationSec: 75,
+      transcript: "La question que Sonia ne se pose peut-être pas assez, et que Théo refuse de se poser : nos clients B2B historiques, est-ce qu'ils nous voient toujours comme une solution professionnelle de référence, ou est-ce qu'ils commencent à nous voir comme « le truc d'avant que les vrais certifiés sont arrivés » ? Parce que si c'est ça, aucune plateforme de marque ne résoudra le problème. C'est trop tard, l'image est cuite. Moi je pense qu'on est à six mois, peut-être neuf, du basculement. Après, ce sera un travail de reconquête. Beaucoup plus cher."
+    }
+  ]
 };
 
 // ══════════════════════════════════════════════════════════════
