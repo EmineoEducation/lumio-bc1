@@ -28,14 +28,40 @@ const C = {
 const FONT =
   "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
-// ── Mapping campus → email RP (Sylvain complétera) ──
-const CAMPUS_RP = {
+// ── Mapping campus → email RP ──
+// Source de vérité : hub emineo-campus-rp (éditable sans redéploiement,
+// via /admin sur ce hub). CAMPUS_RP_FALLBACK n'est utilisé que si le hub
+// est injoignable — l'envoi du portfolio ne doit jamais en dépendre.
+const CAMPUS_RP_HUB = 'https://emineo-campus-rp.vercel.app/api/campus-rp';
+const TITRE_CODE    = 'MSMC'; // MSMC | CDRH | MMD | MDO — résout les exceptions par titre côté hub
+const CAMPUS_RP_FALLBACK = {
   'paris':    ['chloe.guyot@cesacom.fr', 'celine.maheo@cesacom.fr'],
   'nantes':   ['manon.parageaud@cesacom.fr', 'lara.naccache@emineo-education.fr'],
   'bordeaux': ['anthony.nabli@emineo-education.fr'],
   'le mans':  ['etienne.azerad@cesacom.fr'],
   'lemans':   ['etienne.azerad@cesacom.fr'],
 };
+
+async function getCampusRPMap() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 2500);
+    const r = await fetch(CAMPUS_RP_HUB + '?titre=' + TITRE_CODE, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) throw new Error('hub non-OK: ' + r.status);
+    const data = await r.json();
+    const map = {};
+    for (const c of (data.campuses || [])) {
+      const emails = (c.rp || []).map(p => p.email).filter(Boolean);
+      if (c.id) map[String(c.id).toLowerCase()] = emails;
+      if (c.label) map[String(c.label).toLowerCase()] = emails;
+    }
+    return map;
+  } catch (e) {
+    console.warn('Hub campus-rp injoignable, fallback local:', e.message);
+    return CAMPUS_RP_FALLBACK;
+  }
+}
 
 function escapeHtml(s) {
   return String(s == null ? '' : s)
@@ -222,6 +248,7 @@ export default async function handler(req, res) {
     const finalText = buildPortfolioText({ prenom: _prenom, formation });
 
     // ── 2. Envoi Resend ──
+    const campusRPMap = await getCampusRPMap();
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -231,7 +258,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: PORTFOLIO_FROM,
         to: [to],
-        cc: (campus && CAMPUS_RP[(campus || "").toLowerCase()]) ? CAMPUS_RP[campus.toLowerCase()] : [],
+        cc: (campus && campusRPMap[(campus || "").toLowerCase()]) ? campusRPMap[campus.toLowerCase()] : [],
         subject: finalSubject,
         html: finalHtml,
         text: finalText,
