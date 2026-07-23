@@ -375,6 +375,17 @@ window.PASS_CONFIG = {
   grilleEvaluation: {
     niveaux: ['Maximale', 'Haute', 'Moyenne', 'Insuffisante'],
     acquis: ['Maximale', 'Haute', 'Moyenne'] // tout sauf Insuffisante = acquis
+  },
+  // Portfolio visuel — contenu éditorial fixe (carte enrichie 3 pages).
+  // ⚠️ Ne jamais nommer Théo / Sonia / Jakob / Camille / Yassine dans
+  // choix ou justification. Les marques réelles (Withings, Decathlon…)
+  // sont autorisées uniquement dans miseEnSituation.
+  portfolio: {
+    missionTitre: 'Identité de marque en tension',
+    miseEnSituation: 'Lumio Health traverse sa première tension d\'identité. La direction marketing doit trancher entre l\'ADN B2B qui a construit 180 clients fidèles et les codes B2C qu\'affichent des acteurs comme Withings sur le marché du wearable grand public — dans un secteur où la certification MDR est en train de devenir le vrai ticket d\'entrée.',
+    choix: 'Une plateforme de marque à deux voix : un socle B2B affirmé, une extension B2C mesurée, sans jamais promettre ce que la certification réglementaire ne permet pas encore de tenir.',
+    justification: 'Ce choix répond à la tension identifiée entre les deux publics sans sacrifier la crédibilité clinique qui a construit la confiance des clients historiques — et sans ignorer le calendrier de certification réel.',
+    imageSrc: '' // fichier statique du repo recommandé (même origine) — voir note de livraison
   }
 };
 // Alias pour compatibilité
