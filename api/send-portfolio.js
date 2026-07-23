@@ -222,6 +222,7 @@ export default async function handler(req, res) {
       studentName,
       html,
       campus,
+      attachments,
     } = body || {};
 
     if (!to) return res.status(400).json({ error: 'Missing required field: to' });
@@ -247,7 +248,20 @@ export default async function handler(req, res) {
 
     const finalText = buildPortfolioText({ prenom: _prenom, formation });
 
-    // ── 2. Envoi Resend ──
+    // ── 2. Pièces jointes (portfolio visuel — inline via content_id) ──
+    // Best-effort : une pièce malformée est ignorée plutôt que de faire
+    // échouer tout l'envoi. Champs base64 uniquement (pas de path distant).
+    const finalAttachments = Array.isArray(attachments)
+      ? attachments
+          .filter(a => a && a.content && a.filename)
+          .map(a => ({
+            filename: String(a.filename),
+            content: String(a.content),
+            content_id: a.content_id ? String(a.content_id) : undefined,
+          }))
+      : [];
+
+    // ── 3. Envoi Resend ──
     const campusRPMap = await getCampusRPMap();
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -263,6 +277,7 @@ export default async function handler(req, res) {
         html: finalHtml,
         text: finalText,
         reply_to: [],
+        ...(finalAttachments.length ? { attachments: finalAttachments } : {}),
       }),
     });
 
