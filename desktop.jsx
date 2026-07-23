@@ -1,11 +1,12 @@
 // ══════════════════════════════════════════════════════════════
-//  WINDOW MANAGER + DESKTOP + DOCK + MENU BAR — générique
-//  Structure réutilisable. Toute narration lue depuis :
-//    · window.PAC_CONFIG.temps   → barre des 5 actes
-//    · window.LUMIO_DATA.fictif  → calendrier du temps fictif
-//    · window.LUMIO_DATA.events  → moteur de notifications / tips / réactions
-//    · window.LUMIO_DATA.desktopIcons → icônes du bureau
-//  PAC · Éminéo
+// WINDOW MANAGER + DESKTOP + DOCK + MENU BAR — générique
+// VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fixes F16→F18)
+// Structure réutilisable. Toute narration lue depuis :
+//   · window.PAC_CONFIG.temps        → barre des 5 actes
+//   · window.LUMIO_DATA.fictif       → calendrier du temps fictif
+//   · window.LUMIO_DATA.events       → moteur de notifications / tips / réactions
+//   · window.LUMIO_DATA.desktopIcons → icônes du bureau
+// PAC · Éminéo
 // ══════════════════════════════════════════════════════════════
 const { useState: useWmState, useEffect: useWmEffect, useRef: useWmRef, useContext: useWmContext, createContext } = React;
 
@@ -13,18 +14,18 @@ const WindowsCtx = createContext(null);
 window.useWindows = () => useWmContext(WindowsCtx);
 
 const APP_META = {
-  mail:     { title: 'Mail',         w: 1100, h: 680, icon: 'MailIcon' },
-  browser:  { title: 'Safari',       w: 1080, h: 720, icon: 'BrowserIcon' },
-  pdf:      { title: 'Aperçu',       w:  900, h: 700, icon: 'PdfIcon' },
-  voice:    { title: 'Mémos vocaux', w:  820, h: 560, icon: 'VoiceIcon' },
-  notes:    { title: 'Notes',        w:  960, h: 660, icon: 'NotesIcon' },
-  notepad:  { title: 'Bloc-notes',   w:  560, h: 620, icon: 'NotepadIcon' },
-  slack:    { title: 'Slack',        w:  980, h: 640, icon: 'SlackIcon' },
-  finder:   { title: 'Finder',       w:  820, h: 540, icon: 'FinderIcon' },
-  calendar: { title: 'Calendrier',   w:  780, h: 580, icon: 'CalendarIcon' },
-  trash:    { title: 'Corbeille',    w:  500, h: 360, icon: 'TrashIcon' },
-  livrable:  { title: 'Livrable — ' + (window.PAC_CONFIG ? window.PAC_CONFIG.bloc : ''), w: 920, h: 620, icon: 'LivrableIcon' },
-  jefferson: { title: 'Jefferson · Guide PAC', w: 480, h: 560, icon: 'JeffersonIcon' }
+  mail:     { title: 'Mail', w: 1100, h: 680, icon: 'MailIcon' },
+  browser:  { title: 'Safari', w: 1080, h: 720, icon: 'BrowserIcon' },
+  pdf:      { title: 'Aperçu', w: 900, h: 700, icon: 'PdfIcon' },
+  voice:    { title: 'Mémos vocaux', w: 820, h: 560, icon: 'VoiceIcon' },
+  notes:    { title: 'Notes', w: 960, h: 660, icon: 'NotesIcon' },
+  notepad:  { title: 'Bloc-notes', w: 560, h: 620, icon: 'NotepadIcon' },
+  slack:    { title: 'Slack', w: 980, h: 640, icon: 'SlackIcon' },
+  finder:   { title: 'Finder', w: 820, h: 540, icon: 'FinderIcon' },
+  calendar: { title: 'Calendrier', w: 780, h: 580, icon: 'CalendarIcon' },
+  trash:    { title: 'Corbeille', w: 500, h: 360, icon: 'TrashIcon' },
+  livrable: { title: 'Livrable — ' + (window.PAC_CONFIG ? window.PAC_CONFIG.bloc : ''), w: 920, h: 620, icon: 'LivrableIcon' },
+  jefferson:{ title: 'Jefferson · Guide PAC', w: 480, h: 560, icon: 'JeffersonIcon' }
 };
 
 // ═════ Window component ═════════════════════════════════════
@@ -102,7 +103,9 @@ function winTitle(win) {
 const _F = (window.LUMIO_DATA && window.LUMIO_DATA.fictif) || {};
 const DOW = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const FICTIF_START_MIN = (_F.startHour != null ? _F.startHour : 7) * 60 + (_F.startMinute != null ? _F.startMinute : 19);
-const TOTAL_REAL_MIN = (window.PAC_CONFIG && window.PAC_CONFIG.dureeMinutes) || 210;
+// F16 · La config s'appelle `dureeMin` (pas `dureeMinutes`) — la clé lue
+// ici ne correspondait à rien et retombait silencieusement sur 210.
+const TOTAL_REAL_MIN = (window.PAC_CONFIG && (window.PAC_CONFIG.dureeMinutes || window.PAC_CONFIG.dureeMin)) || 210;
 const FICTIF_SPAN_DAYS = _F.spanDays || 18;
 const RATIO = FICTIF_SPAN_DAYS * 24 * 60 / TOTAL_REAL_MIN;
 const FICTIF_START_DAY = _F.startDay || 1;
@@ -120,7 +123,7 @@ function getFictifTime() {
   const hh = Math.floor(minuteOfDay / 60).toString().padStart(2, '0');
   const mm = Math.floor(minuteOfDay % 60).toString().padStart(2, '0');
   const dow = DOW[(FICTIF_START_DOW + dayOffset) % 7];
-  return { label: `${dow} ${day} ${FICTIF_MONTH}  ${hh}:${mm}`, day, dayOffset };
+  return { label: `${dow} ${day} ${FICTIF_MONTH} ${hh}:${mm}`, day, dayOffset };
 }
 window.__getFictifTime = getFictifTime;
 
@@ -154,7 +157,7 @@ function MenuBar({ activeApp, openLogout }) {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 28, background: 'rgba(245,243,239,0.78)', backdropFilter: 'blur(20px) saturate(1.4)', WebkitBackdropFilter: 'blur(20px) saturate(1.4)', borderBottom: '1px solid rgba(20,24,36,0.08)', display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, color: 'var(--ink)', zIndex: 10000 }}>
-      <div style={{ fontSize: 14, marginRight: 14 }}> </div>
+      <div style={{ fontSize: 14, marginRight: 14 }}></div>
       <div style={{ fontWeight: 700, marginRight: 18 }}>{activeApp || 'Finder'}</div>
       {['Fichier', 'Édition', 'Présentation', 'Aller', 'Fenêtre', 'Aide'].map(m => <div key={m} style={{ marginRight: 14, color: 'var(--ink-soft)', cursor: 'default' }}>{m}</div>)}
       <div style={{ flex: 1 }} />
@@ -335,7 +338,6 @@ function PacTimeline() {
   );
 }
 
-
 // ═════ Lumio Pulse — mini tableau de bord (data-driven, D.kpis) ═════
 // D.kpis = [{ label, unit?, values: [v_acte1..v_acteN], goodUp? }] — masqué si absent.
 function LumioPulse() {
@@ -430,7 +432,16 @@ function Desktop({ onLogout }) {
     window.__onLivrableSubmitted = (answers, reflexive, juryResult) => {
       if (EV.onLivrableSubmitted) pushNotif(EV.onLivrableSubmitted);
       window.LUMIO_DATA._livrableSubmitted = { answers, reflexive, juryResult };
-      setTimeout(() => { if (window.__onSoniaLivrableReaction) window.__onSoniaLivrableReaction(answers); }, 4000);
+      // F18 · On transmettait l'objet `answers` brut à la réaction Slack de
+      // Sonia, qui attendait deux CHAÎNES (veille, plateforme) et plantait
+      // sur .substring → indicateur « en train d'écrire » bloqué à vie.
+      // On extrait désormais explicitement C.1 (veille) et C.5 (plateforme).
+      setTimeout(() => {
+        if (window.__onSoniaLivrableReaction) {
+          const a = answers || {};
+          window.__onSoniaLivrableReaction(String(a['C.1'] || ''), String(a['C.5'] || ''));
+        }
+      }, 4000);
     };
     return () => { window.__onSlackExchange = null; window.__onLivrableSubmitted = null; };
   }, []);
@@ -449,11 +460,15 @@ function Desktop({ onLogout }) {
   }, []);
 
   // Tips contextuels (comportement)
+  // F17 · L'ensemble `openedApps` était recréé À VIDE chaque fois que
+  // `livrableUnlocked` changeait (dépendance de l'effet) : Jefferson
+  // croyait ensuite que Mail/Slack n'avaient jamais été ouverts.
+  // → l'historique est persisté sur LUMIO_DATA._openedApps et réhydraté.
   useWmEffect(() => {
-    const openedApps = new Set();
-    const slackSent = { v: false };
+    const openedApps = new Set(window.LUMIO_DATA._openedApps || []);
+    const slackSent = { v: !!window.LUMIO_DATA._slackSentOnce };
     window.__onAppOpened = (app) => { openedApps.add(app); window.LUMIO_DATA._openedApps = Array.from(openedApps); };
-    window.__onSlackSent = () => { slackSent.v = true; };
+    window.__onSlackSent = () => { slackSent.v = true; window.LUMIO_DATA._slackSentOnce = true; };
     const ctx = { openedApps, slackSent: () => slackSent.v, livrableUnlocked };
     const timers = (EV.contextTips || []).map(c => setTimeout(() => {
       let ok = true;
@@ -511,7 +526,7 @@ function Desktop({ onLogout }) {
     const TOTAL = ACTES.length ? (ACTES[ACTES.length - 1].fin || 210) : 210;
     const who = cfg.commanditaire || 'Commanditaire';
     const firstName = ((D.student && D.student.name) || '').split(' ')[0] || '';
-    const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     const defaults = [
       { atPct: 50, body: '{{PRENOM}}, mi-parcours. Fais-moi un point rapide sur Slack : où en es-tu ?' },
       { atPct: 75, body: '{{PRENOM}}, le rendu approche — il te reste environ {{RESTANT}} min. Priorité absolue au livrable maintenant.' },
@@ -537,7 +552,7 @@ function Desktop({ onLogout }) {
         const body = String(a.body || '').replace(/\{\{PRENOM\}\}/g, firstName).replace(/\{\{RESTANT\}\}/g, String(remaining));
         window.LUMIO_DATA._timeAlerts = [...(window.LUMIO_DATA._timeAlerts || []), { from: who, text: body, at: Date.now() }];
         try { window.dispatchEvent(new CustomEvent('pac:time-alert', { detail: { from: who, text: body } })); } catch (err) {}
-        pushNotif({ app: 'Slack', icon: '\uD83D\uDCAC', color: '#3f0e40', title: a.title || ('Message de ' + who), body, click: { app: 'slack', props: { openChannel: slug(who) } } }, 22000);
+        pushNotif({ app: 'Slack', icon: '💬', color: '#3f0e40', title: a.title || ('Message de ' + who), body, click: { app: 'slack', props: { openChannel: slug(who) } } }, 22000);
       });
     };
     tick();
@@ -584,7 +599,6 @@ function Desktop({ onLogout }) {
     }, 15000);
     return () => clearInterval(check);
   }, []);
-
 
   // Signature d'une cible : deux ouvertures avec la même cible = même fenêtre.
   // Cibles distinctes (autre doc, autre portrait, autre dossier) = nouvelles fenêtres.
@@ -668,13 +682,13 @@ function JeffersonFab({ openApp, isOpen }) {
     if (!document.getElementById('jefferson-fab-style')) {
       const s = document.createElement('style'); s.id = 'jefferson-fab-style';
       s.textContent = `
-        @keyframes jeff-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-        @keyframes jeff-in{0%{opacity:0;transform:translateY(14px) scale(.8)}100%{opacity:1;transform:translateY(0) scale(1)}}
-        @keyframes jeff-ring{0%{box-shadow:0 0 0 0 rgba(93,226,152,0.5)}70%{box-shadow:0 0 0 14px rgba(93,226,152,0)}100%{box-shadow:0 0 0 0 rgba(93,226,152,0)}}
-        @keyframes jeff-hint{0%{opacity:0;transform:translateX(10px)}100%{opacity:1;transform:translateX(0)}}
-        .jeff-talking{animation:jeff-pulse 1.5s ease-in-out infinite}
-        .jeff-ring{animation:jeff-ring 2.4s ease-out infinite}
-      `;
+@keyframes jeff-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes jeff-in{0%{opacity:0;transform:translateY(14px) scale(.8)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes jeff-ring{0%{box-shadow:0 0 0 0 rgba(93,226,152,0.5)}70%{box-shadow:0 0 0 14px rgba(93,226,152,0)}100%{box-shadow:0 0 0 0 rgba(93,226,152,0)}}
+@keyframes jeff-hint{0%{opacity:0;transform:translateX(10px)}100%{opacity:1;transform:translateX(0)}}
+.jeff-talking{animation:jeff-pulse 1.5s ease-in-out infinite}
+.jeff-ring{animation:jeff-ring 2.4s ease-out infinite}
+`;
       document.head.appendChild(s);
     }
   }, []);

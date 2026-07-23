@@ -1,5 +1,6 @@
 // ══════════════════════════════════════════════════════════════
-//  LOGIN SCREEN + ROOT APP
+// LOGIN SCREEN + ROOT APP
+// VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fixes F11→F15)
 // ══════════════════════════════════════════════════════════════
 const { useState: useRootState, useEffect: useRootEffect, useRef: useRootRef } = React;
 
@@ -29,14 +30,14 @@ window.LUMIO_SESSION = {
 };
 
 // Substitue {{PRENOM}} {{NOM}} {{EMAIL_ETUDIANT}} PARTOUT dans LUMIO_DATA, en un seul passage.
-function applyStudent(fullName, email) {
+function applyStudent(fullName, email, campus) {
   // Échappe les seules entrées libres de l'étudiant (vecteur XSS via dangerouslySetInnerHTML).
   // Le narratif de data.js, lui, reste du HTML riche contrôlé et n'est pas touché.
   const escHtml = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const prenom = escHtml((fullName || '').split(' ')[0] || '');
-  const nom    = escHtml((fullName || '').split(' ').slice(1).join(' '));
+  const nom = escHtml((fullName || '').split(' ').slice(1).join(' '));
   const map = { '{{PRENOM}}': prenom, '{{NOM}}': nom, '{{EMAIL_ETUDIANT}}': escHtml(email || '') };
   try {
     const json = JSON.stringify(window.LUMIO_DATA)
@@ -46,6 +47,9 @@ function applyStudent(fullName, email) {
   window.LUMIO_DATA.student = window.LUMIO_DATA.student || {};
   window.LUMIO_DATA.student.name = fullName;
   if (email) window.LUMIO_DATA.student.email = email;
+  // F11 · Le campus (?c=) était lu nulle part : app-livrable envoyait
+  // toujours campus:"" à /api/send-portfolio.
+  if (campus) window.LUMIO_DATA.student.campus = campus;
   window.LUMIO_DATA.student.initial = (prenom[0] || '?').toUpperCase();
 }
 
@@ -185,6 +189,15 @@ function LoginScreen({ onLogin, studentName }) {
   const [pwd, setPwd] = useRootState('');
   const initial = window.LUMIO_DATA?.student?.initial || studentName?.[0]?.toUpperCase() || '?';
 
+  // F12 · La date et l'heure étaient codées en dur (« lundi 12 octobre 2026 »,
+  // 07:19) et contredisaient l'univers (mission du 14 au 30 septembre).
+  // Elles sont désormais dérivées de LUMIO_DATA.fictif.
+  const _f = (window.LUMIO_DATA && window.LUMIO_DATA.fictif) || {};
+  const DOWL = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const MOISL = { 'janv.': 'janvier', 'févr.': 'février', 'mars': 'mars', 'avr.': 'avril', 'mai': 'mai', 'juin': 'juin', 'juil.': 'juillet', 'août': 'août', 'sept.': 'septembre', 'oct.': 'octobre', 'nov.': 'novembre', 'déc.': 'décembre' };
+  const loginDate = `${DOWL[_f.startDow != null ? _f.startDow : 1]} ${_f.startDay || 14} ${MOISL[_f.monthShort] || _f.monthShort || 'septembre'} 2026`;
+  const loginTime = `${String(_f.startHour != null ? _f.startHour : 7).padStart(2, '0')}:${String(_f.startMinute != null ? _f.startMinute : 19).padStart(2, '0')}`;
+
   const onUnlock = () => {
     if (stage === 'unlocking') return;
     setStage('unlocking');
@@ -204,8 +217,8 @@ function LoginScreen({ onLogin, studentName }) {
       animation: stage === 'unlocking' ? 'fadeOutLogin 1.1s forwards' : 'none'
     }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.8, marginBottom: 8 }}>lundi 12 octobre 2026</div>
-        <div style={{ fontSize: 96, fontWeight: 200, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>07:19</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.8, marginBottom: 8 }}>{loginDate}</div>
+        <div style={{ fontSize: 96, fontWeight: 200, fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>{loginTime}</div>
       </div>
 
       <div style={{
@@ -327,7 +340,9 @@ function LumioVideoButton() {
                   fontFamily: 'inherit'
                 }}
               >
-                Fermer et commencer l'affaire
+                {/* F13 · Avant : « Fermer et commencer l'affaire » — le bouton
+                    ne commençait rien (checkbox + bouton restaient à valider). */}
+                Fermer la vidéo
               </button>
             </div>
           </div>
@@ -342,7 +357,6 @@ function WelcomeBriefCard({ onClose, studentName }) {
   const prenom = studentName.split(' ')[0];
   const [accepted, setAccepted] = useRootState(false);
   const __acc = (window.PAC_CONFIG && window.PAC_CONFIG.accroche_namescreen) || null;
-
 
   const handleStart = () => {
     if (!accepted) return;
@@ -377,7 +391,7 @@ function WelcomeBriefCard({ onClose, studentName }) {
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.15, marginBottom: 14 }}>
           Bienvenue, {prenom}.
         </h1>
-                <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 10 }}>
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: 10 }}>
           {__acc && __acc.intro
             ? __acc.intro.split('{{STUDENT}}').reduce((out, part, i) => {
                 if (i > 0) out.push(<strong key={'s'+i}>{studentName}</strong>);
@@ -465,10 +479,10 @@ function WelcomeBriefCard({ onClose, studentName }) {
 }
 
 // ─── ROOT ────────────────────────────────────────────────────
-// Lit les URL params transmis par le portail (?p=Prénom&n=Nom&e=email).
+// Lit les URL params transmis par le portail (?p=Prénom&n=Nom&e=email&c=campus).
 // ══════════════════════════════════════════════════════════════
-//  Redirect portail — aucun écran intermédiaire dans le PAC.
-//  L'identité vient TOUJOURS du portail (?p=&n=&e=&c=).
+// Redirect portail — aucun écran intermédiaire dans le PAC.
+// L'identité vient TOUJOURS du portail (?p=&n=&e=&c=).
 // ══════════════════════════════════════════════════════════════
 function getPortalUrl() {
   var h = (window.location.hostname || '').toLowerCase();
@@ -484,8 +498,10 @@ function readPortalParams() {
     const p = (sp.get('p') || '').trim();
     const n = (sp.get('n') || '').trim();
     const e = (sp.get('e') || '').trim().toLowerCase();
+    // F11 · Lecture du campus (?c=) — ignoré auparavant.
+    const c = (sp.get('c') || '').trim().toLowerCase();
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-    if (p && emailOk) return { prenom: p, nom: n, email: e, fullName: p + (n ? ' ' + n : '') };
+    if (p && emailOk) return { prenom: p, nom: n, email: e, campus: c, fullName: p + (n ? ' ' + n : '') };
   } catch (_) { /* SSR-safe / malformed URL */ }
   return null;
 }
@@ -501,22 +517,32 @@ function Root() {
   //              2) sinon, tenter de restaurer une session existante
   //              3) sinon, démarrer en NameScreen
   useRootEffect(() => {
-    // ── 1. URL params du portail (?p=&n=&e=) ──
+    // ── 1. URL params du portail (?p=&n=&e=&c=) ──
     const portal = readPortalParams();
     if (portal) {
-      const sid = makeSessionId(portal.fullName + Date.now());
-      localStorage.setItem('lumio_sid', sid);
-      setSessionId(sid);
-      setStudentName(portal.fullName);
-      applyStudent(portal.fullName, portal.email);
-      window.LUMIO_SESSION.save(sid, {
-        studentName: portal.fullName,
-        studentEmail: portal.email,
-        phase: 'brief',
-        fromPortal: true
-      });
-      // Direct au brief (sans NameScreen ni lockscreen)
-      setPhase('brief');
+      // F14 · Garde anti-réinitialisation : si une session existe déjà en
+      // localStorage pour le MÊME email (rechargement d'onglet, Memory Saver,
+      // retour navigateur…), on la RESTAURE au lieu d'en recréer une —
+      // sinon le timer et la progression repartaient de zéro.
+      const savedIdPortal = localStorage.getItem('lumio_sid');
+      if (savedIdPortal) {
+        window.LUMIO_SESSION.load(savedIdPortal).then(existing => {
+          if (existing && existing.studentName && existing.studentEmail === portal.email) {
+            setSessionId(savedIdPortal);
+            setStudentName(existing.studentName);
+            if (existing.timerStart) {
+              setTimerStart(existing.timerStart);
+              window.LUMIO_TIMER_START = existing.timerStart;
+            }
+            applyStudent(existing.studentName, existing.studentEmail, existing.campus || portal.campus);
+            setPhase(existing.timerStart ? 'desktop' : 'brief');
+          } else {
+            startFreshPortalSession(portal);
+          }
+        });
+      } else {
+        startFreshPortalSession(portal);
+      }
       return;
     }
 
@@ -534,7 +560,7 @@ function Root() {
         window.LUMIO_TIMER_START = session.timerStart; // FIX : sans ça le timer repartait de 0 au reload
       }
       // Substituer le nom/email partout dans les données
-      applyStudent(n, session.studentEmail);
+      applyStudent(n, session.studentEmail, session.campus);
       // Si la session vient du portail (fromPortal) : brief ou desktop, jamais lockscreen
       if (session.fromPortal) {
         setPhase(session.timerStart ? 'desktop' : 'brief');
@@ -544,6 +570,23 @@ function Root() {
       setPhase('desktop');
     });
   }, []);
+
+  const startFreshPortalSession = (portal) => {
+    const sid = makeSessionId(portal.fullName + Date.now());
+    localStorage.setItem('lumio_sid', sid);
+    setSessionId(sid);
+    setStudentName(portal.fullName);
+    applyStudent(portal.fullName, portal.email, portal.campus);
+    window.LUMIO_SESSION.save(sid, {
+      studentName: portal.fullName,
+      studentEmail: portal.email,
+      campus: portal.campus || '',
+      phase: 'brief',
+      fromPortal: true
+    });
+    // Direct au brief (sans NameScreen ni lockscreen)
+    setPhase('brief');
+  };
 
   const handleNameConfirm = (name, studentEmail) => {
     const sid = makeSessionId(name + Date.now());
@@ -563,7 +606,8 @@ function Root() {
   };
 
   const dismissBrief = () => {
-    const ts = Date.now();
+    // F15 · Idempotence : ne jamais écraser un timer déjà démarré.
+    const ts = window.LUMIO_TIMER_START || Date.now();
     setTimerStart(ts);
     window.LUMIO_SESSION.save(sessionId, { phase: 'desktop', timerStart: ts });
     // Exposer le timerStart pour desktop.jsx

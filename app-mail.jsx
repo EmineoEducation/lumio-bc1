@@ -1,10 +1,14 @@
 // ══════════════════════════════════════════════════════════════
-//  MAIL APP — Outlook/Apple Mail-like
+// MAIL APP — Outlook/Apple Mail-like
+// VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fixes F23→F25)
 // ══════════════════════════════════════════════════════════════
 const { useState: useStateMail, useEffect: useEffectMail, useRef: useRefMail } = React;
 
 function MailApp({ winId, openId }) {
   const D = window.LUMIO_DATA;
+
+  // F24 · Les mails non lus le restaient pour toujours (compteurs figés).
+  const [readIds, setReadIds] = useStateMail({});
 
   // Build mailbox
   const inbox = [
@@ -15,7 +19,8 @@ function MailApp({ winId, openId }) {
       avatar: 'SF',
       avatarColor: '#c4420f',
       subject: 'Mission de diagnostic de marque — confidentiel',
-      date: '03/09/26 · 07:42',
+      // F25 · Aligné sur le nouveau départ fictif (voir data.js F4).
+      date: '14/09/26 · 07:42',
       preview: window.LUMIO_DATA?._briefPreview || 'Je vous confie une mission dont j\'ai besoin qu\'elle soit terminée avant…',
       unread: false,
       flagged: true,
@@ -71,27 +76,35 @@ function MailApp({ winId, openId }) {
       unread: false, distractor: true,
       body: 'Madame, Monsieur,\n\nVotre déclaration trimestrielle doit être effectuée avant le 30 septembre 2026.\n\nCordialement, vos services URSSAF.'
     }
-  ];
+  ].map(m => ({ ...m, unread: m.unread && !readIds[m.id] }));
 
-  // Injecter l'email bonus Camille si disponible
-  const camilleEmail = window.LUMIO_DATA?._camilleEmail;
-  const inboxFull = camilleEmail
-    ? [inbox[0], inbox[1], camilleEmail, ...inbox.slice(2)]
+  // F23 · Le moteur d'événements (desktop.jsx) dépose l'email bonus sous
+  // `_bonusEmail` — l'app ne regardait que `_camilleEmail` (jamais écrit)
+  // et l'email injecté n'apparaissait donc jamais. Les deux clés sont lues.
+  const bonusEmail = window.LUMIO_DATA?._bonusEmail || window.LUMIO_DATA?._camilleEmail;
+  const inboxFull = bonusEmail
+    ? [inbox[0], inbox[1], bonusEmail, ...inbox.slice(2)]
     : inbox;
 
   const [selectedId, setSelectedId] = useStateMail(openId || 'brief');
   useEffectMail(() => { if (openId) setSelectedId(openId); }, [openId]);
 
-  // Rafraîchir si l'email Camille arrive
+  // Rafraîchir si l'email bonus arrive
   const [refresh, setRefresh] = useStateMail(0);
   useEffectMail(() => {
     const interval = setInterval(() => {
-      if (window.LUMIO_DATA?._camilleEmail) setRefresh(r => r + 1);
+      if (window.LUMIO_DATA?._bonusEmail || window.LUMIO_DATA?._camilleEmail) setRefresh(r => r + 1);
     }, 2000);
     return () => clearInterval(interval);
   }, []);
 
   const selected = inboxFull.find(m => m.id === selectedId) || inboxFull[0];
+  const unreadCount = inboxFull.filter(m => m.unread).length;
+
+  const openMail = (m) => {
+    setSelectedId(m.id);
+    if (m.unread) setReadIds(r => ({ ...r, [m.id]: true }));
+  };
 
   return (
     <div style={mailStyles.app}>
@@ -99,7 +112,8 @@ function MailApp({ winId, openId }) {
         <div style={mailStyles.sbHead}>Boîtes</div>
         <div style={{...mailStyles.sbItem, ...mailStyles.sbActive}}>
           <span>📥</span><span>Réception</span>
-          <span style={mailStyles.sbCount}>2</span>
+          {/* F24 · Compteur dynamique (était codé en dur à 2) */}
+          {unreadCount > 0 && <span style={mailStyles.sbCount}>{unreadCount}</span>}
         </div>
         <div style={mailStyles.sbItem}><span>⭐</span><span>Suivis</span></div>
         <div style={mailStyles.sbItem}><span>📤</span><span>Envoyés</span></div>
@@ -112,12 +126,12 @@ function MailApp({ winId, openId }) {
       <div style={mailStyles.list} className="scroll">
         <div style={mailStyles.listHead}>
           <div style={mailStyles.listHeadTitle}>Réception</div>
-          <div style={mailStyles.listHeadSub}>{inboxFull.length} messages · {inboxFull.filter(m=>m.unread).length} non lus</div>
+          <div style={mailStyles.listHeadSub}>{inboxFull.length} messages · {unreadCount} non lu{unreadCount > 1 ? 's' : ''}</div>
         </div>
         {inboxFull.map(m => (
           <div
             key={m.id}
-            onClick={() => setSelectedId(m.id)}
+            onClick={() => openMail(m)}
             style={{
               ...mailStyles.listRow,
               ...(selectedId === m.id ? mailStyles.listRowSelected : {}),
@@ -177,7 +191,7 @@ function MailApp({ winId, openId }) {
           )}
           <div style={mailStyles.bodyText}>
             {selected.body.split('\n').map((line, i) => (
-              <p key={i} style={{ margin: line.trim() === '' ? '0.6em 0' : '0 0 0.55em 0' }}>{line || '\u00A0'}</p>
+              <p key={i} style={{ margin: line.trim() === '' ? '0.6em 0' : '0 0 0.55em 0' }}>{line || ' '}</p>
             ))}
           </div>
         </div>

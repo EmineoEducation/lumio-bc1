@@ -1,5 +1,6 @@
 // ══════════════════════════════════════════════════════════════
-//  NOTES APP — Sonia's framing note
+// NOTES APP — Sonia's framing note
+// VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fix F31)
 // ══════════════════════════════════════════════════════════════
 
 function NotesApp({ openNote }) {
@@ -13,8 +14,10 @@ function NotesApp({ openNote }) {
       sonia: D.soniaNote
     },
     {
-      id: 'd1', title: 'Idées vacances août', date: '12 août 2026',
-      preview: 'Crète vs Pouilles · à comparer avant fin juin…',
+      // F31 · La note datée du 12 août disait « à comparer avant fin juin »
+      // (échéance déjà passée de deux mois au moment de l'écriture).
+      id: 'd1', title: 'Idées vacances Toussaint', date: '12 août 2026',
+      preview: 'Crète vs Pouilles · à réserver avant fin septembre…',
       distractor: true,
       body: '— Crète vs Pouilles\n— Demander à Marc le contact de la villa\n— Ne pas oublier le passeport de Léa (renouv. mai)\n— Petit hôtel à Polignano a Mare ?'
     },
@@ -94,10 +97,10 @@ function SoniaNoteRender({ data }) {
 
       <div style={{ background: '#f4f2ee', padding: '18px 22px', borderRadius: 6, marginBottom: 22, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.9 }}>
         <div style={{ marginBottom: 10, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)' }}>Plateforme proposée</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Territoire\u00A0\u00A0\u00A0</span> « La santé que les chiffres ne montrent pas encore »</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Promesse\u00A0\u00A0\u00A0\u00A0</span> Lumio révèle ce que le corps sait mais que la médecine ne capte pas</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2B\u00A0</span> DRH des ETI/grands comptes, prescripteurs (méd. travail, mutuelles)</div>
-        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2C\u00A0</span> actifs 30-50 ans, urbains, charge mentale élevée</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Territoire{'   '}</span> « La santé que les chiffres ne montrent pas encore »</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Promesse{'    '}</span> Lumio révèle ce que le corps sait mais que la médecine ne capte pas</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2B{' '}</span> DRH des ETI/grands comptes, prescripteurs (méd. travail, mutuelles)</div>
+        <div><span style={{ color: 'var(--ink-mute)' }}>Cibles B2C{' '}</span> actifs 30-50 ans, urbains, charge mentale élevée</div>
         <div><span style={{ color: 'var(--ink-mute)' }}>Personnalité</span> scientifique sans être froide · rassurante sans condescendance</div>
         <div><span style={{ color: 'var(--ink-mute)' }}>Engagements</span> 100 % données anonymisées · jamais revendues</div>
       </div>

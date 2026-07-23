@@ -1,13 +1,35 @@
 // ══════════════════════════════════════════════════════════════
-//  SLACK APP — v3
-//  Fixes :
-//  · Badges auto : unreads initialisés à 0, incrémentés uniquement
-//    quand un message ARRIVE pendant la session (pas les seeds)
+// SLACK APP — v4 (VERSION CORRIGÉE — fixes F20→F22)
+// Fixes v4 :
+//  · F20 — __onSoniaLivrableReaction plantait (TypeError: veille.substring
+//    is not a function) : desktop.jsx transmet un OBJET answers, et le
+//    .substring était évalué HORS du try/catch → « Sonia est en train
+//    d'écrire… » restait affiché indéfiniment après remise du livrable.
+//    → Normalisation des arguments + prompt construit DANS le try +
+//    setSending(false) garanti par finally.
+//  · F21 — Les messages étaient horodatés en HEURE RÉELLE (new Date())
+//    alors que la barre de menu affiche le temps FICTIF → deux horloges
+//    contradictoires à l'écran. → horodatage fictif via __getFictifTime.
+// Fixes v3 (conservés) :
+//  · Badges auto : unreads initialisés à 0
 //  · "Lou Bertrand" hardcodé → window.LUMIO_DATA?.student?.name
 //  · API guards (resp.ok, Array.isArray)
 //  · Easter egg WhatsApp : numéro cliquable dans signature Sonia
 // ══════════════════════════════════════════════════════════════
 const { useState: useSlackState, useEffect: useSlackEffect, useRef: useSlackRef } = React;
+
+// F21 · Horodatage cohérent avec l'horloge fictive de la barre de menu.
+const slackNowTime = () => {
+  try {
+    if (window.__getFictifTime) {
+      const label = window.__getFictifTime().label; // ex. "lun. 14 sept. 09:42"
+      const m = label.match(/(\d{2}:\d{2})\s*$/);
+      if (m) return m[1];
+    }
+  } catch (e) {}
+  const now = new Date();
+  return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+};
 
 const SONIA_PROMPT = `Tu es Sonia Ferracci, Directrice Marketing de Lumio Health depuis 7 mois.
 
@@ -40,15 +62,15 @@ Ne dis JAMAIS "Bonjour" ou "Merci pour ta livraison". Entre direct dans le sujet
 
 function SlackApp({ openChannel }) {
   const channels = [
-    { id: 'general',      name: 'général',              type: 'channel', members: 12 },
-    { id: 'mission-lumio',name: 'mission-lumio-brand',  type: 'channel', members: 4, special: true },
-    { id: 'random',       name: 'random',               type: 'channel', members: 11 },
-    { id: 'design-feed',  name: 'design-feed',          type: 'channel', members: 8 }
+    { id: 'general',      name: 'général',             type: 'channel', members: 12 },
+    { id: 'mission-lumio',name: 'mission-lumio-brand', type: 'channel', members: 4, special: true },
+    { id: 'random',       name: 'random',              type: 'channel', members: 11 },
+    { id: 'design-feed',  name: 'design-feed',         type: 'channel', members: 8 }
   ];
   const dms = [
     { id: 'sonia',  name: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', status: 'online' },
     { id: 'camille',name: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e', status: 'online' },
-    { id: 'yassine', name: 'Yassine Morel',    avatar: 'YM', color: '#5b6b85', status: 'away'   }
+    { id: 'yassine', name: 'Yassine Morel', avatar: 'YM', color: '#5b6b85', status: 'away' }
   ];
 
   const getStudentName = () => window.LUMIO_DATA?.student?.name || 'Consultant·e';
@@ -71,7 +93,6 @@ function SlackApp({ openChannel }) {
   const buildSeed = () => ({
     sonia: [
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: '07:48',
-        // Easter egg : numéro cliquable dans le 3e message
         text: 'Bien reçu mon mail ?' },
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: '07:48',
         text: "J'ai déposé tous les docs sur ton espace partagé. Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture." },
@@ -88,10 +109,11 @@ function SlackApp({ openChannel }) {
     ],
     'mission-lumio': [
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: 'lun. 18:42',
-        text: 'On va recevoir une consultante externe pour faire un audit de marque avant le CODIR du 30. @theo @camille merci de jouer le jeu.' },
-      { from: 'Théo Marczak',   avatar: 'TM', color: '#5c2d8f', time: 'lun. 19:14',
+        // F22 · « une consultante externe » → épicène, cohérent avec le reste du dispositif.
+        text: 'On va recevoir un·e consultant·e externe pour faire un audit de marque avant le CODIR du 30. @theo @camille merci de jouer le jeu.' },
+      { from: 'Théo Marczak', avatar: 'TM', color: '#5c2d8f', time: 'lun. 19:14',
         text: "Pas convaincu mais ok. Tant qu'on parle pas de MDR sans moi." },
-      { from: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e', time: 'lun. 21:02',
+      { from: 'Camille Ott', avatar: 'CO', color: '#0a7a6e', time: 'lun. 21:02',
         text: "Tant mieux qu'on en parle franchement. ça commence à être tendu sur le terrain." }
     ],
     yassine: [
@@ -142,17 +164,34 @@ function SlackApp({ openChannel }) {
   };
 
   // ── Réaction de Sonia quand le livrable est soumis ──
+  // F20 · Version robuste : accepte indifféremment (veille, plateforme) en
+  // chaînes OU l'objet answers complet transmis par desktop.jsx ; tout le
+  // travail se fait dans le try ; setSending(false) est garanti.
   useSlackEffect(() => {
     window.__onSoniaLivrableReaction = async (veille, plateforme) => {
       setSending(true);
-      const now = new Date();
-      const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-      const prompt = `Tu es Sonia Ferracci. Le/la consultant·e vient de te remettre son livrable final. Tu l'as lu rapidement. Tu réagis en Slack — direct, honnête, 100-150 mots maximum.
+      const time = slackNowTime();
+      try {
+        const toText = (v) => {
+          if (typeof v === 'string') return v;
+          if (v && typeof v === 'object') {
+            return Object.entries(v).map(([k, x]) => k + ' — ' + String(x || '')).join('\n\n');
+          }
+          return String(v == null ? '' : v);
+        };
+        // Si desktop.jsx a transmis l'objet answers en 1er argument,
+        // on en extrait la veille (C.1) et la plateforme (C.5).
+        let veilleTxt = toText(veille);
+        let plateformeTxt = toText(plateforme);
+        if (veille && typeof veille === 'object' && !plateforme) {
+          veilleTxt = String(veille['C.1'] || toText(veille));
+          plateformeTxt = String(veille['C.5'] || '');
+        }
+        const prompt = `Tu es Sonia Ferracci. Le/la consultant·e vient de te remettre son livrable final. Tu l'as lu rapidement. Tu réagis en Slack — direct, honnête, 100-150 mots maximum.
 
 Livrable reçu :
-${veille.substring(0, 600)}...
-${plateforme.substring(0, 600)}...`;
-      try {
+${veilleTxt.substring(0, 600)}...
+${plateformeTxt.substring(0, 600)}...`;
         const resp = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -184,8 +223,7 @@ ${plateforme.substring(0, 600)}...`;
     if (!draft.trim() || sending) return;
     const text = draft.trim();
     setDraft('');
-    const now = new Date();
-    const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    const time = slackNowTime();
     const userMsg = {
       from: getStudentName(),
       avatar: getStudentInitial(),
@@ -225,9 +263,7 @@ ${plateforme.substring(0, 600)}...`;
           let delay = 800;
           for (const reply of replies) {
             await new Promise(r => setTimeout(r, delay));
-            const t = new Date();
-            const tt = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
-            addIncoming('sonia', { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: tt, text: reply });
+            addIncoming('sonia', { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: slackNowTime(), text: reply });
             delay = 1400 + reply.length * 8;
           }
         } catch {
@@ -384,14 +420,14 @@ ${plateforme.substring(0, 600)}...`;
 // ── WhatsApp Easter Egg ───────────────────────────────────────
 function WhatsAppModal({ onClose }) {
   const waMessages = [
-    { from: 'Sonia', time: '06:51', text: "Théo a encore refusé de me donner le calendrier MDR ce matin. Je commence à penser qu'il n'a pas de calendrier." },
+    { from: 'Sonia',   time: '06:51', text: "Théo a encore refusé de me donner le calendrier MDR ce matin. Je commence à penser qu'il n'a pas de calendrier." },
     { from: 'Camille', time: '06:53', text: "Je m'en doutais. Mon contact chez Biostream m'a dit que leur process a pris 22 mois." },
     { from: 'Camille', time: '06:54', text: "Si Lumio n'a pas commencé y'a plus d'un an on est pas certifiés avant 2028 au mieux." },
-    { from: 'Sonia', time: '06:55', text: "C'est ce que je craignais. On ne peut pas lancer la plateforme de marque sans cette réponse." },
+    { from: 'Sonia',   time: '06:55', text: "C'est ce que je craignais. On ne peut pas lancer la plateforme de marque sans cette réponse." },
     { from: 'Camille', time: '06:57', text: "Le consultant que tu as mandaté — il est au courant pour la certif ?" },
-    { from: 'Sonia', time: '06:58', text: "Il/elle a accès à l'email de Théo. À lui/elle de tirer les fils." },
+    { from: 'Sonia',   time: '06:58', text: "Il/elle a accès à l'email de Théo. À lui/elle de tirer les fils." },
     { from: 'Camille', time: '07:02', text: "J'espère. Parce que si la plateforme de marque sort avec 'expert santé certifié' sans la certif, on va se faire massacrer par Biostream." },
-    { from: 'Sonia', time: '07:03', text: "Je sais. C'est pour ça que j'ai besoin d'un diagnostic honnête, pas d'un document qui nous fait plaisir. 🙏" },
+    { from: 'Sonia',   time: '07:03', text: "Je sais. C'est pour ça que j'ai besoin d'un diagnostic honnête, pas d'un document qui nous fait plaisir. 🙏" },
   ];
 
   return (
@@ -454,27 +490,27 @@ function WhatsAppModal({ onClose }) {
 }
 
 const SS = {
-  app:          { display: 'flex', height: '100%', background: 'white', overflow: 'hidden', position: 'relative' },
-  sidebar:      { width: 220, flexShrink: 0, background: '#3f0e40', color: 'rgba(255,255,255,0.85)', overflowY: 'auto' },
-  workspace:    { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' },
-  section:      { padding: '12px 0' },
+  app: { display: 'flex', height: '100%', background: 'white', overflow: 'hidden', position: 'relative' },
+  sidebar: { width: 220, flexShrink: 0, background: '#3f0e40', color: 'rgba(255,255,255,0.85)', overflowY: 'auto' },
+  workspace: { padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' },
+  section: { padding: '12px 0' },
   sectionTitle: { padding: '4px 16px', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.02em' },
-  item:         { display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px', fontSize: 13.5, cursor: 'pointer' },
-  itemActive:   { background: '#1164a3', color: 'white' },
-  itemUnread:   { fontWeight: 700, color: 'white' },
-  statusDot:    { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
-  badge:        { marginLeft: 'auto', background: '#cd2553', color: 'white', fontSize: 10, fontWeight: 700, padding: '0 6px', borderRadius: 9, minWidth: 16, textAlign: 'center', height: 16, lineHeight: '16px' },
-  main:         { flex: 1, display: 'flex', flexDirection: 'column', background: 'white', minWidth: 0, overflow: 'hidden' },
-  chatHead:     { padding: '10px 20px', borderBottom: '1px solid var(--rule)', flexShrink: 0 },
-  chatBody:     { flex: 1, padding: '12px 0', overflowY: 'auto', minHeight: 0 },
-  message:      { display: 'flex', gap: 12, padding: '6px 20px', alignItems: 'flex-start' },
-  msgAvatar:    { width: 32, height: 32, borderRadius: 4, color: 'white', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  typeDot:      { width: 6, height: 6, borderRadius: '50%', background: '#9a9ea8', display: 'inline-block', animation: 'typedot 1.2s infinite' },
-  composer:     { padding: '0 20px 12px', flexShrink: 0 },
+  item: { display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px', fontSize: 13.5, cursor: 'pointer' },
+  itemActive: { background: '#1164a3', color: 'white' },
+  itemUnread: { fontWeight: 700, color: 'white' },
+  statusDot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
+  badge: { marginLeft: 'auto', background: '#cd2553', color: 'white', fontSize: 10, fontWeight: 700, padding: '0 6px', borderRadius: 9, minWidth: 16, textAlign: 'center', height: 16, lineHeight: '16px' },
+  main: { flex: 1, display: 'flex', flexDirection: 'column', background: 'white', minWidth: 0, overflow: 'hidden' },
+  chatHead: { padding: '10px 20px', borderBottom: '1px solid var(--rule)', flexShrink: 0 },
+  chatBody: { flex: 1, padding: '12px 0', overflowY: 'auto', minHeight: 0 },
+  message: { display: 'flex', gap: 12, padding: '6px 20px', alignItems: 'flex-start' },
+  msgAvatar: { width: 32, height: 32, borderRadius: 4, color: 'white', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  typeDot: { width: 6, height: 6, borderRadius: '50%', background: '#9a9ea8', display: 'inline-block', animation: 'typedot 1.2s infinite' },
+  composer: { padding: '0 20px 12px', flexShrink: 0 },
   composerInner:{ border: '1px solid rgba(20,24,36,0.18)', borderRadius: 8, background: 'white' },
-  textarea:     { width: '100%', border: 'none', outline: 'none', padding: '10px 14px', fontSize: 14, fontFamily: 'inherit', resize: 'none', color: 'var(--ink)' },
+  textarea: { width: '100%', border: 'none', outline: 'none', padding: '10px 14px', fontSize: 14, fontFamily: 'inherit', resize: 'none', color: 'var(--ink)' },
   composerToolbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderTop: '1px solid var(--rule)' },
-  sendBtn:      { background: '#007a5a', color: 'white', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontSize: 14, fontWeight: 700 },
+  sendBtn: { background: '#007a5a', color: 'white', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontSize: 14, fontWeight: 700 },
   sendBtnDisabled: { background: 'rgba(20,24,36,0.1)', color: 'var(--ink-faint)', cursor: 'not-allowed' }
 };
 

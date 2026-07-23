@@ -1,14 +1,17 @@
 // ══════════════════════════════════════════════════════════════
-//  LIVRABLE APP v2 — Composant canonique unique (tous PAC)
-//  Flux : Évaluation formative → Reprise → Débrief final → Portfolio
-//  Lit tout depuis window.PAC_CONFIG. Aucun prompt hardcodé.
+// LIVRABLE APP v2 — Composant canonique unique (tous PAC)
+// VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fixes F26→F27)
+// Flux : Évaluation formative → Reprise → Débrief final → Portfolio
+// Lit tout depuis window.PAC_CONFIG. Aucun prompt hardcodé.
 // ══════════════════════════════════════════════════════════════
 
 const { useState: useLivState } = React;
 const _wc = (t) => (t || "").trim() ? (t || "").trim().split(/\s+/).length : 0;
 
 // ── Markdown-lite : rendu sécurisé (échappement HTML systématique) ──
-// Supporte : **gras**, *italique*, listes (- / 1.), tableaux (| a | b |).
+// Supporte : **gras**, *italique*, listes (- / 1.), tableaux (| a | b |),
+// et depuis F26 : titres (#, ##, ###) + séparateurs (---) pour le rendu
+// des retours de jury.
 const _mdEsc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const _mdInline = (s) => s
   .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
@@ -34,6 +37,21 @@ function _mdToHtml(raw) {
       });
       html += "</table>";
       out.push(html);
+      continue;
+    }
+    // F26 · Titres markdown (###, ##, #) — le jury répond dans ce format.
+    const h = l.match(/^\s*(#{1,3})\s+(.*)$/);
+    if (h) {
+      const level = h[1].length;
+      const size = level === 1 ? 16 : level === 2 ? 14.5 : 13.5;
+      out.push("<div style=\"font-weight:700;font-size:" + size + "px;margin:14px 0 4px\">" + _mdInline(h[2]) + "</div>");
+      i++;
+      continue;
+    }
+    // F26 · Séparateur horizontal (--- / ***)
+    if (/^\s*([-*_])\s*\1\s*\1[\s\-*_]*$/.test(l)) {
+      out.push("<hr style=\"border:none;border-top:1px solid rgba(127,127,127,0.35);margin:12px 0\">");
+      i++;
       continue;
     }
     if (/^\s*[-*]\s+/.test(l)) {
@@ -93,7 +111,7 @@ function LivField({ title, count, min, placeholder, conseil, value, onChange, lo
     onChange(pre + (pre && !pre.endsWith("\n") ? "\n\n" : "") + block + "\n" + post);
     if (ta) requestAnimationFrame(() => ta.focus());
   };
-  const TBL = "| Colonne 1 | Colonne 2 | Colonne 3 |\n|---|---|---|\n|  |  |  |\n|  |  |  |";
+  const TBL = "| Colonne 1 | Colonne 2 | Colonne 3 |\n|---|---|---|\n| | | |\n| | | |";
   const btn = { border: "1px solid var(--rule)", background: "white", borderRadius: 5, padding: "3px 8px", fontSize: 11, cursor: "pointer", color: "var(--ink-soft)", fontFamily: "inherit" };
   return (
     <div style={{ background: "white", borderRadius: 10, padding: "16px 18px", marginBottom: 14, border: "1px solid var(--rule)", opacity: locked ? 0.7 : 1 }}>
@@ -129,6 +147,32 @@ function LivField({ title, count, min, placeholder, conseil, value, onChange, lo
   );
 }
 
+// ── F27 · Fiche identitaire (aide-mémoire C.5/C.6) ──
+// La config `ficheIdentitaire` existait mais n'était rendue nulle part.
+function FicheIdentitaire({ fiche }) {
+  if (!fiche) return null;
+  const row = (label, val) => val ? (
+    <div style={{ display: "flex", gap: 10, padding: "3px 0" }}>
+      <span style={{ flexShrink: 0, width: 110, fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(19,69,71,0.55)", paddingTop: 2 }}>{label}</span>
+      <span style={{ fontSize: 12.5, lineHeight: 1.5, color: "#134547" }}>{val}</span>
+    </div>
+  ) : null;
+  return (
+    <div style={{ background: "rgba(93,226,152,0.08)", border: "1px solid rgba(19,69,71,0.18)", borderRadius: 10, padding: "14px 18px", marginBottom: 14 }}>
+      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#134547", fontWeight: 700, marginBottom: 6 }}>Aide-mémoire · Plateforme proposée par la note de cadrage</div>
+      {row("Territoire", fiche.territoirePropose)}
+      {row("Promesse", fiche.promesse)}
+      {row("Cibles B2B", fiche.ciblesB2B)}
+      {row("Cibles B2C", fiche.ciblesB2C)}
+      {row("Personnalité", fiche.personnalite)}
+      {row("Engagements", fiche.engagements)}
+      {fiche.tension ? (
+        <div style={{ marginTop: 8, padding: "8px 12px", background: "rgba(196,66,15,0.08)", borderLeft: "3px solid #c4420f", fontSize: 12, lineHeight: 1.55, color: "#5a3010" }}>⚠ {fiche.tension}</div>
+      ) : null}
+      {fiche.source ? <div style={{ fontSize: 10.5, color: "rgba(19,69,71,0.6)", marginTop: 8, fontStyle: "italic" }}>{fiche.source}</div> : null}
+    </div>
+  );
+}
 
 function LivrableApp() {
   const cfg = window.PAC_CONFIG || window.PASS_CONFIG || {};
@@ -136,9 +180,9 @@ function LivrableApp() {
   const [answers, setAnswers] = useLivState({});
   const [reflexive, setReflexive] = useLivState("");
   const [sending, setSending] = useLivState(false);
-  const [step, setStep] = useLivState("draft");       // draft | feedback | revision | debrief
-  const [feedback, setFeedback] = useLivState("");     // retour formatif
-  const [debrief, setDebrief] = useLivState("");       // débrief final
+  const [step, setStep] = useLivState("draft"); // draft | feedback | revision | debrief
+  const [feedback, setFeedback] = useLivState("");   // retour formatif
+  const [debrief, setDebrief] = useLivState("");     // débrief final
   const [err, setErr] = useLivState("");
   const [sent, setSent] = useLivState("");
 
@@ -218,8 +262,8 @@ function LivrableApp() {
         : "";
 
       // ── Portfolio visuel (carte enrichie 3 pages) — best-effort.
-      // Si cfg.portfolio ou window.PACPortfolio sont absents (bloc pas
-      // encore migré), on n'envoie que l'email fonctionnel, comme avant.
+      //    Si cfg.portfolio ou window.PACPortfolio sont absents (bloc pas
+      //    encore migré), on n'envoie que l'email fonctionnel, comme avant.
       let visualHtml = "";
       let attachments = [];
       const pf = cfg.portfolio;
@@ -262,7 +306,8 @@ function LivrableApp() {
         rows + refl +
         "<hr style=\"border:none;border-top:2px solid #5DE298;margin:24px 0\">" +
         "<h2 style=\"color:#0B2B2D;font-size:16px;margin-bottom:8px\">Débrief de compétences</h2>" +
-        "<div style=\"white-space:pre-wrap;color:#0B2B2D;line-height:1.55;font-size:13px\">" + debrief + "</div>" +
+        // F26 · Le débrief est désormais converti en HTML (plus de ### bruts dans l'email).
+        "<div style=\"color:#0B2B2D;line-height:1.55;font-size:13px\">" + _mdToHtml(debrief) + "</div>" +
         "<hr style=\"border:none;border-top:1px solid #E3FFF0;margin:24px 0\">" +
         "<p style=\"font-size:11px;color:#999;text-align:center\">Ce document a été généré automatiquement par le dispositif PAC · Éminéo Education<br>Ne pas répondre à cet email.</p>" +
         "</div></div>";
@@ -298,13 +343,18 @@ function LivrableApp() {
 
         {/* ── Champs par compétence (saisie markdown-lite : toolbar + aperçu) ── */}
         {comps.map(c => (
-          <LivField key={c.code}
-            title={c.code + " — " + c.label}
-            count={_wcMd(answers[c.code])} min={c.min || 0}
-            placeholder={c.placeholder} conseil={c.conseil}
-            value={answers[c.code]} onChange={v => set(c.code, v)}
-            locked={step === "debrief"} rows={5}
-            tableauModele={c.tableauModele} />
+          <React.Fragment key={c.code}>
+            {/* F27 · L'aide-mémoire « fiche identitaire » (configuré mais
+                jamais affiché) apparaît avant C.5, comme prévu. */}
+            {c.code === "C.5" ? <FicheIdentitaire fiche={cfg.ficheIdentitaire} /> : null}
+            <LivField
+              title={c.code + " — " + c.label}
+              count={_wcMd(answers[c.code])} min={c.min || 0}
+              placeholder={c.placeholder} conseil={c.conseil}
+              value={answers[c.code]} onChange={v => set(c.code, v)}
+              locked={step === "debrief"} rows={5}
+              tableauModele={c.tableauModele} />
+          </React.Fragment>
         ))}
 
         {/* ── Note réflexive ── */}
@@ -328,9 +378,10 @@ function LivrableApp() {
         {/* ── Retour formatif (étape 1) ── */}
         {step === "feedback" && feedback ? (
           <div style={{ marginTop: 22 }}>
-            <div style={{ background: "white", borderRadius: 10, padding: "18px 20px", border: "1px solid var(--rule)", whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.6 }}>
+            <div style={{ background: "white", borderRadius: 10, padding: "18px 20px", border: "1px solid var(--rule)", fontSize: 13, lineHeight: 1.6 }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.15em", color: "#1a6641", textTransform: "uppercase", marginBottom: 10 }}>Retour d'évaluation</div>
-              {feedback}
+              {/* F26 · Rendu markdown (avant : ###, **, --- affichés bruts) */}
+              <div dangerouslySetInnerHTML={{ __html: _mdToHtml(feedback) }} />
             </div>
             <div style={{ marginTop: 14, display: "flex", gap: 12 }}>
               <button onClick={revise}
@@ -348,9 +399,10 @@ function LivrableApp() {
         {/* ── Débrief final (étape 2) ── */}
         {step === "debrief" && debrief ? (
           <div style={{ marginTop: 22 }}>
-            <div style={{ background: "#0B2B2D", borderRadius: 10, padding: "20px 22px", whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.6, color: "#E3FFF0" }}>
+            <div style={{ background: "#0B2B2D", borderRadius: 10, padding: "20px 22px", fontSize: 13, lineHeight: 1.6, color: "#E3FFF0" }}>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.15em", color: "#5DE298", textTransform: "uppercase", marginBottom: 10 }}>Débrief de compétences</div>
-              {debrief}
+              {/* F26 · Rendu markdown */}
+              <div dangerouslySetInnerHTML={{ __html: _mdToHtml(debrief) }} />
             </div>
             <div style={{ marginTop: 16 }}>
               <button onClick={sendPortfolio}

@@ -1,5 +1,6 @@
 // ══════════════════════════════════════════════════════════════
 //  DATA — Mission Lumio Health BC1
+//  VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fixes F1→F10)
 // ══════════════════════════════════════════════════════════════
 
 window.LUMIO_DATA = {
@@ -10,6 +11,21 @@ window.LUMIO_DATA = {
     company: "Indépendant·e",
     initial: "?"
   },
+
+  // ── F1 · Temps fictif — manquant auparavant : l'horloge retombait
+  // sur ses défauts ("lun. 1 oct.", 18 jours) et contredisait toute
+  // la narration (deadline 30 sept, brief du 14 sept).
+  // lun. 14 sept. 2026 (vrai lundi) → mer. 30 sept. 2026 (vrai mercredi, CODIR).
+  fictif: {
+    startDay: 14,
+    endDay: 30,
+    spanDays: 16,
+    monthShort: "sept.",
+    startDow: 1,        // lundi
+    startHour: 7,
+    startMinute: 19
+  },
+
   ceoEmail: {
     from: "Théo Marczak <theo@lumio-health.com>",
     to: "Sonia Ferracci <sonia@lumio-health.com>",
@@ -32,11 +48,15 @@ Reparlons-nous demain matin. 8h30 dans mon bureau ?
 
 T.`
   },
+
   briefEmail: {
     from: "Sonia Ferracci <sonia@lumio-health.com>",
     to: "{{EMAIL_ETUDIANT}}",
     subject: "Mission de diagnostic de marque — confidentiel",
-    date: "3 septembre 2026, 07h42",
+    // F4 · Date alignée sur le début de la simulation (lun. 14 sept.).
+    // Avant : "3 septembre" + « écrivez-moi avant le 12 septembre »,
+    // soit des échéances déjà passées au démarrage.
+    date: "14 septembre 2026, 07h42",
     body: `{{PRENOM}},
 
 Je vous confie une mission dont j'ai besoin qu'elle soit terminée avant notre réunion de direction du 30 septembre. Je vais être directe sur le contexte, parce que vous ne pourrez pas travailler correctement sans le connaître.
@@ -53,9 +73,9 @@ Ce que je vous demande :
 
 2. Une plateforme de marque — notre territoire, notre proposition de valeur, notre personnalité, nos engagements. Un document que Théo peut tenir entre les mains, défendre au board, et que mes équipes peuvent utiliser comme boussole.
 
-J'ai déposé sur votre espace les documents internes que j'ai pu rassembler. Ils sont fragmentaires — c'est tout ce que j'ai pu obtenir sans alarmer le reste de la direction. Vous trouverez la note de cadrage que j'ai présentée au CODIR en juin (et que Théo a contestée), un rapport de veille de notre stagiaire (non relu, à prendre avec des pincettes), trois articles de presse, et un entretien avec Camille Ott — notre commerciale historique.
+J'ai déposé sur votre espace les documents internes que j'ai pu rassembler. Ils sont fragmentaires — c'est tout ce que j'ai pu obtenir sans alarmer le reste de la direction. Vous trouverez la note de cadrage que j'ai présentée au CODIR en juin (et que Théo a contestée), un rapport de veille de Yassine, notre content manager junior (non relu, à prendre avec des pincettes), trois articles de presse, et un entretien avec Camille Ott — notre commerciale historique.
 
-Quand vous aurez fait un premier tour, écrivez-moi sur Slack. Je veux savoir ce que vous voyez avant le 12 septembre.
+Quand vous aurez fait un premier tour, écrivez-moi sur Slack. Je veux savoir ce que vous voyez avant le 18 septembre.
 
 Bonne lecture.
 
@@ -63,6 +83,7 @@ Sonia
 Directrice Marketing — Lumio Health
 +33 6 ▒▒ ▒▒ ▒▒ ▒▒`
   },
+
   pressArticles: [
     {
       url: "lesechos.fr/industrie-services/sante/wearable-mdr-fracture",
@@ -108,6 +129,7 @@ L'enquête, menée par OpinionWay pour la Fédération Française des Diabétiqu
 Pour les acteurs medtech français, la fenêtre est étroite : prouver la rigueur sans tomber dans l'austérité, démocratiser sans banaliser. L'équation reste à inventer.`
     }
   ],
+
   yanisReport: {
     title: "Rapport de veille concurrentielle wearables santé",
     author: "Yassine Morel, Content Manager",
@@ -118,9 +140,9 @@ Pour les acteurs medtech français, la fenêtre est étroite : prouver la rigueu
 
 Le marché mondial des wearables santé dépasse 95 Md$ en 2025 et croît à un rythme de +18 %/an (source : Statista, IDC, March 2026). Trois forces structurent désormais le secteur :
 
-  • La pression réglementaire (MDR en Europe, FDA aux US)
-  • L'intégration verticale par les géants tech (Apple, Samsung, Google/Fitbit)
-  • L'émergence de spécialistes verticaux sur des indications précises (sommeil, stress, glycémie continue)
+• La pression réglementaire (MDR en Europe, FDA aux US)
+• L'intégration verticale par les géants tech (Apple, Samsung, Google/Fitbit)
+• L'émergence de spécialistes verticaux sur des indications précises (sommeil, stress, glycémie continue)
 
 Lumio Health se positionne historiquement sur le créneau du stress chronique mesuré en milieu professionnel, avec une approche B2B-DRH. Le présent rapport recense les acteurs concurrents directs et indirects, et propose une cartographie de la pression concurrentielle.
 
@@ -166,6 +188,7 @@ IV. RECOMMANDATIONS
       { name: "Lumio Health", product: "Lumio Patch", mdr: "En cours — délai non communiqué", priceB2B: "3 800 €/an/10 ut.", funding: "Série B — 22 M$ (2025)" }
     ]
   },
+
   soniaNote: {
     title: "Note de cadrage — Repositionnement Lumio",
     subtitle: "« Ce que nous voulons devenir »",
@@ -182,18 +205,12 @@ Repositionner Lumio comme « l'expert de la santé invisible » — le stress ch
 
 PLATEFORME PROPOSÉE
 
-  Territoire     : « La santé que les chiffres ne montrent pas encore »
-  Promesse       : Lumio révèle ce que le corps sait mais que la médecine
-                   ne capte pas
-  Cibles B2B     : DRH des ETI et grands comptes (>500 salariés),
-                   prescripteurs (médecine du travail, mutuelles)
-  Cibles B2C     : actifs 30-50 ans, urbains, en charge mentale élevée
-  Personnalité   : scientifique sans être froide
-                   rassurante sans être condescendante
-                   précise sans être technique
-  Engagements    : 100 % des données anonymisées
-                   jamais revendues à des tiers
-                   open data scientifique sur 5 ans
+Territoire : « La santé que les chiffres ne montrent pas encore »
+Promesse : Lumio révèle ce que le corps sait mais que la médecine ne capte pas
+Cibles B2B : DRH des ETI et grands comptes (>500 salariés), prescripteurs (médecine du travail, mutuelles)
+Cibles B2C : actifs 30-50 ans, urbains, en charge mentale élevée
+Personnalité : scientifique sans être froide, rassurante sans être condescendante, précise sans être technique
+Engagements : 100 % des données anonymisées, jamais revendues à des tiers, open data scientifique sur 5 ans
 
 CONDITIONS DE RÉUSSITE
 
@@ -210,6 +227,7 @@ Cette note est un point de départ, pas un livrable. J'attends vos retours en CO
 
 Sonia`
   },
+
   camilleVerbatims: [
     {
       duration: "01:42",
@@ -227,6 +245,7 @@ Sonia`
       transcript: `La question que Sonia ne se pose peut-être pas assez, et que Théo refuse de se poser : nos clients B2B historiques, est-ce qu'ils nous voient toujours comme une solution professionnelle de référence, ou est-ce qu'ils commencent à nous voir comme « le truc d'avant que les vrais certifiés sont arrivés » ? Parce que si c'est ça, aucune plateforme de marque ne résoudra le problème. C'est trop tard, l'image est cuite. Moi je pense qu'on est à six mois, peut-être neuf, du basculement. Après, ce sera un travail de reconquête. Beaucoup plus cher.`
     }
   ],
+
   slackMessages: {
     initial: [
       { from: "Sonia Ferracci", time: "07:48", text: "Salut {{PRENOM}} — bien reçu mon mail ? J'ai déposé tous les docs sur ton espace partagé.", read: true },
@@ -236,8 +255,8 @@ Sonia`
       { from: "Camille Ott", time: "+8min", text: "Hello 👋 j'ai vu que Sonia t'avait briefé. Si tu veux qu'on se parle dans la semaine, dis-moi. Je travaille pas dans la même réalité que la direction sur ce dossier 🙃", channel: "DM" },
       { from: "Sonia Ferracci", time: "+15min", text: "Au fait — n'oublie pas que Théo ne sait pas que tu as accès à son mail du 14 juin. À toi de juger comment l'utiliser.", channel: "DM" },
     ]
-  }
-,
+  },
+
   finder: {
     folders: {
       guide: {
@@ -260,14 +279,15 @@ Sonia`
       }
     },
     order: ['guide', 'espace']
-  }
-,
+  },
+
+  // F9 · Dates ajoutées — le lecteur affichait « Enregistré le  » (vide).
   voiceMemos: [
     {
       title: "Sur la rupture dans les conversations clients",
       author: "Camille Ott",
       role: "Responsable partenariats B2B",
-      date: "",
+      date: "8 septembre 2026",
       context: "Verbatim terrain",
       durationSec: 102,
       transcript: "Ce que je vis depuis six mois, c'est une vraie rupture dans les conversations avec nos clients. Avant, on nous achetait sur la confiance — sur huit ans de relation, sur des cas d'usage, sur la qualité de la data. Aujourd'hui, les DRH arrivent en réunion avec des questions sur la certification. Pas agressivement — embarrassés, comme si c'était indiscret de demander. Mais ils demandent quand même. Et c'est récent. C'est de cette année. C'est pas encore un dealbreaker, mais c'est une horloge. Je le sens à la façon dont ils tournent autour du sujet en début de rendez-vous, comme s'ils voulaient cocher la case avant de passer à la vraie discussion."
@@ -276,7 +296,7 @@ Sonia`
       title: "Sur la pression Biostream",
       author: "Camille Ott",
       role: "Responsable partenariats B2B",
-      date: "",
+      date: "8 septembre 2026",
       context: "Verbatim terrain",
       durationSec: 58,
       transcript: "Nos clients actuels nous font encore confiance. Mais si Biostream se pointe chez eux avec sa certification IIa et un prix légèrement inférieur, la conversation va changer très vite. Moi je peux défendre Lumio sur la qualité des données, sur l'historique, sur la relation. Je ne peux pas défendre une absence de certification indéfiniment. Au bout d'un moment, le client va dire « j'ai un comité d'éthique, je peux pas continuer avec un fournisseur non certifié ». Et là j'aurai plus d'arguments."
@@ -285,23 +305,57 @@ Sonia`
       title: "La question que personne ne pose",
       author: "Camille Ott",
       role: "Responsable partenariats B2B",
-      date: "",
+      date: "8 septembre 2026",
       context: "Verbatim terrain",
       durationSec: 75,
       transcript: "La question que Sonia ne se pose peut-être pas assez, et que Théo refuse de se poser : nos clients B2B historiques, est-ce qu'ils nous voient toujours comme une solution professionnelle de référence, ou est-ce qu'ils commencent à nous voir comme « le truc d'avant que les vrais certifiés sont arrivés » ? Parce que si c'est ça, aucune plateforme de marque ne résoudra le problème. C'est trop tard, l'image est cuite. Moi je pense qu'on est à six mois, peut-être neuf, du basculement. Après, ce sera un travail de reconquête. Beaucoup plus cher."
     }
-  ]
+  ],
+
+  // F7 · Calendrier — manquant auparavant : l'app Calendrier s'ouvrait
+  // sans nom de mois, avec une échéance par défaut au 15 et 31 jours.
+  calendar: {
+    monthLabel: "Septembre 2026",
+    todayLabel: "Temps fictif de la mission",
+    daysInMonth: 30,
+    startOffset: 1,          // le 1er sept. 2026 est un mardi (grille lundi-first)
+    deadlineDay: 30,
+    countdownLabel: "AVANT CODIR",
+    legend: [
+      { color: "#1b3a6b", text: "Mission Lumio" },
+      { color: "#b85c00", text: "Retour attendu par Sonia" },
+      { color: "#c4420f", text: "<strong>CODIR — rendu final</strong>" }
+    ],
+    events: {
+      14: [{ label: "Début de mission", bg: "rgba(27,58,107,0.14)", color: "#1b3a6b" }],
+      18: [{ label: "Point Slack → Sonia", bg: "rgba(184,92,0,0.14)", color: "#b85c00" }],
+      30: [{ label: "CODIR 09h00 — rendu", bg: "rgba(196,66,15,0.16)", color: "#c4420f", bold: true }]
+    },
+    footer: "Le CODIR du 30 septembre à 09h00 est la seule date non négociable."
+  }
 };
 
 // ══════════════════════════════════════════════════════════════
-//  PAC_CONFIG — Configuration du Parcours d'Activation BC1
-//  Remplace window.PASS_CONFIG dans app-livrable et app-assistant
+// PAC_CONFIG — Configuration du Parcours d'Activation BC1
+// Remplace window.PASS_CONFIG dans app-livrable et app-assistant
 // ══════════════════════════════════════════════════════════════
 window.PASS_CONFIG = {
   bloc: 'bc1',
   epreuve: 'MSMC RNCP 38504 · Bloc 1',
   deadline: '30 septembre 2026 · CODIR 09h00',
   dureeMin: 210,
+
+  // F2 · Actes — manquant auparavant : la timeline des 5 actes ne
+  // s'affichait jamais, et Jefferson / Sonia croyaient l'étudiant·e
+  // bloqué·e en « Acte 1 » pendant toute la session.
+  temps: [
+    { n: 1, label: 'Ancrage terrain',       debut: 0,   fin: 20  },
+    { n: 2, label: "Entrée dans l'affaire", debut: 20,  fin: 50  },
+    { n: 3, label: 'Diagnostic',            debut: 50,  fin: 95  },
+    { n: 4, label: 'Production',            debut: 95,  fin: 175 },
+    { n: 5, label: 'Réflexion',             debut: 175, fin: 210 }
+  ],
+
   competences: [
     {
       code: 'C.1',
@@ -310,7 +364,9 @@ window.PASS_CONFIG = {
       min: 120,
       motsCles: ['MDR', 'certification', 'concurrence', 'tendance'],
       conseil: 'Citez des faits issus des documents (données chiffrées, citations). Ne listez pas — hiérarchisez.',
-      placeholder: 'Identifiez les 3-4 tendances majeures qui pèsent sur Lumio Health. Pour chacune : faits + impact potentiel (opportunité ou risque).'
+      // F6 · « 3-4 tendances » contredisait le critère éliminatoire du jury
+      // (« 4 tendances listées au minimum »). Aligné sur 4.
+      placeholder: 'Identifiez les 4 tendances majeures qui pèsent sur Lumio Health. Pour chacune : faits + impact potentiel (opportunité ou risque).'
     },
     {
       code: 'C.2',
@@ -328,7 +384,8 @@ window.PASS_CONFIG = {
       min: 100,
       motsCles: ['tension', 'contradiction', 'MDR', 'budget', 'clients'],
       conseil: 'Les documents se contredisent : 230 vs 180 clients, budget 380K vs 200K€, MDR "en cours" vs "fin Q2 2027". Ce sont des matériaux, pas des bugs.',
-      placeholder: 'Quelles contradictions avez-vous identifiées dans les documents ? Quelle est leur impact sur la cohérence de la marque ?'
+      // F5 · « Quelle est leur impact » → « Quel est leur impact ».
+      placeholder: 'Quelles contradictions avez-vous identifiées dans les documents ? Quel est leur impact sur la cohérence de la marque ?'
     },
     {
       code: 'C.4',
@@ -359,6 +416,7 @@ window.PASS_CONFIG = {
       placeholder: 'Quelles sont les limites de votre recommandation ? Quelles conditions doivent être remplies pour qu\'elle tienne ?'
     }
   ],
+
   // Fiche identitaire — aide-mémoire latéral C.5/C.6
   // Remappée verbatim depuis soniaNote.body (PLATEFORME PROPOSÉE) — aucun contenu inventé.
   ficheIdentitaire: {
@@ -371,11 +429,13 @@ window.PASS_CONFIG = {
     engagements: '100 % des données anonymisées · jamais revendues à des tiers · open data scientifique sur 5 ans.',
     tension: 'Cette plateforme suppose la certification MDR classe IIa avant le lancement grand public. Or Théo ne s\'engage sur aucun calendrier (fin Q2 2027 au mieux en interne). Sans certification, le territoire « expert santé » est intenable et expose Lumio à des attaques juridiques des concurrents certifiés.'
   },
+
   // Grille d'évaluation pour le portfolio — niveaux RNCP
   grilleEvaluation: {
     niveaux: ['Maximale', 'Haute', 'Moyenne', 'Insuffisante'],
     acquis: ['Maximale', 'Haute', 'Moyenne'] // tout sauf Insuffisante = acquis
   },
+
   // Portfolio visuel — contenu éditorial fixe (carte enrichie 3 pages).
   // ⚠️ Ne jamais nommer Théo / Sonia / Jakob / Camille / Yassine dans
   // choix ou justification. Les marques réelles (Withings, Decathlon…)
@@ -398,12 +458,12 @@ window.PAC_CONFIG = window.PASS_CONFIG;
   if (!cfg.juryPrompt) cfg.juryPrompt = "Tu es le jury certifiant du bloc 1 (Manager Stratégie Marketing & Communication — MSMC, RNCP 38504).\nContexte : Lumio Health — Sonia Ferracci, nouvelle Directrice Marketing, doit construire la plateforme de marque dans un contexte de tensions entre B2B installé (180 clients pros) et pression de pivot B2C portée par Northgate Capital. Calendrier MDR classe IIa incertain (au mieux fin Q2 2027). Septembre 2026, CODIR du 30 septembre 09h00.\nTu évalues une production étudiante aux critères RNCP stricts. Sois exigeant mais juste.\nCritères éliminatoires :\n- L'absence de toute hiérarchisation des tendances de l'environnement (4 tendances listées au minimum, avec sources documentées et impacts différenciés) invalide la compétence C.1.\n- Le diagnostic se contente d'une liste FFOM sans s'appuyer sur les contradictions documentées entre les sources (230 vs 180 clients B2B, 380K vs 200K€ de budget, calendrier MDR fluctuant) : la compétence C.2 est non validée.\n- Les tensions internes nommées dans C.3 ne désignent ni acteurs (Théo / Sonia / Jakob), ni mécanismes concrets de blocage : la compétence reste descriptive et non analytique.\n- La recommandation stratégique (C.4) ne peut être défendue à la fois face à Théo et à Sonia, ou ignore le calendrier MDR réel : elle est invalidée pour défaut de réalisme.\n- La plateforme de marque (C.5) ne couvre pas les quatre dimensions attendues (territoire / promesse / personnalité / engagements) ou se limite à du vocabulaire générique non défendable en CODIR.\n- Aucune condition de mise en œuvre n'est nommée (C.6) — la plateforme prétend tenir sans la MDR ou sans arbitrage budgétaire : invalidation immédiate.\n\nRéponds EXACTEMENT dans ce format :\n### C.1 — [Satisfaisant / Insuffisant / Absent]\nUne phrase de retour précise et exigeante.\n\n### C.2 — [Satisfaisant / Insuffisant / Absent]\nUne phrase de retour précise et exigeante.\n\n### C.3 — [Satisfaisant / Insuffisant / Absent]\nUne phrase de retour précise et exigeante.\n\n### C.4 — [Satisfaisant / Insuffisant / Absent]\nUne phrase de retour précise et exigeante.\n\n### C.5 — [Satisfaisant / Insuffisant / Absent]\nUne phrase de retour précise et exigeante.\n\n### C.6 — [Satisfaisant / Insuffisant / Absent]\nUne phrase de retour précise et exigeante.\n\n## Niveau global\n**[Non conforme / Partiellement conforme / Conforme / Conforme avec distinction]**\n\n## Question de jury\nUne question dérangeante que tu poserais à l'oral.";
   if (!cfg.dispositif) cfg.dispositif = "PAC";
   if (!cfg.commanditaire) cfg.commanditaire = "Sonia Ferracci";
-  if (!cfg.accroche_namescreen) cfg.accroche_namescreen = {"intro":"Tu es {{STUDENT}}, consultant·e externe missionné·e par Sonia Ferracci, nouvelle Directrice Marketing de Lumio Health. Tu disposes d'un poste de mission dédié pour construire la plateforme de marque.","ratio_label":"18 jours dans l'univers Lumio","regles":[{"ico":"📄","txt":"Tout ce que tu sais, c'est dans les documents du poste de mission."},{"ico":"🤐","txt":"Le jury teste chaque hypothèse. Il ne cherche pas à t'aider — il évalue."},{"ico":"💬","txt":"Quand tu as une hypothèse solide → Slack → ton commanditaire. Sa réaction débloque la suite."}]};
+  // F3 · « 18 jours » → « 16 jours » (14 → 30 septembre).
+  if (!cfg.accroche_namescreen) cfg.accroche_namescreen = {"intro":"Tu es {{STUDENT}}, consultant·e externe missionné·e par Sonia Ferracci, nouvelle Directrice Marketing de Lumio Health. Tu disposes d'un poste de mission dédié pour construire la plateforme de marque.","ratio_label":"16 jours dans l'univers Lumio","regles":[{"ico":"📄","txt":"Tout ce que tu sais, c'est dans les documents du poste de mission."},{"ico":"🤐","txt":"Le jury teste chaque hypothèse. Il ne cherche pas à t'aider — il évalue."},{"ico":"💬","txt":"Quand tu as une hypothèse solide → Slack → ton commanditaire. Sa réaction débloque la suite."}]};
   window.PAC_CONFIG = cfg;
   window.PASS_CONFIG = cfg;
 })();
 // === [PAC v2 complétion] fin ===
-
 
 // === [Chantier PDF+Browser] dossiers/guide/portraits — 02/07/2026 (régénéré 01/07 après correction Yassine Morel) ===
 // Restructuration de D.yanisReport (déjà écrit, nom/rôle corrigés) en D.dossiers[]. Guide laissé sans tips.
@@ -412,181 +472,84 @@ window.PAC_CONFIG = window.PASS_CONFIG;
   var D = window.LUMIO_DATA;
   if (!D) return;
   D.dossiers = [
-  {
-    "id": "rapport-veille",
-    "title": "Rapport de veille concurrentielle wearables santé",
-    "tab": "Veille concurrentielle",
-    "accent": "#1b3a6b",
-    "type": "rich",
-    "pages": [
-      {
-        "kicker": "Yassine Morel, Content Manager",
-        "title": "Rapport de veille concurrentielle wearables santé",
-        "byline": "Yassine Morel, Content Manager · 12 mai 2026",
-        "blocks": [
-          {
-            "type": "h3",
-            "text": "INTRODUCTION"
-          },
-          {
-            "type": "p",
-            "text": "Le marché mondial des wearables santé dépasse 95 Md$ en 2025 et croît à un rythme de +18 %/an (source : Statista, IDC, March 2026). Trois forces structurent désormais le secteur :"
-          },
-          {
-            "type": "ul",
-            "items": [
-              "La pression réglementaire (MDR en Europe, FDA aux US)",
-              "L'intégration verticale par les géants tech (Apple, Samsung, Google/Fitbit)",
-              "L'émergence de spécialistes verticaux sur des indications précises (sommeil, stress, glycémie continue)"
-            ]
-          },
-          {
-            "type": "p",
-            "text": "Lumio Health se positionne historiquement sur le créneau du stress chronique mesuré en milieu professionnel, avec une approche B2B-DRH. Le présent rapport recense les acteurs concurrents directs et indirects, et propose une cartographie de la pression concurrentielle."
-          },
-          {
-            "type": "h3",
-            "text": "I. CARTOGRAPHIE CONCURRENTIELLE"
-          },
-          {
-            "type": "h3",
-            "text": "[TABLEAU PRINCIPAL]"
-          },
-          {
-            "type": "h3",
-            "text": "II. ANALYSE DES SIGNAUX FAIBLES"
-          },
-          {
-            "type": "p",
-            "text": "a) Salon Préventica 2026 (Lyon, 20-22 mars)"
-          },
-          {
-            "type": "p",
-            "text": "Les DRH et préventeurs interrogés citent la certification MDR comme critère de décision n°1 dans 73 % des cas (n=42 entretiens informels sur stand). Citation récurrente : « Sans certif, je peux pas justifier l'achat à mon comité d'éthique. »"
-          },
-          {
-            "type": "p",
-            "text": "b) Étude Kantar Health Monitor 2026"
-          },
-          {
-            "type": "p",
-            "text": "La certification réglementaire devient un signal de crédibilité — pas seulement une obligation légale. 58 % des DRH déclarent l'utiliser comme proxy de qualité scientifique, même quand ils ne comprennent pas le détail du règlement."
-          },
-          {
-            "type": "p",
-            "text": "c) Mouvement des prix"
-          },
-          {
-            "type": "p",
-            "text": "Les acteurs certifiés ont tous augmenté leurs tarifs B2B de 15 à 25 % dans les six mois suivant l'obtention. Les non-certifiés sont sous pression à la baisse."
-          },
-          {
-            "type": "h3",
-            "text": "III. LACUNES NON COUVERTES"
-          },
-          {
-            "type": "p",
-            "text": "— Statut exact de la certification chez Withings (information contradictoire entre site institutionnel et discours commercial)\n— Calendrier MDR de Lumio (Théo a refusé de me communiquer l'information malgré relances)\n— Résultats de l'étude qualitative clients B2B menée par Camille Ott en mars 2026 (jamais reçus)\n— Position d'Apple Health sur le marché entreprise français (rumeurs de partenariat avec Malakoff Humanis non confirmées)"
-          },
-          {
-            "type": "h3",
-            "text": "IV. RECOMMANDATIONS"
-          },
-          {
-            "type": "p",
-            "text": "À ce stade, et sous toutes réserves liées à mon niveau d'expérience, j'identifie trois mouvements urgents :"
-          },
-          {
-            "type": "p",
-            "text": "1. Clarifier en interne le calendrier MDR de Lumio\n2. Cartographier précisément les 230 clients (ou 180 ?) pour distinguer comptes actifs et dormants\n3. Anticiper l'arrivée d'Apple Health sur le segment entreprise via un positionnement de niche défendable"
-          },
-          {
-            "type": "h3",
-            "text": "— FIN —"
-          }
-        ]
-      }
-    ]
-  }
-];
+    {
+      "id": "rapport-veille",
+      "title": "Rapport de veille concurrentielle wearables santé",
+      "tab": "Veille concurrentielle",
+      "accent": "#1b3a6b",
+      "type": "rich",
+      "pages": [
+        {
+          "kicker": "Yassine Morel, Content Manager",
+          "title": "Rapport de veille concurrentielle wearables santé",
+          "byline": "Yassine Morel, Content Manager · 12 mai 2026",
+          "blocks": [
+            { "type": "h3", "text": "INTRODUCTION" },
+            { "type": "p", "text": "Le marché mondial des wearables santé dépasse 95 Md$ en 2025 et croît à un rythme de +18 %/an (source : Statista, IDC, March 2026). Trois forces structurent désormais le secteur :" },
+            {
+              "type": "ul",
+              "items": [
+                "La pression réglementaire (MDR en Europe, FDA aux US)",
+                "L'intégration verticale par les géants tech (Apple, Samsung, Google/Fitbit)",
+                "L'émergence de spécialistes verticaux sur des indications précises (sommeil, stress, glycémie continue)"
+              ]
+            },
+            { "type": "p", "text": "Lumio Health se positionne historiquement sur le créneau du stress chronique mesuré en milieu professionnel, avec une approche B2B-DRH. Le présent rapport recense les acteurs concurrents directs et indirects, et propose une cartographie de la pression concurrentielle." },
+            { "type": "h3", "text": "I. CARTOGRAPHIE CONCURRENTIELLE" },
+            {
+              "type": "table",
+              "headers": ["Acteur", "Produit", "Statut MDR", "Prix B2B", "Financement"],
+              "rows": [
+                ["Biostream", "Flow Patch Pro", "Classe IIa — janv. 2026", "4 200 €/an/10 ut.", "Série C — 80 M$"],
+                ["Neuroflow", "Calm Band", "Classe IIa — mars 2026", "890 €/an/10 ut.", "Série B — 35 M€"],
+                ["Withings", "ScanWatch 2", "Non communiqué", "299 €/unité", "Privé — Éric Carreel"],
+                ["Apple Health", "Apple Watch S10", "Hors scope MDR", "499 €/unité", "Apple Inc."],
+                { "_highlight": true, "cells": ["Lumio Health", "Lumio Patch", "En cours — délai non communiqué", "3 800 €/an/10 ut.", "Série B — 22 M$ (2025)"] }
+              ]
+            },
+            { "type": "h3", "text": "II. ANALYSE DES SIGNAUX FAIBLES" },
+            { "type": "p", "text": "a) Salon Préventica 2026 (Lyon, 20-22 mars)" },
+            { "type": "p", "text": "Les DRH et préventeurs interrogés citent la certification MDR comme critère de décision n°1 dans 73 % des cas (n=42 entretiens informels sur stand). Citation récurrente : « Sans certif, je peux pas justifier l'achat à mon comité d'éthique. »" },
+            { "type": "p", "text": "b) Étude Kantar Health Monitor 2026" },
+            { "type": "p", "text": "La certification réglementaire devient un signal de crédibilité — pas seulement une obligation légale. 58 % des DRH déclarent l'utiliser comme proxy de qualité scientifique, même quand ils ne comprennent pas le détail du règlement." },
+            { "type": "p", "text": "c) Mouvement des prix" },
+            { "type": "p", "text": "Les acteurs certifiés ont tous augmenté leurs tarifs B2B de 15 à 25 % dans les six mois suivant l'obtention. Les non-certifiés sont sous pression à la baisse." },
+            { "type": "h3", "text": "III. LACUNES NON COUVERTES" },
+            { "type": "p", "text": "— Statut exact de la certification chez Withings (information contradictoire entre site institutionnel et discours commercial)\n— Calendrier MDR de Lumio (Théo a refusé de me communiquer l'information malgré relances)\n— Résultats de l'étude qualitative clients B2B menée par Camille Ott en mars 2026 (jamais reçus)\n— Position d'Apple Health sur le marché entreprise français (rumeurs de partenariat avec Malakoff Humanis non confirmées)" },
+            { "type": "h3", "text": "IV. RECOMMANDATIONS" },
+            { "type": "p", "text": "À ce stade, et sous toutes réserves liées à mon niveau d'expérience, j'identifie trois mouvements urgents :" },
+            { "type": "p", "text": "1. Clarifier en interne le calendrier MDR de Lumio\n2. Cartographier précisément les 230 clients (ou 180 ?) pour distinguer comptes actifs et dormants\n3. Anticiper l'arrivée d'Apple Health sur le segment entreprise via un positionnement de niche défendable" },
+            { "type": "h3", "text": "— FIN —" }
+          ]
+        }
+      ]
+    }
+  ];
+  // F8 · Le bloc « [TABLEAU PRINCIPAL] » (placeholder) est remplacé
+  // ci-dessus par le vrai tableau concurrentiel (données yanisReport.competitors).
   D.guide = {
-  "tips": []
-};
+    "tips": []
+  };
   D.portraits = [
-  {
-    "key": "theo_marczak",
-    "title": "Théo Marczak",
-    "file": "portraits/portrait_theo_marczak.html"
-  },
-  {
-    "key": "sonia_ferracci",
-    "title": "Sonia Ferracci",
-    "file": "portraits/portrait_sonia_ferracci.html"
-  },
-  {
-    "key": "camille_ott",
-    "title": "Camille Ott",
-    "file": "portraits/portrait_camille_ott.html"
-  },
-  {
-    "key": "jakob_rein",
-    "title": "Jakob Rein",
-    "file": "portraits/portrait_jakob_rein.html"
-  },
-  {
-    "key": "yassine_morel",
-    "title": "Yassine Morel",
-    "file": "portraits/portrait_yassine_morel.html"
-  }
-];
+    { "key": "theo_marczak",   "title": "Théo Marczak",   "file": "portraits/portrait_theo_marczak.html" },
+    { "key": "sonia_ferracci", "title": "Sonia Ferracci", "file": "portraits/portrait_sonia_ferracci.html" },
+    { "key": "camille_ott",    "title": "Camille Ott",    "file": "portraits/portrait_camille_ott.html" },
+    { "key": "jakob_rein",     "title": "Jakob Rein",     "file": "portraits/portrait_jakob_rein.html" },
+    { "key": "yassine_morel",  "title": "Yassine Morel",  "file": "portraits/portrait_yassine_morel.html" }
+  ];
   D.finder = D.finder || { folders: {}, order: [] };
   D.finder.folders.portraits = {
-  "title": "Portraits",
-  "sidebar": "👥 Portraits",
-  "icon": "👥",
-  "items": [
-    {
-      "kind": "portrait",
-      "name": "Théo Marczak",
-      "app": "browser",
-      "props": {
-        "openPortrait": "theo_marczak"
-      }
-    },
-    {
-      "kind": "portrait",
-      "name": "Sonia Ferracci",
-      "app": "browser",
-      "props": {
-        "openPortrait": "sonia_ferracci"
-      }
-    },
-    {
-      "kind": "portrait",
-      "name": "Camille Ott",
-      "app": "browser",
-      "props": {
-        "openPortrait": "camille_ott"
-      }
-    },
-    {
-      "kind": "portrait",
-      "name": "Jakob Rein",
-      "app": "browser",
-      "props": {
-        "openPortrait": "jakob_rein"
-      }
-    },
-    {
-      "kind": "portrait",
-      "name": "Yassine Morel",
-      "app": "browser",
-      "props": {
-        "openPortrait": "yassine_morel"
-      }
-    }
-  ]
-};
+    "title": "Portraits",
+    "sidebar": "👥 Portraits",
+    "icon": "👥",
+    "items": [
+      { "kind": "portrait", "name": "Théo Marczak",   "app": "browser", "props": { "openPortrait": "theo_marczak" } },
+      { "kind": "portrait", "name": "Sonia Ferracci", "app": "browser", "props": { "openPortrait": "sonia_ferracci" } },
+      { "kind": "portrait", "name": "Camille Ott",    "app": "browser", "props": { "openPortrait": "camille_ott" } },
+      { "kind": "portrait", "name": "Jakob Rein",     "app": "browser", "props": { "openPortrait": "jakob_rein" } },
+      { "kind": "portrait", "name": "Yassine Morel",  "app": "browser", "props": { "openPortrait": "yassine_morel" } }
+    ]
+  };
   if (D.finder.order.indexOf('portraits') === -1) {
     var gIdx = D.finder.order.indexOf('guide');
     D.finder.order.splice(gIdx >= 0 ? gIdx + 1 : 0, 0, 'portraits');

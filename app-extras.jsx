@@ -1,7 +1,8 @@
 // ══════════════════════════════════════════════════════════════
-//  EXTRAS — Notepad · Finder · Calendar · Trash
-//  Générique · piloté par window.LUMIO_DATA. Aucune narration hardcodée.
-//  PAC · Éminéo
+// EXTRAS — Notepad · Finder · Calendar
+// VERSION CORRIGÉE — voir NOTES-CORRECTIONS.md (fixes F28→F30)
+// Générique · piloté par window.LUMIO_DATA. Aucune narration hardcodée.
+// PAC · Éminéo
 // ══════════════════════════════════════════════════════════════
 
 // ─── NOTEPAD (bloc-notes étudiant, persistant) ───────────────
@@ -23,7 +24,7 @@ function NotepadApp() {
         placeholder={np.placeholder || "Tes pensées au fil de l'eau pendant que tu lis le dossier."}
         style={{ flex: 1, width: '100%', padding: '7px 26px 20px', border: 'none', outline: 'none', background: 'transparent', fontFamily: 'var(--font-display)', fontSize: 16, lineHeight: '31px', color: 'var(--ink)', resize: 'none', backgroundImage: 'repeating-linear-gradient(transparent, transparent 30px, rgba(20,24,36,0.06) 30px, rgba(20,24,36,0.06) 31px)', backgroundAttachment: 'local' }} />
       <div style={{ padding: '8px 22px', borderTop: '1px solid rgba(20,24,36,0.08)', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-mute)', fontFamily: 'var(--font-mono)' }}>
-        <span>{wordCount} mots</span><span>auto-saved · ⌘S</span>
+        <span>{wordCount} mot{wordCount > 1 ? 's' : ''}</span><span>auto-saved · ⌘S</span>
       </div>
     </div>
   );
@@ -40,6 +41,7 @@ function FinderApp({ openFolder }) {
   const { open } = window.useWindows();
   const [folder, setFolder] = React.useState(openFolder || order[0] || '');
   const cur = folders[folder] || { title: '', items: [] };
+  const nbItems = (cur.items || []).length;
 
   const onItemClick = (item) => {
     if (item.kind === 'folder') setFolder(item.folder);
@@ -70,7 +72,8 @@ function FinderApp({ openFolder }) {
         <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>{cur.title}</div>
           <div style={{ flex: 1 }} />
-          <div style={{ fontSize: 11, color: 'var(--ink-mute)' }}>{(cur.items || []).length} éléments</div>
+          {/* F28 · « 1 éléments » → accord singulier/pluriel */}
+          <div style={{ fontSize: 11, color: 'var(--ink-mute)' }}>{nbItems} élément{nbItems > 1 ? 's' : ''}</div>
         </div>
         <div className="scroll" style={{ flex: 1, padding: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 18, alignContent: 'start' }}>
           {(cur.items || []).map((item, i) => (
@@ -91,10 +94,14 @@ function CalendarApp() {
   const D = window.LUMIO_DATA || {};
   const C = D.calendar || {};
   const events = C.events || {};
-  const deadlineDay = C.deadlineDay || 15;
+  // F30 · L'échéance par défaut était le 15 (aucun rapport avec la mission) :
+  // sans config, l'app affichait « J−13 » vers une date fantôme. La valeur
+  // de repli est désormais le 30 (CODIR) — et data.js fournit maintenant
+  // une vraie config `calendar` (septembre 2026).
+  const deadlineDay = C.deadlineDay || 30;
   const boardDay = C.boardDay || null;
   const startOffset = C.startOffset || 0;
-  const daysInMonth = C.daysInMonth || 31;
+  const daysInMonth = C.daysInMonth || 30;
 
   const [currentDay, setCurrentDay] = React.useState(() => window.__getFictifTime ? window.__getFictifTime().day : (C.startDay || 1));
   React.useEffect(() => {
@@ -111,7 +118,7 @@ function CalendarApp() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'white', overflow: 'hidden' }}>
       <div style={{ padding: '14px 22px', borderBottom: '1px solid var(--rule)', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)' }}>{C.monthLabel || ''}</div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)' }}>{C.monthLabel || 'Septembre 2026'}</div>
           <div style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>{C.todayLabel || ''}</div>
         </div>
         <div style={{ flex: 1 }} />
@@ -164,15 +171,22 @@ function CalendarApp() {
 window.LUMIO_APPS.calendar = CalendarApp;
 
 // ─── TRASH ────────────────────────────────────────────────────
-function TrashApp() {
-  const D = window.LUMIO_DATA || {};
-  const t = D.trash || {};
-  return (
-    <div style={{ padding: 40, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'white', color: 'var(--ink-mute)', textAlign: 'center' }}>
-      <div style={{ opacity: 0.4, marginBottom: 20 }}><window.TrashIcon size={80} /></div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink)' }}>{t.title || 'La corbeille est vide.'}</div>
-      <div style={{ fontSize: 12, marginTop: 6 }}>{t.body || "Mais l'idée est bonne. La plupart des consultants commencent par jeter quelque chose."}</div>
-    </div>
-  );
+// F29 · La définition de TrashApp qui vivait ici entrait en collision avec
+// celle d'app-trash.jsx (easter egg « ne_pas_transmettre.msg ») : deux
+// fonctions du même nom, deux enregistrements successifs de
+// window.LUMIO_APPS.trash — seule la version chargée en dernier gagnait.
+// La corbeille est désormais définie UNIQUEMENT dans app-trash.jsx ;
+// on ne conserve ici qu'un repli minimal si app-trash.jsx n'est pas chargé.
+if (!window.LUMIO_APPS.trash) {
+  window.LUMIO_APPS.trash = function TrashFallbackApp() {
+    const D = window.LUMIO_DATA || {};
+    const t = D.trash || {};
+    return (
+      <div style={{ padding: 40, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'white', color: 'var(--ink-mute)', textAlign: 'center' }}>
+        <div style={{ opacity: 0.4, marginBottom: 20 }}><window.TrashIcon size={80} /></div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink)' }}>{t.title || 'La corbeille est vide.'}</div>
+        <div style={{ fontSize: 12, marginTop: 6 }}>{t.body || "Mais l'idée est bonne. La plupart des consultants commencent par jeter quelque chose."}</div>
+      </div>
+    );
+  };
 }
-window.LUMIO_APPS.trash = TrashApp;
