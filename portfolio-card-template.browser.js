@@ -57,21 +57,31 @@
     })).then(function () { return document.fonts.ready; });
   }
 
-  function ensureHtml2Canvas() {
-    if (window.html2canvas) return Promise.resolve(window.html2canvas);
+  function loadScriptOnce() {
     return new Promise(function (resolve, reject) {
-      var existing = document.querySelector('script[data-pac-h2c]');
-      if (existing) {
-        existing.addEventListener('load', function () { resolve(window.html2canvas); });
-        existing.addEventListener('error', function () { reject(new Error('html2canvas indisponible (réseau bloqué ?)')); });
-        return;
-      }
       var s = document.createElement('script');
       s.src = HTML2CANVAS_URL;
       s.setAttribute('data-pac-h2c', '1');
       s.onload = function () { resolve(window.html2canvas); };
       s.onerror = function () { reject(new Error('html2canvas indisponible (réseau bloqué ?)')); };
       document.head.appendChild(s);
+    });
+  }
+
+  function ensureHtml2Canvas() {
+    if (window.html2canvas) return Promise.resolve(window.html2canvas);
+    var existing = document.querySelector('script[data-pac-h2c]');
+    if (existing) {
+      return new Promise(function (resolve, reject) {
+        existing.addEventListener('load', function () { resolve(window.html2canvas); });
+        existing.addEventListener('error', function () { reject(new Error('html2canvas indisponible (réseau bloqué ?)')); });
+      });
+    }
+    return loadScriptOnce().catch(function () {
+      // Échec CDN souvent transitoire — un seul retry avant d'abandonner.
+      var failed = document.querySelector('script[data-pac-h2c]');
+      if (failed && failed.parentNode) failed.parentNode.removeChild(failed);
+      return loadScriptOnce();
     });
   }
 
