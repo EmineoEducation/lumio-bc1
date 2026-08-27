@@ -22,6 +22,14 @@ function BrowserApp({ openTab, openPortrait }) {
     }
   }, [openPortrait]);
 
+  // F32 · Safari est une fenêtre unique (winSignature → 'browser::single').
+  // Sans cet effet, un clic sur « Revue de presse » depuis le Finder se
+  // contentait de remonter la fenêtre existante sans changer d'onglet :
+  // l'étudiant·e croyait que le lien ne marchait pas.
+  useStateBrowserEffect(() => {
+    if (openTab) setActiveTab(openTab);
+  }, [openTab]);
+
   const portraitTabs = openedPortraitKeys
     .map(k => portraits.find(p => p.key === k))
     .filter(Boolean)

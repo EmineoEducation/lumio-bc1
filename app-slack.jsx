@@ -60,6 +60,41 @@ Format de réponse :
 
 Ne dis JAMAIS "Bonjour" ou "Merci pour ta livraison". Entre direct dans le sujet.`;
 
+// ══════════════════════════════════════════════════════════════
+// F32 · FICHIER FANTÔME — carte des documents
+// Symptôme : le commanditaire évoquait des documents (« mon espace
+// partagé », « le rapport de Yassine ») sans savoir où ils se trouvent
+// dans l'interface. Quand l'étudiant·e répondait « je ne le trouve pas »,
+// le modèle improvisait un Drive, une pièce jointe ou un « je te le
+// renvoie » — trois impasses. Toute la promo bloquait au même endroit.
+// Correctif : la localisation réelle est injectée dans le prompt depuis
+// window.LUMIO_DATA.docIndex (source de vérité, définie dans data.js),
+// assortie de règles strictes. Générique — aucun contenu de bloc ici.
+// ══════════════════════════════════════════════════════════════
+const buildDocMapBlock = () => {
+  const idx = (window.LUMIO_DATA && window.LUMIO_DATA.docIndex) || [];
+  const lignes = idx.length
+    ? idx.map(d => `- ${d.nom} → ${d.ou}`).join('\n')
+    : "- (aucun index fourni : ne cite alors AUCUN document par son emplacement)";
+  return `
+
+═══ LOCALISATION DES DOCUMENTS — RÈGLE ABSOLUE ═══
+
+Tous les documents sont DÉJÀ installés sur le poste de mission de la personne. Rien ne reste à envoyer.
+
+${lignes}
+
+Règles non négociables :
+1. Si on te demande où trouver un document, tu donnes sa localisation exacte telle qu'écrite ci-dessus, en UNE phrase, puis tu relances immédiatement sur le fond ("et une fois que tu l'as lu, dis-moi ce que tu en tires").
+2. Tu ne proposes JAMAIS d'envoyer, de renvoyer, de transférer, de partager, de joindre ou de déposer un fichier. Tu n'en as pas la possibilité — tout est déjà là.
+3. Tu ne mentionnes JAMAIS de Drive, Dropbox, Notion, SharePoint, WeTransfer, pièce jointe, lien de téléchargement, ni aucun outil qui n'existe pas sur ce poste.
+4. Tu ne cites JAMAIS un document absent de la liste ci-dessus. Si la personne réclame une pièce qui n'existe pas (chiffres détaillés, étude client complète, calendrier MDR écrit), tu le dis franchement : cette pièce n'existe pas, et c'est précisément le problème — à elle de faire avec, ou de nommer ce manque dans son livrable.
+5. Tu ne fais jamais allusion à une conversation privée ou à un document confidentiel qui ne figure pas dans la liste.
+6. Tu ne décris pas le contenu d'un document à la place de la personne. Tu dis où il est ; elle le lit.`;
+};
+
+const buildSoniaSystemPrompt = () => SONIA_PROMPT + buildDocMapBlock();
+
 function SlackApp({ openChannel }) {
   const channels = [
     { id: 'general',      name: 'général',             type: 'channel', members: 12 },
@@ -95,7 +130,11 @@ function SlackApp({ openChannel }) {
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: '07:48',
         text: 'Bien reçu mon mail ?' },
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: '07:48',
-        text: "J'ai déposé tous les docs sur ton espace partagé. Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture." },
+        // F32 · « ton espace partagé » ne désignait aucun endroit de l'interface.
+        // Le libellé vient désormais de data.js (D.docLocationHint) et nomme le
+        // dossier Finder qui contient réellement les pièces.
+        text: (window.LUMIO_DATA && window.LUMIO_DATA.docLocationHint)
+          || "J'ai déposé tous les docs dans le Finder de ton poste — dossier « Espace de travail ». Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture." },
       { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: '07:49',
         text: "Au fait — n'oublie pas que Théo ne sait pas que tu as accès à son mail du 14 juin. À toi de juger comment l'utiliser.",
         // Easter egg : signature avec numéro caché
@@ -251,7 +290,7 @@ ${plateformeTxt.substring(0, 600)}...`;
             body: JSON.stringify({
               model: 'claude-sonnet-4-6',
               max_tokens: 600,
-              system: SONIA_PROMPT,
+              system: buildSoniaSystemPrompt(),
               messages: [{ role: 'user', content: userPrompt }]
             })
           });

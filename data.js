@@ -73,7 +73,7 @@ Ce que je vous demande :
 
 2. Une plateforme de marque — notre territoire, notre proposition de valeur, notre personnalité, nos engagements. Un document que Théo peut tenir entre les mains, défendre au board, et que mes équipes peuvent utiliser comme boussole.
 
-J'ai déposé sur votre espace les documents internes que j'ai pu rassembler. Ils sont fragmentaires — c'est tout ce que j'ai pu obtenir sans alarmer le reste de la direction. Vous trouverez la note de cadrage que j'ai présentée au CODIR en juin (et que Théo a contestée), un rapport de veille de Yassine, notre content manager junior (non relu, à prendre avec des pincettes), trois articles de presse, et un entretien avec Camille Ott — notre commerciale historique.
+J'ai déposé les documents internes que j'ai pu rassembler dans le Finder de votre poste, dossier « Espace de travail ». Ils sont fragmentaires — c'est tout ce que j'ai pu obtenir sans alarmer le reste de la direction. Vous y trouverez, dans l'ordre : la note de cadrage que j'ai présentée au CODIR en juin (et que Théo a contestée), un rapport de veille de Yassine, notre content manager junior (non relu, à prendre avec des pincettes), une revue de presse de trois articles, et un entretien avec Camille Ott — notre commerciale historique. Le mail de Théo du 14 juin s'y trouve aussi ; je vous laisse juger de ce que vous en faites.
 
 Quand vous aurez fait un premier tour, écrivez-moi sur Slack. Je veux savoir ce que vous voyez avant le 18 septembre.
 
@@ -248,7 +248,10 @@ Sonia`
 
   slackMessages: {
     initial: [
-      { from: "Sonia Ferracci", time: "07:48", text: "Salut {{PRENOM}} — bien reçu mon mail ? J'ai déposé tous les docs sur ton espace partagé.", read: true },
+      // F32 · Bloc hérité, actuellement lu par aucune app (le seed vit dans
+      // app-slack.jsx) — corrigé quand même pour ne pas réintroduire le
+      // « fichier fantôme » lors d'une future propagation.
+      { from: "Sonia Ferracci", time: "07:48", text: "Salut {{PRENOM}} — bien reçu mon mail ? J'ai déposé tous les docs dans le Finder de ton poste, dossier « Espace de travail ».", read: true },
       { from: "Sonia Ferracci", time: "07:48", text: "Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture.", read: true },
     ],
     delayed: [
@@ -267,14 +270,23 @@ Sonia`
           { kind: 'mail', name: 'Brief de mission', app: 'mail', props: { openId: 'brief' } }
         ]
       },
+      // F32 · « Fichier fantôme » — Sonia annonce des documents (mail de brief
+      // + seed Slack) qui n'existaient nulle part dans ce dossier : l'étudiant·e
+      // ouvrait « Espace de travail » et n'y trouvait que trois raccourcis
+      // d'applications. Le dossier contient désormais EXACTEMENT les documents
+      // annoncés, dans l'ordre où le mail de brief les énumère.
       espace: {
-        title: 'Espace de travail',
+        title: 'Espace de travail — documents transmis par Sonia Ferracci',
         sidebar: 'Espace de travail',
         icon: '📁',
         items: [
-          { kind: 'mail', name: 'Boîte mail', app: 'mail', props: {} },
-          { kind: 'note', name: 'Notes', app: 'notes', props: {} },
-          { kind: 'audio', name: 'Mémos vocaux', app: 'voice', props: {} }
+          { kind: 'mail',  label: 'MAIL', name: '00 — Brief de mission (Sonia, 14 sept.)',      app: 'mail',    props: { openId: 'brief' } },
+          { kind: 'doc',   label: 'NOTE', name: '01 — Note de cadrage CODIR (12 juin)',          app: 'notes',   props: { openNote: 'cadrage' } },
+          { kind: 'pdf',   label: 'PDF',  name: '02 — Rapport de veille — Y. Morel (non relu)',  app: 'pdf',     props: { openDoc: 'rapport-veille' } },
+          { kind: 'doc',   label: 'WEB',  name: '03 — Revue de presse (3 articles)',             app: 'browser', props: { openTab: 'press-0' } },
+          { kind: 'audio', label: 'M4A',  name: '04 — Entretien Camille Ott (3 mémos)',          app: 'voice',   props: {} },
+          { kind: 'mail',  label: 'MAIL', name: '05 — Mail T. Marczak du 14 juin (transféré)',   app: 'mail',    props: { openId: 'theo' } },
+          { kind: 'note',  label: 'TXT',  name: 'Mes notes.txt',                                 app: 'notepad', props: {} }
         ]
       }
     },
@@ -556,3 +568,31 @@ window.PAC_CONFIG = window.PASS_CONFIG;
   }
 })();
 // === [Chantier PDF+Browser] fin ===
+
+// === [F32 · Fichier fantôme] docIndex — 27/08/2026 =============
+// Source de vérité de la LOCALISATION des documents. Lu par app-slack.jsx
+// pour injecter la carte des documents dans le prompt du commanditaire :
+// Sonia ne peut plus renvoyer l'étudiant·e vers un fichier inexistant,
+// ni promettre de « renvoyer » quoi que ce soit.
+// ⚠️ Toute pièce ajoutée au dossier « Espace de travail » doit être
+// répercutée ici — et réciproquement.
+(function() {
+  var D = window.LUMIO_DATA;
+  if (!D) return;
+
+  // Phrase utilisée par le seed Slack du commanditaire (message d'accueil).
+  D.docLocationHint = "J'ai déposé tous les docs dans le Finder de ton poste — dossier « Espace de travail ». Prends ta matinée pour digérer, et écris-moi quand tu as une première lecture.";
+
+  D.docIndex = [
+    { nom: "Brief de mission (Sonia Ferracci, 14 sept.)",        ou: "Mail → « Mission de diagnostic de marque » — aussi dans Finder / Espace de travail" },
+    { nom: "Note de cadrage CODIR du 12 juin",                   ou: "Notes → « Note de cadrage — Repositionnement Lumio » — aussi dans Finder / Espace de travail" },
+    { nom: "Rapport de veille concurrentielle (Yassine Morel)",  ou: "Aperçu (PDF) → onglet « Veille concurrentielle » — aussi dans Finder / Espace de travail" },
+    { nom: "Revue de presse : Les Échos, HBR France, 20 Minutes", ou: "Safari → trois onglets déjà ouverts — aussi dans Finder / Espace de travail" },
+    { nom: "Entretien Camille Ott — 3 mémos vocaux transcrits",  ou: "Mémos vocaux — aussi dans Finder / Espace de travail" },
+    { nom: "Mail confidentiel de Théo Marczak du 14 juin",       ou: "Mail → « Re : Proposition repositionnement — mes réserves » (transféré)" },
+    { nom: "Portraits presse des 5 dirigeants",                  ou: "Finder → dossier « Portraits »" },
+    { nom: "Calendrier de la mission (CODIR du 30 sept.)",       ou: "Calendrier" },
+    { nom: "Bloc-notes personnel de l'étudiant·e",               ou: "Bloc-notes (Mes notes.txt)" }
+  ];
+})();
+// === [F32] fin =================================================
