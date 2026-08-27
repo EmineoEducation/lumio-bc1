@@ -4,7 +4,7 @@
 //  Lit tout depuis window.PAC_CONFIG. Aucun prompt hardcodé.
 // ══════════════════════════════════════════════════════════════
 
-const { useState: useLivState } = React;
+const { useState: useLivState, useEffect: useLivEffect } = React;
 const _wc = (t) => (t || "").trim() ? (t || "").trim().split(/\s+/).length : 0;
 
 // ── Markdown-lite : rendu sécurisé (échappement HTML systématique) ──
@@ -130,6 +130,39 @@ function LivField({ title, count, min, placeholder, conseil, value, onChange, lo
 }
 
 
+// ── F33 · Indicateur de sauvegarde ────────────────────────────
+function SaveStatus() {
+  const P = window.PAC_PERSIST;
+  const [st, setSt] = useLivState(P ? P.status() : null);
+  useLivEffect(() => {
+    if (!P || !P.onChange) return;
+    return P.onChange(s => setSt({ ...s }));
+  }, []);
+
+  if (!P) return null;
+
+  if (st && st.ok === false) {
+    return (
+      <div style={{ background: "#fdecea", border: "1px solid #c4420f", borderRadius: 7, padding: "10px 14px", marginBottom: 16, fontSize: 12.5, color: "#7a2408", lineHeight: 1.55 }}>
+        <strong>⚠ Sauvegarde automatique interrompue.</strong> Votre copie n'est plus enregistrée sur le serveur.
+        Copiez dès maintenant votre texte dans le Bloc-notes, puis prévenez votre référent de campus.
+        Ne rechargez pas cette page.
+      </div>
+    );
+  }
+
+  const heure = st && st.lastSaved
+    ? new Date(st.lastSaved).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
+  return (
+    <div style={{ fontSize: 11, color: "var(--ink-faint)", marginBottom: 16, fontFamily: "var(--font-mono)" }}>
+      {heure ? "✓ Copie enregistrée automatiquement · dernière sauvegarde " + heure
+             : "✓ Copie enregistrée automatiquement au fil de la saisie"}
+    </div>
+  );
+}
+
 function LivrableApp() {
   const cfg = window.PAC_CONFIG || window.PASS_CONFIG || {};
   const comps = cfg.competences || [];
@@ -141,6 +174,54 @@ function LivrableApp() {
   const [debrief, setDebrief] = useLivState("");       // débrief final
   const [err, setErr] = useLivState("");
   const [sent, setSent] = useLivState("");
+
+  // ══ F33 · Persistance de la copie ═══════════════════════════
+  // La saisie du livrable ne survivait à aucun rechargement : plusieurs
+  // heures de travail disparaissaient à la moindre touche F5. On restaure
+  // la copie ET l'étape du flux (un retour formatif déjà reçu n'est pas
+  // reperdu), puis on sauvegarde en différé à chaque frappe.
+  // `hydrated` interdit toute écriture tant que la lecture n'a pas eu
+  // lieu — sinon l'état vide du montage écraserait la copie enregistrée.
+  const [hydrated, setHydrated] = useLivState(false);
+
+  useLivEffect(() => {
+    let annule = false;
+    const P = window.PAC_PERSIST;
+    if (!P) { setHydrated(true); return; }
+    P.load().then(session => {
+      if (annule) return;
+      const L = (session && session.livrable) || null;
+      if (L) {
+        if (L.answers && typeof L.answers === 'object') setAnswers(L.answers);
+        if (typeof L.reflexive === 'string') setReflexive(L.reflexive);
+        if (typeof L.feedback === 'string') setFeedback(L.feedback);
+        if (typeof L.debrief === 'string') setDebrief(L.debrief);
+        // On ne restaure jamais vers une étape terminale par erreur :
+        // seules les étapes réellement atteintes sont reprises.
+        if (L.step === 'feedback' || L.step === 'revision' || L.step === 'debrief') setStep(L.step);
+      }
+      setHydrated(true);
+    });
+    return () => { annule = true; };
+  }, []);
+
+  const snapshotLivrable = () => ({
+    answers, reflexive, step, feedback, debrief, savedAt: Date.now()
+  });
+
+  useLivEffect(() => {
+    if (!hydrated || !window.PAC_PERSIST) return;
+    window.PAC_PERSIST.save('livrable', snapshotLivrable());
+  }, [hydrated, answers, reflexive, step, feedback, debrief]);
+
+  // Filet : écriture immédiate si l'onglet se ferme en pleine rédaction.
+  useLivEffect(() => {
+    if (!window.PAC_PERSIST) return;
+    const bye = () => { if (hydrated) window.PAC_PERSIST.flush('livrable', snapshotLivrable()); };
+    window.addEventListener('beforeunload', bye);
+    return () => window.removeEventListener('beforeunload', bye);
+  }, [hydrated, answers, reflexive, step, feedback, debrief]);
+  // ══ fin F33 ═════════════════════════════════════════════════
 
   const set = (code, v) => setAnswers(a => ({ ...a, [code]: v }));
   const totalMots = comps.reduce((n, c) => n + _wcMd(answers[c.code]), 0) + _wcMd(reflexive);
@@ -298,6 +379,13 @@ function LivrableApp() {
           {cfg.commanditaire && cfg.deadline ? " · " : null}
           {cfg.deadline ? "Échéance : " + cfg.deadline : null}
         </div>
+
+        {/* ── F33 · État de la sauvegarde automatique ──
+            Muet tant que tout va bien (une simple mention discrète).
+            Devient un avertissement franc dès qu'une écriture échoue :
+            l'étudiant doit apprendre TOUT DE SUITE que sa copie n'est
+            plus protégée, pas au moment de la perdre. ── */}
+        <SaveStatus />
 
         {/* ── Champs par compétence (saisie markdown-lite : toolbar + aperçu) ── */}
         {comps.map(c => (

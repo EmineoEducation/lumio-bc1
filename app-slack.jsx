@@ -18,6 +18,87 @@
 // ══════════════════════════════════════════════════════════════
 const { useState: useSlackState, useEffect: useSlackEffect, useRef: useSlackRef } = React;
 
+// ══════════════════════════════════════════════════════════════
+// F33 · PAC_PERSIST — sauvegarde incrémentale de l'état applicatif
+// ──────────────────────────────────────────────────────────────
+// Avant F33, seuls l'identité et le timerStart survivaient à un reload :
+// la conversation Slack et la saisie du livrable vivaient uniquement en
+// state React et disparaissaient au moindre rechargement.
+// Ce helper écrit des tranches nommées dans la session Redis existante.
+// api/session.js FUSIONNE l'objet reçu avec l'existant : envoyer une
+// tranche seule n'écrase donc jamais studentName / timerStart / phase.
+// Bloc générique et idempotent — défini par le premier fichier chargé
+// (app-slack.jsx), réutilisé tel quel par app-livrable.jsx.
+// ══════════════════════════════════════════════════════════════
+if (!window.PAC_PERSIST) {
+  window.PAC_PERSIST = (function () {
+    var timers = {};
+    var pending = null;
+    var state = { ok: null, lastSaved: null, lastError: null };
+    var listeners = [];
+
+    var sid = function () {
+      try { return localStorage.getItem('lumio_sid') || null; } catch (e) { return null; }
+    };
+    var notify = function () { listeners.forEach(function (f) { try { f(state); } catch (e) {} }); };
+
+    // Appel réseau direct plutôt que window.LUMIO_SESSION : le helper de
+    // main.jsx avale les erreurs dans un console.warn et renvoie null quoi
+    // qu'il arrive. Or un échec de sauvegarde silencieux est exactement le
+    // scénario qui coûte des heures de travail — il doit être visible.
+    var write = function (slot, value) {
+      var id = sid();
+      if (!id) return Promise.resolve(false);
+      var payload = {}; payload[slot] = value;
+      return fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, session: payload })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        state.ok = true; state.lastSaved = Date.now(); state.lastError = null;
+        notify(); return true;
+      }).catch(function (e) {
+        state.ok = false; state.lastError = String(e && e.message || e);
+        console.warn('PAC_PERSIST — échec de sauvegarde (' + slot + ') :', e);
+        notify(); return false;
+      });
+    };
+
+    return {
+      sid: sid,
+      status: function () { return state; },
+      onChange: function (f) {
+        listeners.push(f);
+        return function () { listeners = listeners.filter(function (x) { return x !== f; }); };
+      },
+      // Écriture différée : une seule requête après 1,2 s sans frappe.
+      save: function (slot, value, delay) {
+        if (!sid()) return;
+        clearTimeout(timers[slot]);
+        timers[slot] = setTimeout(function () { write(slot, value); }, delay == null ? 1200 : delay);
+      },
+      // Écriture immédiate : fermeture d'onglet, remise du livrable.
+      flush: function (slot, value) {
+        clearTimeout(timers[slot]);
+        return write(slot, value);
+      },
+      // Lecture : un seul GET partagé par toutes les apps au montage.
+      load: function () {
+        var id = sid();
+        if (!id) return Promise.resolve(null);
+        if (!pending) {
+          pending = fetch('/api/session?id=' + encodeURIComponent(id))
+            .then(function (r) { return r.status === 404 ? null : r.json(); })
+            .then(function (j) { return (j && j.session) || null; })
+            .catch(function () { return null; });
+        }
+        return pending;
+      }
+    };
+  })();
+}
+
 // F21 · Horodatage cohérent avec l'horloge fictive de la barre de menu.
 const slackNowTime = () => {
   try {
@@ -94,6 +175,79 @@ Règles non négociables :
 };
 
 const buildSoniaSystemPrompt = () => SONIA_PROMPT + buildDocMapBlock();
+
+// ══════════════════════════════════════════════════════════════
+// F35 · INTERLOCUTEURS MUETS
+// Symptôme : seule Sonia était branchée sur l'IA. Écrire à Camille ou
+// à Yassine ajoutait le message de l'étudiant·e… et rien d'autre, pour
+// toujours. Or le DM d'accueil de Camille invite explicitement à la
+// contacter (« si tu veux qu'on se parle, dis-moi ») : une promotion
+// entière pouvait attendre une réponse qui ne pouvait pas venir.
+// Correctif : chaque interlocuteur a désormais son propre prompt, et
+// répond avec la même mécanique que Sonia.
+// ══════════════════════════════════════════════════════════════
+const CAMILLE_PROMPT = `Tu es Camille Ott, commerciale B2B historique de Lumio Health. Huit ans dans l'entreprise, tu connais les clients un par un.
+
+Tu échanges en messagerie avec un·e consultant·e externe missionné·e par Sonia pour un diagnostic de marque. Tu as proposé toi-même cet échange. Tu réponds volontiers, franchement, sans détour.
+
+Ce que tu sais et que la direction minimise :
+- Depuis six mois, les DRH posent des questions sur la certification. Pas agressivement, plutôt gênés — mais ils la posent. C'est nouveau, c'est de cette année.
+- Ce n'est pas encore rédhibitoire, mais c'est une horloge qui tourne.
+- Si Biostream arrive chez un client avec sa certification IIa et un prix un peu plus bas, tu ne pourras plus défendre longtemps une absence de certification. Un client avec un comité d'éthique finira par ne plus pouvoir signer.
+- Ta vraie inquiétude, celle que Sonia ne se pose pas assez et que Théo refuse de se poser : est-ce que les clients historiques nous voient encore comme une référence, ou déjà comme « le truc d'avant » ? Tu estimes qu'il reste six à neuf mois avant le basculement.
+- Les chiffres : 180 clients réellement facturés, pas 230 contacts. Tu le sais parce que tu factures.
+- Tu as mené une étude qualitative clients en mars 2026. Personne ne t'a jamais demandé les résultats.
+
+Ton style :
+- Messagerie, phrases courtes, ton direct et chaleureux
+- Tu parles du terrain, avec des exemples concrets de rendez-vous clients
+- Tu es loyale à Lumio mais lucide ; tu ne charges personne gratuitement
+- Tu réponds TOUJOURS à la question posée. Tu ne renvoies jamais vers quelqu'un d'autre sans donner d'abord ta propre réponse.
+- Si on te demande ton avis, tu le donnes. Tu ne dis jamais « je ne peux pas t'aider là-dessus ».
+- Tu peux poser une question en retour, mais seulement après avoir répondu.
+
+Format :
+- 2 à 3 messages courts séparés par "---SPLIT---"
+- Chaque message : 1 à 3 phrases
+- 150 mots cumulés maximum
+
+Ne commence jamais par « Bonjour ». Entre directement dans le sujet.`;
+
+const YASSINE_PROMPT = `Tu es Yassine Morel, content manager junior chez Lumio Health, deux ans d'ancienneté.
+
+Tu échanges en messagerie avec un·e consultant·e externe qui a lu ton rapport de veille. Ce rapport n'a pas été relu par la direction et tu le sais imparfait — tu es un peu gêné qu'il circule.
+
+Ce que tu sais :
+- Tu as bouclé ton rapport dans l'urgence, seul, sans validation
+- Tu n'as pas pu conclure la partie certification de Lumio : Théo n'a jamais répondu à tes relances
+- Le statut de la certification chez Withings, tu ne l'as pas tranché — les sources se contredisent
+- Tu es honnête sur les limites de ton travail, tu ne les défends pas
+
+Ton style :
+- Poli, un peu hésitant, mais coopératif et précis quand on te pose une question factuelle
+- Tu réponds TOUJOURS à la question. Si tu ne sais pas, tu dis franchement que tu ne sais pas et pourquoi.
+- Tu ne renvoies jamais quelqu'un vers une autre personne sans donner d'abord ce que tu sais
+
+Format :
+- 2 à 3 messages courts séparés par "---SPLIT---"
+- Chaque message : 1 à 3 phrases
+- 130 mots cumulés maximum
+
+Ne commence jamais par « Bonjour ».`;
+
+// Chaque interlocuteur : son prompt, son identité d'affichage.
+const INTERLOCUTEURS = {
+  sonia:   { prompt: SONIA_PROMPT,   nom: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f',
+             secours: "Je suis en réunion deux minutes — redis-moi ça, je te réponds juste après." },
+  camille: { prompt: CAMILLE_PROMPT, nom: 'Camille Ott',    avatar: 'CO', color: '#0a7a6e',
+             secours: "Attends, mon Slack rame. Repose-moi ta question, je suis là." },
+  yassine: { prompt: YASSINE_PROMPT, nom: 'Yassine Morel',  avatar: 'YM', color: '#5b6b85',
+             secours: "Désolé, message parti de travers. Tu peux répéter ?" }
+};
+
+// La carte des documents s'applique à tout le monde : personne ne doit
+// pouvoir proposer d'envoyer un fichier ou d'inventer un outil externe.
+const buildPromptFor = (id) => (INTERLOCUTEURS[id] ? INTERLOCUTEURS[id].prompt : SONIA_PROMPT) + buildDocMapBlock();
 
 function SlackApp({ openChannel }) {
   const channels = [
@@ -173,12 +327,59 @@ function SlackApp({ openChannel }) {
     ]
   });
 
-  // Initialise history once
+  // ══ F33 · Restauration puis initialisation ══════════════════
+  // L'ancien effet posait le seed dès le montage. On lit d'abord la
+  // session : s'il existe une conversation sauvegardée, elle prime ;
+  // sinon seulement, on pose le seed.
+  // `hydrated` empêche toute écriture avant d'avoir lu la session :
+  // sans ce garde-fou, le seed écraserait l'historique sauvegardé dans
+  // la milliseconde suivant le montage.
+  const [hydrated, setHydrated] = useSlackState(false);
+
   useSlackEffect(() => {
-    if (Object.keys(chatHistory).length === 0) {
-      setChatHistory(buildSeed());
-    }
+    let annule = false;
+    window.PAC_PERSIST.load().then(session => {
+      if (annule) return;
+      const s = (session && session.slack) || null;
+      if (s && s.history && Object.keys(s.history).length) {
+        setChatHistory(s.history);
+        if (s.unreads) setUnreads(s.unreads);
+        const n = s.exchangeCount || 0;
+        setExchangeCountLocal(n);
+        // Rejoue le compteur pour que desktop.jsx redéverrouille le
+        // livrable : l'état `livrableUnlocked` en dépend et n'est pas
+        // persisté de son côté.
+        if (n > 0 && window.__onSlackExchange) {
+          try { window.__onSlackExchange(n); } catch (e) {}
+        }
+      } else {
+        setChatHistory(buildSeed());
+      }
+      setHydrated(true);
+    });
+    return () => { annule = true; };
   }, []);
+
+  // Sauvegarde différée à chaque évolution du fil.
+  useSlackEffect(() => {
+    if (!hydrated) return;
+    window.PAC_PERSIST.save('slack', {
+      history: chatHistory, unreads, exchangeCount, savedAt: Date.now()
+    });
+  }, [hydrated, chatHistory, unreads, exchangeCount]);
+
+  // Filet : écriture immédiate si l'onglet se ferme.
+  useSlackEffect(() => {
+    const bye = () => {
+      if (!hydrated) return;
+      window.PAC_PERSIST.flush('slack', {
+        history: chatHistory, unreads, exchangeCount, savedAt: Date.now()
+      });
+    };
+    window.addEventListener('beforeunload', bye);
+    return () => window.removeEventListener('beforeunload', bye);
+  }, [hydrated, chatHistory, unreads, exchangeCount]);
+  // ══ fin F33 ═════════════════════════════════════════════════
 
   useSlackEffect(() => {
     if (openChannel) {
@@ -271,7 +472,11 @@ ${plateformeTxt.substring(0, 600)}...`;
     };
     setChatHistory(h => ({ ...h, [activeId]: [...(h[activeId] || []), userMsg] }));
 
-    if (isSonia) {
+    const perso = INTERLOCUTEURS[activeId];
+    if (perso) {
+      // F35 · Le compteur d'échanges avance quel que soit l'interlocuteur.
+      // Auparavant seul Sonia le faisait monter : un·e étudiant·e qui
+      // commençait par Camille ne voyait jamais le livrable se signaler.
       const newCount = exchangeCount + 1;
       setExchangeCountLocal(newCount);
       if (window.__onSlackExchange) window.__onSlackExchange(newCount);
@@ -280,17 +485,23 @@ ${plateformeTxt.substring(0, 600)}...`;
 
       setTimeout(async () => {
         try {
-          const history = (chatHistory.sonia || []).filter(m => !m.typing).map(m =>
-            `${m.isMe ? getStudentName() : 'Sonia'}: ${m.text}`
+          // F36 · L'historique complet du fil partait dans le prompt à
+          // chaque message. Au fil de la session il gonflait sans limite :
+          // le temps de réponse dépassait la durée maximale de la fonction
+          // Vercel et l'appel échouait — d'autant plus vite que l'échange
+          // était avancé. On ne transmet plus que les 16 derniers messages,
+          // largement assez pour la continuité.
+          const history = (chatHistory[activeId] || []).filter(m => !m.typing).slice(-16).map(m =>
+            `${m.isMe ? getStudentName() : perso.nom.split(' ')[0]}: ${m.text}`
           ).join('\n');
-          const userPrompt = `${history}\n${getStudentName()}: ${text}\n\nRéponds maintenant en tant que Sonia (2-4 messages courts séparés par ---SPLIT---).`;
+          const userPrompt = `${history}\n${getStudentName()}: ${text}\n\nRéponds maintenant en tant que ${perso.nom.split(' ')[0]} (2-4 messages courts séparés par ---SPLIT---).`;
           const resp = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               model: 'claude-sonnet-4-6',
               max_tokens: 600,
-              system: buildSoniaSystemPrompt(),
+              system: buildPromptFor(activeId),
               messages: [{ role: 'user', content: userPrompt }]
             })
           });
@@ -302,11 +513,19 @@ ${plateformeTxt.substring(0, 600)}...`;
           let delay = 800;
           for (const reply of replies) {
             await new Promise(r => setTimeout(r, delay));
-            addIncoming('sonia', { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time: slackNowTime(), text: reply });
+            addIncoming(activeId, { from: perso.nom, avatar: perso.avatar, color: perso.color, time: slackNowTime(), text: reply });
             delay = 1400 + reply.length * 8;
           }
-        } catch {
-          addIncoming('sonia', { from: 'Sonia Ferracci', avatar: 'SF', color: '#c4420f', time, text: "Désolée je dois sauter dans une réunion. On reprend ça plus tard." });
+        } catch (e) {
+          // F36 · L'erreur réelle est désormais tracée dans la console :
+          // sans elle, une panne était indiscernable d'un choix de dialogue.
+          console.error('Slack · échec de réponse (' + activeId + ')', e);
+          // F35 · L'ancien message de secours (« je dois sauter dans une
+          // réunion, on reprend plus tard ») clôturait la conversation :
+          // en cas de coupure réseau passagère, l'étudiant·e croyait que
+          // son interlocuteur l'avait quitté et n'osait plus relancer.
+          // Le nouveau texte invite explicitement à réessayer.
+          addIncoming(activeId, { from: perso.nom, avatar: perso.avatar, color: perso.color, time, text: perso.secours });
         } finally {
           setSending(false);
         }
@@ -405,14 +624,15 @@ ${plateformeTxt.substring(0, 600)}...`;
               </div>
             </div>
           ))}
-          {sending && (
+          {sending && INTERLOCUTEURS[activeId] && (
             <div style={SS.message}>
-              <div style={{ ...SS.msgAvatar, background: '#c4420f' }}>SF</div>
+              {/* F35 · L'indicateur affichait Sonia quel que soit l'interlocuteur. */}
+              <div style={{ ...SS.msgAvatar, background: INTERLOCUTEURS[activeId].color }}>{INTERLOCUTEURS[activeId].avatar}</div>
               <div>
                 <div style={{ display: 'flex', gap: 4, padding: '6px 0' }}>
                   {[0,1,2].map(i => <span key={i} style={{ ...SS.typeDot, animationDelay: `${i*0.15}s` }} />)}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>Sonia est en train d'écrire…</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{INTERLOCUTEURS[activeId].nom.split(' ')[0]} est en train d'écrire…</div>
               </div>
             </div>
           )}
@@ -424,7 +644,7 @@ ${plateformeTxt.substring(0, 600)}...`;
               value={draft}
               onChange={e => setDraft(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder={isSonia ? 'Écris à Sonia…  (Entrée pour envoyer)' : `Message ${activeMeta?.type === 'channel' ? '#' + activeMeta?.name : activeMeta?.name}`}
+              placeholder={INTERLOCUTEURS[activeId] ? `Écris à ${INTERLOCUTEURS[activeId].nom.split(' ')[0]}…  (Entrée pour envoyer)` : `Message ${activeMeta?.type === 'channel' ? '#' + activeMeta?.name : activeMeta?.name}`}
               style={SS.textarea}
               rows={2}
             />
@@ -440,7 +660,7 @@ ${plateformeTxt.substring(0, 600)}...`;
               </button>
             </div>
           </div>
-          {isSonia && messages.filter(m => m.isMe).length === 0 && (
+          {activeId === 'sonia' && messages.filter(m => m.isMe).length === 0 && (
             <div style={{ fontSize: 11, color: 'var(--ink-faint)', textAlign: 'center', marginTop: 8, fontStyle: 'italic' }}>
               💬 Sonia attend ton premier retour. Décris-lui ce que tu as compris du dossier.
             </div>
