@@ -6,12 +6,24 @@ const UPSTASH_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const SESSION_TTL   = 60 * 60 * 24 * 90; // 90 jours en secondes
 
-async function redis(command, ...args) {
-  const res = await fetch(`${UPSTASH_URL}/${command}/${args.map(encodeURIComponent).join('/')}`, {
-    headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
+// F33 · La commande passait entièrement dans le CHEMIN de l'URL
+// (`${UPSTASH_URL}/SET/clé/valeur/EX/ttl`). Tant que la session ne
+// contenait qu'un nom et un timestamp, cela tenait. Dès qu'on y range la
+// copie du livrable et le fil Slack, l'URL dépasse 45 000 caractères et
+// la requête est rejetée — silencieusement, car apiSession() côté client
+// se contente d'un console.warn. La commande part désormais dans le CORPS
+// de la requête, format tableau documenté par l'API REST Upstash.
+async function redis(...command) {
+  const res = await fetch(UPSTASH_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(command.map(String)),
   });
   const json = await res.json();
-  if (!res.ok) throw new Error(json.error || 'Redis error');
+  if (!res.ok || json.error) throw new Error(json.error || 'Redis error');
   return json.result;
 }
 
