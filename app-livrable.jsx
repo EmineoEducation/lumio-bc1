@@ -229,6 +229,21 @@ function LivrableApp() {
   const reflexiveOk = !cfg.note_reflexive || _wcMd(reflexive) >= (cfg.noteReflexiveMinMots || 0);
   const canSubmit = allMin && reflexiveOk && totalMots >= (cfg.livrableMinMots || 0) && !sending;
 
+  // ══ F38 · Bouton grisé sans explication ══════════════════════
+  // Le bouton de soumission se débloque uniquement quand CHAQUE
+  // compétence atteint son minimum de mots. Jusqu'ici, rien ne le disait :
+  // l'étudiant·e voyait un bouton gris, muet, et concluait à une panne.
+  // Il manquait parfois dix mots sur une seule rubrique. On liste
+  // désormais précisément ce qui reste à écrire.
+  const manquants = comps
+    .filter(c => _wcMd(answers[c.code]) < (c.min || 0))
+    .map(c => ({ code: c.code, manque: (c.min || 0) - _wcMd(answers[c.code]) }));
+  const manqueReflexive = (cfg.note_reflexive && _wcMd(reflexive) < (cfg.noteReflexiveMinMots || 0))
+    ? (cfg.noteReflexiveMinMots || 0) - _wcMd(reflexive)
+    : 0;
+  const manqueTotal = Math.max(0, (cfg.livrableMinMots || 0) - totalMots);
+  // ══ fin F38 ═════════════════════════════════════════════════
+
   // ── Construire le texte de production ──
   const buildProd = () => {
     let prod = comps.map(c => "### " + c.code + " — " + c.label + "\n" + (answers[c.code] || "(vide)")).join("\n\n");
@@ -407,6 +422,22 @@ function LivrableApp() {
         ) : null}
 
         {err ? <div style={{ color: "#c4420f", fontSize: 12, marginBottom: 10 }}>{err}</div> : null}
+
+        {/* ── F38 · Ce qui reste à écrire avant de pouvoir soumettre ── */}
+        {(step === "draft" || step === "revision") && !canSubmit && !sending ? (
+          <div style={{ background: "#fff8e6", border: "1px solid #d9a300", borderRadius: 7, padding: "11px 14px", marginBottom: 12, fontSize: 12.5, color: "#6b4e00", lineHeight: 1.6 }}>
+            <strong>Il reste à compléter avant de pouvoir soumettre.</strong> Le bouton se débloquera automatiquement.
+            {manquants.length ? (
+              <div style={{ marginTop: 6 }}>
+                {manquants.map(m => (
+                  <div key={m.code}>{m.code} — encore {m.manque} mot{m.manque > 1 ? "s" : ""}</div>
+                ))}
+              </div>
+            ) : null}
+            {manqueReflexive ? <div style={{ marginTop: 6 }}>Note réflexive — encore {manqueReflexive} mot{manqueReflexive > 1 ? "s" : ""}</div> : null}
+            {manqueTotal ? <div style={{ marginTop: 6 }}>Total du livrable — encore {manqueTotal} mot{manqueTotal > 1 ? "s" : ""}</div> : null}
+          </div>
+        ) : null}
 
         {/* ── Bouton étape 1 : soumettre pour évaluation ── */}
         {(step === "draft" || step === "revision") ? (

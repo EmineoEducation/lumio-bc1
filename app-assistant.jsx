@@ -8,6 +8,36 @@
 
 const { useState: useJefState } = React;
 
+// ══════════════════════════════════════════════════════════════
+// F39 · RÉSEAU INSTABLE
+// Les étudiants travaillent sur leurs propres machines, en partage de
+// connexion mobile. Sur un réseau qui tombe une seconde, `fetch` échoue
+// franchement : la requête n'atteint jamais le serveur, elle n'apparaît
+// donc dans aucun journal côté Vercel, et le personnage se taisait — ce
+// qui, du poste de l'encadrant sur une connexion stable, était
+// impossible à reproduire.
+// Correctif : trois tentatives espacées avant d'abandonner. Une coupure
+// d'une ou deux secondes devient invisible pour l'étudiant·e.
+// Bloc générique et idempotent.
+// ══════════════════════════════════════════════════════════════
+if (!window.PAC_FETCH) {
+  window.PAC_FETCH = async function (url, options, essais) {
+    const max = essais == null ? 3 : essais;
+    let derniere = null;
+    for (let i = 0; i < max; i++) {
+      try {
+        return await fetch(url, options);
+      } catch (e) {
+        derniere = e;
+        console.warn('PAC_FETCH — tentative ' + (i + 1) + '/' + max + ' échouée', e);
+        if (i < max - 1) await new Promise(r => setTimeout(r, 800 * (i + 1)));
+      }
+    }
+    throw derniere;
+  };
+}
+
+
 // Conseils génériques par numéro d'acte — les durées viennent de cfg.temps
 const JEF_ACTES = {
   1: { obj: "Observer, lire le brief.", action: (cmd) => "Ouvrir Mail. Lire le brief de " + cmd + "." },
@@ -77,7 +107,7 @@ function JeffersonApp() {
       const name = (window.LUMIO_DATA && window.LUMIO_DATA.student && window.LUMIO_DATA.student.name) || "";
       // Historique complet (sans le message d'accueil), tronqué aux 20 derniers tours
       const history = msgs.slice(1).slice(-20).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
-      const resp = await fetch("/api/chat", {
+      const resp = await window.PAC_FETCH("/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 300, system: buildJeffersonPrompt(name), messages: [...history, { role: "user", content: q }] })
       });
