@@ -99,7 +99,7 @@ function LivField({ title, count, min, placeholder, conseil, value, onChange, lo
     <div style={{ background: "white", borderRadius: 10, padding: "16px 18px", marginBottom: 14, border: "1px solid var(--rule)", opacity: locked ? 0.7 : 1 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
         <span style={{ fontWeight: 700, fontSize: 14 }}>{title}</span>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: count >= min ? "#1a6641" : "var(--ink-faint)" }}>{count}/{min} mots</span>
+        <span title="Volume repère — indicatif, il ne bloque pas la remise" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: count >= min ? "#1a6641" : "var(--ink-faint)" }}>{count}/{min} mots<span style={{ opacity: 0.6 }}> repère</span></span>
       </div>
       {placeholder ? <div style={{ fontSize: 12, color: "var(--ink-mute)", marginBottom: 8, lineHeight: 1.5 }}>{placeholder}</div> : null}
       {!locked ? (
@@ -173,6 +173,8 @@ function LivrableApp() {
   const [feedback, setFeedback] = useLivState("");     // retour formatif
   const [debrief, setDebrief] = useLivState("");       // débrief final
   const [err, setErr] = useLivState("");
+  // F42 · Demande de confirmation lorsque la copie est sous le volume repère.
+  const [confirmCourt, setConfirmCourt] = useLivState(false);
   const [sent, setSent] = useLivState("");
 
   // ══ F33 · Persistance de la copie ═══════════════════════════
@@ -227,7 +229,32 @@ function LivrableApp() {
   const totalMots = comps.reduce((n, c) => n + _wcMd(answers[c.code]), 0) + _wcMd(reflexive);
   const allMin = comps.every(c => _wcMd(answers[c.code]) >= (c.min || 0));
   const reflexiveOk = !cfg.note_reflexive || _wcMd(reflexive) >= (cfg.noteReflexiveMinMots || 0);
-  const canSubmit = allMin && reflexiveOk && totalMots >= (cfg.livrableMinMots || 0) && !sending;
+
+  // ══ F42 · Le volume ne verrouille plus la remise ═════════════
+  // Constat de terrain (Vi, CESACOM Lille, 27/08) : une copie qui
+  // identifiait la contradiction 230/180 — celle qui valide justement la
+  // compétence visée — est restée non soumise, donc non évaluée, pour un
+  // déficit de mots. Le format demandé aggrave le phénomène : une
+  // plateforme de marque ou un plan média se rédigent en listes denses,
+  // et plus la réponse est professionnelle, moins elle pèse de mots.
+  // Un compteur ne peut pas être le portier d'une épreuve certifiante :
+  // le jury évalue sur les critères RNCP et sait sanctionner une réponse
+  // sous-développée. Le minimum devient donc un seuil RECOMMANDÉ,
+  // signalé et confirmé, mais non bloquant.
+  //
+  // Seul subsiste un plancher anti-copie-vide, pour éviter de lancer une
+  // évaluation sur des champs vides ou remplis au hasard.
+  const PLANCHER_MOTS = 15;
+  const plancherAtteint =
+    comps.every(c => _wcMd(answers[c.code]) >= PLANCHER_MOTS) &&
+    (!cfg.note_reflexive || _wcMd(reflexive) >= PLANCHER_MOTS);
+  const videsOuTropCourts = comps
+    .filter(c => _wcMd(answers[c.code]) < PLANCHER_MOTS)
+    .map(c => c.code);
+
+  const volumeAtteint = allMin && reflexiveOk && totalMots >= (cfg.livrableMinMots || 0);
+  const canSubmit = plancherAtteint && !sending;
+  // ══ fin F42 ═════════════════════════════════════════════════
 
   // ══ F38 · Bouton grisé sans explication ══════════════════════
   // Le bouton de soumission se débloque uniquement quand CHAQUE
@@ -423,25 +450,63 @@ function LivrableApp() {
 
         {err ? <div style={{ color: "#c4420f", fontSize: 12, marginBottom: 10 }}>{err}</div> : null}
 
-        {/* ── F38 · Ce qui reste à écrire avant de pouvoir soumettre ── */}
-        {(step === "draft" || step === "revision") && !canSubmit && !sending ? (
+        {/* ── F42 · Champs sous le plancher : seul cas réellement bloquant ── */}
+        {(step === "draft" || step === "revision") && !plancherAtteint && !sending ? (
+          <div style={{ background: "#fdecea", border: "1px solid #c4420f", borderRadius: 7, padding: "11px 14px", marginBottom: 12, fontSize: 12.5, color: "#7a2408", lineHeight: 1.6 }}>
+            <strong>Une réponse par compétence est nécessaire avant de soumettre.</strong>
+            <div style={{ marginTop: 6 }}>
+              À renseigner : {videsOuTropCourts.join(", ")}
+              {cfg.note_reflexive && _wcMd(reflexive) < PLANCHER_MOTS ? (videsOuTropCourts.length ? ", " : "") + "note réflexive" : ""}
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── F38 + F42 · Volume recommandé — informatif, non bloquant ── */}
+        {(step === "draft" || step === "revision") && plancherAtteint && !volumeAtteint && !sending ? (
           <div style={{ background: "#fff8e6", border: "1px solid #d9a300", borderRadius: 7, padding: "11px 14px", marginBottom: 12, fontSize: 12.5, color: "#6b4e00", lineHeight: 1.6 }}>
-            <strong>Il reste à compléter avant de pouvoir soumettre.</strong> Le bouton se débloquera automatiquement.
+            <strong>Volume recommandé non atteint — vous pouvez soumettre malgré tout.</strong> Le jury évalue le fond ;
+            une réponse trop brève est simplement plus difficile à valoriser.
             {manquants.length ? (
               <div style={{ marginTop: 6 }}>
                 {manquants.map(m => (
-                  <div key={m.code}>{m.code} — encore {m.manque} mot{m.manque > 1 ? "s" : ""}</div>
+                  <div key={m.code}>{m.code} — {m.manque} mot{m.manque > 1 ? "s" : ""} sous le repère</div>
                 ))}
               </div>
             ) : null}
-            {manqueReflexive ? <div style={{ marginTop: 6 }}>Note réflexive — encore {manqueReflexive} mot{manqueReflexive > 1 ? "s" : ""}</div> : null}
-            {manqueTotal ? <div style={{ marginTop: 6 }}>Total du livrable — encore {manqueTotal} mot{manqueTotal > 1 ? "s" : ""}</div> : null}
+            {manqueReflexive ? <div style={{ marginTop: 6 }}>Note réflexive — {manqueReflexive} mot{manqueReflexive > 1 ? "s" : ""} sous le repère</div> : null}
+            {manqueTotal ? <div style={{ marginTop: 6 }}>Total du livrable — {manqueTotal} mot{manqueTotal > 1 ? "s" : ""} sous le repère</div> : null}
+          </div>
+        ) : null}
+
+        {/* ── F42 · Confirmation avant une remise sous le volume recommandé ── */}
+        {(step === "draft" || step === "revision") && confirmCourt && !sending ? (
+          <div style={{ background: "var(--paper, #fff)", border: "1px solid #134547", borderRadius: 7, padding: "13px 16px", marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+            <strong>Soumettre malgré un volume inférieur au repère ?</strong>
+            <div style={{ marginTop: 6, color: "var(--ink-soft, #555)" }}>
+              Vos réponses partent telles quelles à l'évaluation. Vous pourrez les reprendre après le retour formatif.
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button onClick={() => setConfirmCourt(false)}
+                style={{ background: "transparent", color: "#134547", border: "1px solid #134547", borderRadius: 7, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                Compléter d'abord
+              </button>
+              <button onClick={() => { setConfirmCourt(false); (step === "draft" ? submitForFeedback : submitFinal)(); }}
+                style={{ background: "#134547", color: "white", border: "none", borderRadius: 7, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                Soumettre quand même
+              </button>
+            </div>
           </div>
         ) : null}
 
         {/* ── Bouton étape 1 : soumettre pour évaluation ── */}
-        {(step === "draft" || step === "revision") ? (
-          <button onClick={canSubmit ? (step === "draft" ? submitForFeedback : submitFinal) : undefined} disabled={!canSubmit}
+        {(step === "draft" || step === "revision") && !confirmCourt ? (
+          <button
+            onClick={canSubmit
+              ? (volumeAtteint
+                  ? (step === "draft" ? submitForFeedback : submitFinal)
+                  : () => setConfirmCourt(true))
+              : undefined}
+            disabled={!canSubmit}
             style={{ background: canSubmit ? "#134547" : "rgba(20,24,36,0.1)", color: canSubmit ? "white" : "var(--ink-faint)", border: "none", borderRadius: 7, padding: "11px 24px", fontSize: 13, fontWeight: 600, cursor: canSubmit ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
             {sending ? "Évaluation en cours…" : step === "draft" ? "Soumettre pour évaluation →" : "Valider le livrable final →"}
           </button>
