@@ -305,7 +305,7 @@ Le livrable attendu se remplit dans l'application « Livrable » du poste de la 
 
 ${lignes}
 
-Le bouton de remise ne s'active que lorsque CHAQUE rubrique atteint son minimum de mots. Un bouton grisé signifie qu'il manque des mots quelque part, jamais une panne.
+Les nombres de mots indiqués sont des REPÈRES, pas des conditions : depuis F42, une copie plus courte peut être soumise après confirmation. Le bouton n'est grisé que si une rubrique est vide ou quasi vide (moins de quinze mots). Un bouton grisé ne signale jamais une panne.
 
 Règles non négociables :
 1. Tu ne décris JAMAIS le livrable autrement que par les rubriques ci-dessus. Tu n'inventes ni format, ni nombre de paragraphes, ni nombre de sources.
